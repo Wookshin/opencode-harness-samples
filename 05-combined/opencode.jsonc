@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 문서·기계적 작업
+  //   codemate/CodeLLMPro    무난 — 구현·일반 리뷰
+  //   codemate/CodeLLMMax    고가 — 계획 수립, 최종 검증
+  "model": "codemate/CodeLLMPro",
+
+  // ── 이 샘플에서만 2 입니다 ───────────────────────────────────────────
+  // 기본값 1이면 "서브에이전트는 서브에이전트를 부를 수 없습니다".
+  // 여기서는 planner 가 조사를 위해 explore 를 부를 수 있어야 하므로 2로 올립니다.
+  // 1로 되돌리면 어디서 막히는지 README 의 "직접 바꿔 보기" 참고.
+  "subagent_depth": 2,
+
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  }
+}

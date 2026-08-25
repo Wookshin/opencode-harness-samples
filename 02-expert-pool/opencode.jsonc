@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 정형적인 작업 (문서, 셸 한 줄)
+  //   codemate/CodeLLMPro    무난 — 판단이 필요한 작업 (테스트, 리팩터링)
+  //   codemate/CodeLLMMax    고가 — 이 샘플에서는 쓰지 않습니다
+  "model": "codemate/CodeLLMPro",
+
+  "subagent_depth": 1,
+
+  "permission": {
+    "edit": "allow",
+    "bash": "ask"
+  }
+}

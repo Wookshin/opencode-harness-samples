@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 이 샘플에서는 쓰지 않습니다
+  //   codemate/CodeLLMPro    무난 — 만드는 쪽 (game-builder)
+  //   codemate/CodeLLMMax    고가 — 판정하는 쪽 (game-verifier)
+  //
+  // 검증자에게 더 비싼 모델을 준 것은 의도적입니다.
+  // 대충 만든 것을 통과시키는 비용이, 잘 만든 것을 다시 보는 비용보다 큽니다.
+  "model": "codemate/CodeLLMPro",
+
+  "subagent_depth": 1,
+
+  "permission": {
+    "edit": "allow",
+    "bash": "allow" // 게임을 실제로 실행해 봐야 하므로 열어 둡니다
+  }
+}

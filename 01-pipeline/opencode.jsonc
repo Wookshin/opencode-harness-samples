@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  // 다른 프로바이더를 쓰신다면 이 파일의 model 값만 바꾸면 됩니다.
+  //   codemate/CodeLLMImage  저렴 — 기계적인 초벌 작업
+  //   codemate/CodeLLMPro    무난 — 감수·윤문
+  //   codemate/CodeLLMMax    고가 — 이 샘플에서는 쓰지 않습니다
+  // 에이전트별 모델은 .opencode/agents/*.md 의 프론트매터에 있습니다.
+  "model": "codemate/CodeLLMPro",
+
+  // 파이프라인은 오케스트레이터가 단계를 순서대로 부릅니다.
+  // 서브에이전트가 또 서브에이전트를 부를 필요가 없으므로 기본값 1을 씁니다.
+  "subagent_depth": 1,
+
+  // 이 샘플은 파일을 읽고 번역 결과를 씁니다.
+  "permission": {
+    "edit": "allow",
+    "bash": "ask"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 가독성 리뷰 (기계적인 확인)
+  //   codemate/CodeLLMPro    무난 — 정확성·테스트 리뷰
+  //   codemate/CodeLLMMax    고가 — 보안 리뷰 (놓치면 가장 비싼 항목)
+  "model": "codemate/CodeLLMPro",
+
+  "subagent_depth": 1,
+
+  // 리뷰어들은 아무것도 고치지 않습니다. 전역 기본값부터 편집을 닫아 둡니다.
+  // 오케스트레이터도 리포트만 쓰므로 편집이 필요 없습니다.
+  "permission": {
+    "edit": "deny",
+    "bash": "ask"
+  }
+}
