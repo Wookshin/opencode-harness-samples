@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 재현 스크립트 작성
+  //   codemate/CodeLLMPro    무난 — 후보 수정안 3인
+  //   codemate/CodeLLMMax    고가 — 심사(채점), 최종 검증
+  "model": "codemate/CodeLLMPro",
+
+  // challenger 들은 서브에이전트를 부를 필요가 없습니다.
+  "subagent_depth": 1,
+
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  }
+}

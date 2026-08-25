@@ -1,17 +1,20 @@
-# 05 · 조합 (Combined)
+# 05 · 조합 · 게이트형 (Gated)
 
-> **한 줄로**: 앞의 네 패턴을 하나의 작업 흐름으로 엮은 것. **게이트**로 단계를 강제합니다.
+> **한 줄로**: 네 패턴을 직렬로 엮고 **게이트**로 단계를 강제하는 조합. 단계 사이는 `_workspace/` 파일로 잇습니다.
 
 ## 바로 실행하기
 
 ```bash
-cd 05-combined
+cd 05-combined-gated
 
 # 계획만 세우고 멈추기 (여기부터 권합니다)
 opencode run "/plan-only"
 
 # 전체 사이클 — 계획 → 병렬 구현 → 4인 리뷰 → 최종 검증
 opencode run "/feature"
+
+# 중간에 끊겼을 때 어디까지 갔는지
+opencode run "/status"
 ```
 
 인자를 비우면 `sample/REQUEST.md` 의 요청을 사용합니다. 직접 요청을 줄 수도 있습니다.
@@ -41,7 +44,7 @@ opencode run "/feature todo.js 에 항목 삭제 기능 추가해줘"
 
 `.opencode/agents/combo-lead.md` 의 핵심 세 줄:
 
-> - **계획 없이 구현 금지** — `PLAN.md` 가 없으면 2단계로 가지 않습니다.
+> - **계획 없이 구현 금지** — `_workspace/1-plan.md` 가 없으면 Phase 2로 가지 않습니다.
 > - **리뷰 없이 검증 금지** — 리뷰가 FAIL 이면 4단계로 가지 않고 2단계로 되돌아갑니다.
 > - **증거 없이 완료 금지** — 최종 검증의 실행 출력이 없으면 완료를 선언하지 않습니다.
 
@@ -49,7 +52,7 @@ opencode run "/feature todo.js 에 항목 삭제 기능 추가해줘"
 
 ### ② 계획서가 병렬 실행 계획을 낳는다
 
-`planner` 는 작업 표에 **선행 작업**과 **병렬 가능** 칸을 반드시 채워야 합니다.
+`planner` 는 `_workspace/1-plan.md` 의 작업 표에 **선행 작업**과 **건드리면 안 되는 것** 칸을 반드시 채워야 합니다.
 
 ```markdown
 | # | 작업 | 대상 파일 | 선행 작업 | 병렬 가능 |
@@ -70,15 +73,15 @@ opencode run "/feature todo.js 에 항목 삭제 기능 추가해줘"
 
 ### ④ 권한으로 역할을 못 박았다
 
-- `planner` — `edit` 이 **`PLAN.md` 한 파일에만** 허용됩니다. 계획자가 구현으로 넘어갈 수 없습니다.
+- `planner` — `edit` 이 **`_workspace/` 안에만** 허용됩니다. 계획자가 구현으로 넘어갈 수 없습니다.
   ```yaml
   edit:
     "*": deny
-    "PLAN.md": allow
+    "*_workspace/*": allow
   ```
-  글롭 패턴 권한의 좋은 예입니다.
-- 리뷰어 4인 — `edit: deny`
-- `final-verifier` — `edit: deny`, `bash: allow`
+  글롭 패턴 권한의 좋은 예입니다. 패턴은 **git 루트 기준 상대 경로**와 매칭되고 `*` 는 `/` 를 넘어가므로,
+  `_workspace/*` 가 아니라 `*_workspace/*` 로 써야 `05-combined-gated/_workspace/...` 도 잡힙니다.
+- 리뷰어 4인 · `final-verifier` — 소스는 `deny`, `_workspace/` 만 `allow` (자기 보고서는 써야 하므로)
 - `implementer` — 유일하게 자유롭게 편집 가능
 
 **고칠 수 있는 사람이 딱 한 종류뿐**입니다.
@@ -101,7 +104,7 @@ opencode run "/feature todo.js 에 항목 삭제 기능 추가해줘"
 
 ## 직접 바꿔 보기
 
-- **`/plan-only` 부터 돌려 보세요.** 계획 단계만 보면 나머지가 훨씬 잘 이해됩니다. `PLAN.md` 가 어떻게 생겼는지, 병렬 계획이 어떻게 잡히는지 확인하세요.
+- **`/plan-only` 부터 돌려 보세요.** 계획 단계만 보면 나머지가 훨씬 잘 이해됩니다. `_workspace/1-plan.md` 가 어떻게 생겼는지, 병렬 계획이 어떻게 잡히는지 확인하세요.
 - **`subagent_depth` 를 1로 되돌려 보세요.** `planner` 가 `explore` 를 부르는 지점에서 막힙니다. 위임 깊이 제한이 실제로 무엇을 막는지 눈으로 볼 수 있습니다.
 - **`planner` 의 `edit` 권한을 `allow` 로 열어 보세요.** 계획자가 계획을 세우다 말고 직접 구현하기 시작합니다. 역할 분리가 권한으로 지켜진다는 걸 확인할 수 있습니다.
 - **게이트를 하나 지워 보세요.** "리뷰 없이 검증 금지"를 지우면 리뷰가 FAIL 인데도 통과하는 경우가 생깁니다.
@@ -111,22 +114,24 @@ opencode run "/feature todo.js 에 항목 삭제 기능 추가해줘"
 ## 파일 구조
 
 ```
-05-combined/
+05-combined-gated/
 ├── opencode.jsonc              subagent_depth: 2 ← 이 샘플만
 ├── .opencode/
 │   ├── agents/
 │   │   ├── combo-lead.md       전체 오케스트레이터 (primary) ← 게이트가 여기
-│   │   ├── planner.md          1단계 · PLAN.md 만 쓸 수 있음 (고가)
-│   │   ├── implementer.md      2단계 · 유일하게 편집 가능 (무난)
-│   │   ├── review-*.md         3단계 · 04에서 가져온 리뷰어 4인
-│   │   └── final-verifier.md   4단계 · 실행해서 판정, 편집 불가 (고가)
+│   │   ├── planner.md          Phase 1 · _workspace 에만 쓸 수 있음 (고가)
+│   │   ├── implementer.md      Phase 2 · 유일하게 소스 편집 가능 (무난)
+│   │   ├── review-*.md         Phase 3 · 04에서 가져와 _workspace 용으로 고침
+│   │   └── final-verifier.md   Phase 4 · 실행해서 판정, 소스 편집 불가 (고가)
 │   └── commands/
 │       ├── feature.md          /feature    — 전체 사이클
-│       └── plan-only.md        /plan-only  — 계획만
-├── sample/
-│   ├── todo.js                 시작 코드 (add / list 만 있음)
-│   └── REQUEST.md              추가할 기능 2개
-└── PLAN.md                     (실행하면 생깁니다)
+│       ├── plan-only.md        /plan-only  — 계획만
+│       └── status.md           /status     — 진행 상황
+├── _workspace/                 Phase 간 우편함
+│   └── README.md               규약 (산출물은 .gitignore)
+└── sample/
+    ├── todo.js                 시작 코드 (add / list 만 있음)
+    └── REQUEST.md              추가할 기능 2개
 ```
 
 > **참고**: 리뷰어 4인은 `04-fanout-fanin` 에서 **복사해 온 것**입니다. OpenCode 설정은 폴더 경계를 넘어 공유되지 않으므로(각 폴더가 독립적으로 동작하도록 그렇게 설계했습니다), 재사용하려면 실제로 복사해야 합니다.

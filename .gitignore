@@ -1,14 +1,15 @@
-# 샘플을 실행하면 생기는 산출물 — 저장소에 넣지 않습니다.
+# ── _workspace 산출물 ────────────────────────────────────────────────
+# Phase 간 인계 파일은 실행할 때마다 새로 생깁니다. 규약 문서만 커밋합니다.
+# (패턴에 / 가 들어가면 .gitignore 위치에 앵커되므로 **/ 를 붙여야 하위 폴더도 잡힙니다)
+**/_workspace/*
+!**/_workspace/README.md
 
-# 03-generate-verify: game-builder 가 만드는 게임
+# ── 각 샘플이 실행 중 만드는 것 ──────────────────────────────────────
 03-generate-verify/game.js
-
-# 05-combined: planner 가 만드는 계획서, 구현자가 만드는 데이터 파일
-05-combined/PLAN.md
-05-combined/sample/todos.json
-
-# 01-pipeline: 번역 결과물
 01-pipeline/sample/*.ko.md
+05-combined-gated/sample/todos.json
+06-combined-compete/sample/*.orig.js
+07-combined-refine/sample/**/*.log
 
-# OpenCode 로컬 상태
+# ── OpenCode 로컬 상태 ───────────────────────────────────────────────
 .opencode/themes/

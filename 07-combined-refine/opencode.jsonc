@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 조사원 (여러 명 동시)
+  //   codemate/CodeLLMPro    무난 — 집필
+  //   codemate/CodeLLMMax    고가 — 빈틈 감사 (놓치면 다음 라운드가 헛돔)
+  "model": "codemate/CodeLLMPro",
+
+  // 이 샘플은 오케스트레이터가 모든 단계를 직접 호출합니다.
+  "subagent_depth": 1,
+
+  "permission": {
+    "edit": "allow",
+    "bash": "ask"
+  }
+}
