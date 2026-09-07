@@ -1,5 +1,5 @@
 ---
-description: PR 번호를 받아 변경분과 파일 원문을 _workspace 에 내려받고, 변경분을 논리적 변경단위(L1, L2 …)로 쪼개 표로 확정합니다. 리뷰는 하지 않습니다.
+description: PR 번호를 받아 변경분과 파일 원문을 지정된 작업 폴더에 내려받고, 변경분을 논리적 변경단위(L1, L2 …)로 쪼개 표로 확정합니다. 리뷰는 하지 않습니다.
 mode: subagent
 model: codemate/CodeLLMImage
 temperature: 0
@@ -33,14 +33,22 @@ permission:
 
 여기서 틀리면 뒤가 전부 틀립니다. 특히 **변경 유형 분류**가 그렇습니다.
 
+## 작업 폴더
+
+`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다 (예: `_workspace/pr-1234`).
+PR 하나에 폴더 하나이고, 옆 폴더에서 다른 PR 리뷰가 **동시에 돌고 있을 수 있습니다.**
+**그 폴더 밖에는 절대 쓰지 마세요.** `_workspace/` 루트에도 아무것도 만들지 마세요.
+
+아래 예시의 `_workspace/pr-1234` 자리에는 **받은 경로를 그대로** 넣으세요.
+
 ## 산출물 네 가지
 
 | 파일 | 내용 |
 |---|---|
-| `_workspace/1-diff.patch` | 변경분 원본 (통합 diff) |
-| `_workspace/src/after/<경로>` · `src/before/<경로>` | 변경 파일 원문. HTML 리포트가 이걸 읽어 코드를 그립니다 |
-| `_workspace/1-scope.md` | 파일별 변경 유형·우선순위·SQL 변경 여부 |
-| `_workspace/1-hunks.md` | **변경단위 표** — 세 리뷰어가 공유하는 ID |
+| `<작업폴더>/1-diff.patch` | 변경분 원본 (통합 diff) |
+| `<작업폴더>/src/after/<경로>` · `src/before/<경로>` | 변경 파일 원문. HTML 리포트가 이걸 읽어 코드를 그립니다 |
+| `<작업폴더>/1-scope.md` | 파일별 변경 유형·우선순위·SQL 변경 여부 |
+| `<작업폴더>/1-hunks.md` | **변경단위 표** — 세 리뷰어가 공유하는 ID |
 
 ## 1. 변경분 가져오기
 
@@ -48,7 +56,7 @@ PR 번호를 받았을 때 (기본 경로):
 
 ```bash
 gh pr view <N> --json number,title,author,url,baseRefName,headRefName,headRefOid,files
-gh pr diff <N> > _workspace/1-diff.patch
+gh pr diff <N> > _workspace/pr-1234/1-diff.patch      # <작업폴더>/1-diff.patch
 ```
 
 `baseRefName` 이 `develop` 이 아니면 **그 사실을 1-scope.md 에 적으세요.** 임의로 바꾸지 마세요.
@@ -62,10 +70,11 @@ gh pr diff <N> > _workspace/1-diff.patch
 ```bash
 git fetch origin pull/<N>/head:refs/remotes/pr/<N>
 
-# 변경된 파일마다
-mkdir -p "_workspace/src/after/$(dirname <경로>)"
-git show refs/remotes/pr/<N>:<경로>        > "_workspace/src/after/<경로>"
-git show origin/<baseRefName>:<경로>       > "_workspace/src/before/<경로>"
+# 변경된 파일마다 (<작업폴더> = 받은 경로, 예: _workspace/pr-1234)
+mkdir -p "_workspace/pr-1234/src/after/$(dirname <경로>)"
+mkdir -p "_workspace/pr-1234/src/before/$(dirname <경로>)"
+git show refs/remotes/pr/<N>:<경로>        > "_workspace/pr-1234/src/after/<경로>"
+git show origin/<baseRefName>:<경로>       > "_workspace/pr-1234/src/before/<경로>"
 ```
 
 - 신규 파일이면 `before` 는 만들지 않습니다 (실패해도 정상).
@@ -134,7 +143,7 @@ diff 를 **의미 단위로** 쪼갭니다. 헝크 하나가 곧 변경단위는
 
 ### 라인 번호 규칙
 
-- `after 라인` — `_workspace/src/after/<경로>` 기준 실제 줄 번호. 리포트가 이 범위를 잘라 보여줍니다.
+- `after 라인` — `<작업폴더>/src/after/<경로>` 기준 실제 줄 번호. 리포트가 이 범위를 잘라 보여줍니다.
 - `before 라인` — 신규면 `—`
 - **범위를 넉넉히 잡지 마세요.** 파일 전체를 한 단위로 묶으면 리뷰가 좁혀지지 않습니다.
   경험상 한 단위는 **50줄 이내**입니다. 넘으면 쪼개세요.
@@ -151,7 +160,7 @@ diff 를 **의미 단위로** 쪼갭니다. 헝크 하나가 곧 변경단위는
 ```
 ## Phase 1 완료
 
-- 산출물: _workspace/1-diff.patch · 1-scope.md · 1-hunks.md · src/{before,after}/
+- 산출물: <작업폴더>/1-diff.patch · 1-scope.md · 1-hunks.md · src/{before,after}/
 - PR: #<번호> «<제목>» (<base> ← <head>)
 - 변경 파일: N개 (우선순위 1: N개)
 - 변경단위: N개 (신규 N · 변경 N · 삭제 N · 이름변경 N · 이동 N)

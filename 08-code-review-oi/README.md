@@ -20,9 +20,17 @@ opencode run "/review-pr 1234"
 # Phase 1 만 — 변경단위 분류가 맞는지 먼저 확인
 opencode run "/scope-only 1234"
 
-# HTML 만 다시 생성 / 어디까지 갔는지
-opencode run "/report-only"
+# HTML 만 다시 생성 / 진행 중인 모든 리뷰 상태
+opencode run "/report-only 1234"
 opencode run "/status"
+```
+
+**PR 두 개를 동시에 리뷰할 수 있습니다.** 터미널 두 개에서 각각 돌리면 됩니다.
+
+```bash
+# 터미널 1                          # 터미널 2
+opencode run "/review-pr 1234"      opencode run "/review-pr 5678"
+#   → _workspace/pr-1234/               → _workspace/pr-5678/
 ```
 
 **LLM 없이 렌더링만 먼저 보고 싶다면** 빌드 스크립트를 단독으로 돌릴 수 있습니다.
@@ -151,14 +159,42 @@ bash:
 
 경로 매핑은 `dpimgr-dir.txt` 에 있고, **이 파일이 팀 환경에 맞게 고쳐 쓰는 자리**입니다.
 
-### ⑦ 아무도 소스를 못 고친다
+### ⑦ 작업 폴더가 PR 별로 갈린다
+
+산출물은 `_workspace/` 에 평평하게 쌓이지 않고 **`_workspace/pr-<번호>/`** 로 나뉩니다.
+
+```
+_workspace/
+├── README.md          규약 (유일하게 커밋되는 파일)
+├── pr-1234/           세션 A — STATUS.md · 1-*.md · src/ · 2-*.md · 3-*.md · review-1234.html
+└── pr-5678/           세션 B — 위와 같은 구성, 완전히 독립
+```
+
+폴더를 안 나누면 파일 이름이 전부 같아 서로를 덮어씁니다. 특히 `src/after/` 에 두 PR 의 원문이
+섞이면 **리포트에 엉뚱한 PR 의 코드가 실립니다.** 눈에 잘 안 띄는 사고입니다.
+
+세 가지 규칙이 이 격리를 지탱합니다.
+
+1. **오케스트레이터가 Phase 0 에서 작업 폴더를 확정**하고, 모든 `task` 프롬프트에
+   `_workspace/pr-1234/…` **전체 경로**를 적습니다. 서브에이전트는 대화를 못 보기 때문입니다.
+2. **`_workspace/` 루트에 공유 파일을 만들지 않습니다.** 진행 인덱스 하나를 두면 그 파일이
+   다시 경합 지점이 됩니다. `/status` 는 각 폴더의 `STATUS.md` 를 **읽기만** 합니다.
+3. **아무도 지우지 않습니다.** 같은 PR 을 새로 돌릴 때도 `mv _workspace/pr-1234
+   _workspace/pr-1234.prev-<시각>` 으로 밀어냅니다. bash 권한은 명령 문자열 글롭이라
+   `rm -rf _workspace/pr-*` 같은 와일드카드를 패턴만으로 막을 수 없어서,
+   **`rm` 권한 자체를 주지 않았습니다.** 정리는 사람이 합니다.
+
+빌드 스크립트는 이 구조를 **모릅니다.** `dirname(findings.json)` 을 기준으로 패치와 원문을
+찾을 뿐이라, 작업 폴더가 어디로 바뀌어도 인자만 맞으면 그대로 동작합니다.
+
+### ⑧ 아무도 소스를 못 고친다
 
 `opencode.jsonc` 의 전역 기본값부터 `"edit": "deny"` 입니다. 04 와 같은 입장입니다.
 각 에이전트는 `*_workspace/*` 만 열려 있어 **자기 보고서만** 씁니다.
 
 ## HTML 리포트가 회의에서 하는 일
 
-`_workspace/review-<PR번호>.html` — 브라우저로 그냥 열면 됩니다. **외부 요청 0건**, 폐쇄망에서 동작합니다.
+`_workspace/pr-<번호>/review-<번호>.html` — 브라우저로 그냥 열면 됩니다. **외부 요청 0건**, 폐쇄망에서 동작합니다.
 
 | 기능 | 쓰임 |
 |---|---|
@@ -187,6 +223,11 @@ bash:
   검증에서 걸립니다. LLM 이 스키마를 어겼을 때 무엇이 막아 주는지 볼 수 있습니다.
 - **네 번째 관점을 추가해 보세요.** 예: `review-ui`(XAML 바인딩·리소스). 에이전트 파일 하나와
   오케스트레이터의 호출 목록 한 줄, 그리고 `html-report.md` 의 `perspective` 목록에 한 줄이면 됩니다.
+- **두 PR 을 동시에 돌려 보세요.** 터미널 두 개로 `/review-pr 1234`, `/review-pr 5678` 을 띄우고
+  `_workspace/` 를 보면 폴더가 둘로 갈립니다. `/status` 로 둘 다 한눈에 확인하세요.
+- **작업 폴더 격리를 깨 보세요.** `review-lead.md` 의 `task` 프롬프트에서 작업 폴더 경로를 빼고
+  `1-hunks.md` 로만 적으면, 서브에이전트가 어느 폴더인지 몰라 엉뚱한 곳을 찾거나 루트에 씁니다.
+  경로를 전체로 적어야 하는 이유가 바로 보입니다.
 - **자기 팀 규칙으로 바꿔 보세요.** `references/naming-rules.md` 를 팀 컨벤션으로 갈아 끼우면
   리팩토링 리뷰어의 판정 기준이 통째로 바뀝니다. 에이전트는 손대지 않습니다.
 
@@ -205,7 +246,7 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 |---|---|
 | `.opencode/skills/code-review-oi-pr/dpimgr-dir.txt` | 팀의 DPImgr 경로 매핑 |
 | `.opencode/agents/*.md` 의 `model:` | 쓰는 프로바이더의 모델 이름 |
-| `.gitignore` | `_workspace/*` 를 무시하도록 (`!_workspace/README.md` 예외) |
+| `.gitignore` | `_workspace/*` 를 무시하도록 (`!_workspace/README.md` 예외). `*` 가 `/` 를 넘으므로 `pr-*/` 하위까지 함께 잡힙니다 |
 
 기본 브랜치가 `develop` 이 아니면 `diff-scoper` 가 그 사실을 `1-scope.md` 에 적고 알려 줍니다.
 임의로 바꾸지 않습니다.
@@ -227,9 +268,9 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 │   ├── commands/
 │   │   ├── review-pr.md                 /review-pr <번호>   전체 사이클
 │   │   ├── scope-only.md                /scope-only <번호>  Phase 1 만
-│   │   ├── report-only.md               /report-only        HTML 만 재생성
+│   │   ├── report-only.md               /report-only <번호> HTML 만 재생성
 │   │   ├── review-sample.md             /review-sample      gh 없는 오프라인 데모
-│   │   └── status.md                    /status
+│   │   └── status.md                    /status             진행 중인 모든 PR 리뷰
 │   └── skills/code-review-oi-pr/
 │       ├── SKILL.md                     진입점 (얇게 유지)
 │       ├── dpimgr-dir.txt               ★ 팀 환경에 맞게 고치는 파일
@@ -243,7 +284,8 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 │           ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
 │           └── build-report.mjs         스키마 검증 + diff 계산 + 렌더 (Node 내장 모듈만)
 ├── _workspace/
-│   └── README.md                        단계 사이 우편함 규약
+│   ├── README.md                        단계 사이 우편함 규약 (PR 별 폴더 구조 설명)
+│   └── pr-<번호>/                        실행할 때 생김 — PR 하나에 폴더 하나 (.gitignore)
 └── sample/
     ├── pr-sample.patch                  세 관점에 각각 걸리는 결함을 심은 C# 변경분
     ├── before/ · after/                 그 패치가 가리키는 파일 원문

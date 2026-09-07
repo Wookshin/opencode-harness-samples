@@ -10,8 +10,8 @@
 
 ```bash
 node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
-     _workspace/4-findings.json \
-     _workspace/review-1234.html
+     _workspace/pr-1234/4-findings.json \
+     _workspace/pr-1234/review-1234.html
 ```
 
 | 인자 | 필수 | 설명 |
@@ -20,7 +20,9 @@ node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
 | 2 | ● | 출력 HTML 경로 |
 | 3 | | 패치 경로. 생략하면 findings.json 과 같은 폴더의 `1-diff.patch` |
 
-`src/before/`·`src/after/` 도 findings.json 과 같은 폴더에서 찾습니다.
+**기준은 findings.json 이 있는 폴더입니다.** 패치도 `src/before/`·`src/after/` 도 거기서 찾습니다.
+그래서 작업 폴더가 `pr-1234` 든 `pr-5678` 이든 인자만 맞으면 그대로 동작합니다 —
+스크립트는 작업 폴더 이름을 전혀 모릅니다.
 스크립트는 **스키마를 검증**하고, 어긋나면 무엇이 잘못됐는지 출력하며 exit 1 합니다.
 실패하면 JSON 을 고쳐 다시 실행하세요. **HTML 을 손으로 고치지 마세요.**
 
@@ -50,7 +52,7 @@ node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
       "priority":   1,                  // 필수. .xaml.cs = 1, 그 외 = 2
       "hasSql":     false,
       "renamedFrom": null,              // renamed / moved 일 때만
-      "beforeFile": "src/before/YOEDSMOV/YOEDSMOV.xaml.cs",  // findings.json 기준 상대 경로
+      "beforeFile": "src/before/YOEDSMOV/YOEDSMOV.xaml.cs",  // findings.json 이 있는 폴더 기준
       "afterFile":  "src/after/YOEDSMOV/YOEDSMOV.xaml.cs"    // 없으면 원문 임베드 생략
     }
   ],

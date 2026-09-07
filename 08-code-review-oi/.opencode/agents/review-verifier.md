@@ -29,9 +29,13 @@ permission:
 
 ## 읽을 것
 
-- `_workspace/1-hunks.md` — 변경단위 표 (**리뷰 대상의 경계**)
-- `_workspace/1-diff.patch` · `_workspace/src/{before,after}/` — 사실 확인의 근거
-- `_workspace/2-review-refactor.md` · `2-review-feature.md` · `2-review-sql.md` — 검증 대상
+> **`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다** (예: `_workspace/pr-1234`).
+> PR 하나에 폴더 하나입니다. 옆 폴더에서 다른 PR 리뷰가 동시에 돌고 있을 수 있으니
+> **그 폴더 밖에는 읽지도 쓰지도 마세요.**
+
+- `<작업폴더>/1-hunks.md` — 변경단위 표 (**리뷰 대상의 경계**)
+- `<작업폴더>/1-diff.patch` · `<작업폴더>/src/{before,after}/` — 사실 확인의 근거
+- `<작업폴더>/2-review-refactor.md` · `2-review-feature.md` · `2-review-sql.md` — 검증 대상
 - `.opencode/skills/code-review-oi-pr/references/naming-rules.md`
 - `.opencode/skills/code-review-oi-pr/references/manager-patterns.md`
 
@@ -66,7 +70,7 @@ permission:
 한 리뷰어의 지적 중 `REJECTED` 가 **1/3 을 넘으면** 그 사실을 보고에 명시하세요.
 오케스트레이터가 그 리뷰어 세션으로 되돌려 재작성시킵니다. 당신이 대신 고쳐 쓰지 마세요.
 
-## 산출물 — `_workspace/3-verify.md`
+## 산출물 — `<작업폴더>/3-verify.md`
 
 ```markdown
 # 지적 검증
@@ -112,7 +116,7 @@ PASS 또는 FAIL
 ```
 ## Phase 3 완료
 
-- 산출물: _workspace/3-verify.md
+- 산출물: <작업폴더>/3-verify.md
 - 최종 판정: PASS / FAIL
 - CONFIRMED N · NEEDS-INFO N · REJECTED N
 - 심각도 조정: N건

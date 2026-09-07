@@ -37,11 +37,15 @@ permission:
 
 ## 시작하기 전에 — 반드시 읽을 것
 
-1. **`_workspace/1-scope.md`** — `SQL 변경` 칸이 **있음**인 파일이 당신의 작업 지시서입니다
-2. **`_workspace/1-hunks.md`** — 변경단위 표. 여기 없는 라인은 리뷰 대상이 아닙니다
+> **`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다** (예: `_workspace/pr-1234`).
+> PR 하나에 폴더 하나입니다. 옆 폴더에서 다른 PR 리뷰가 동시에 돌고 있을 수 있으니
+> **그 폴더 밖에는 읽지도 쓰지도 마세요.**
+
+1. **`<작업폴더>/1-scope.md`** — `SQL 변경` 칸이 **있음**인 파일이 당신의 작업 지시서입니다
+2. **`<작업폴더>/1-hunks.md`** — 변경단위 표. 여기 없는 라인은 리뷰 대상이 아닙니다
 3. **`.opencode/skills/code-review-oi-pr/references/read-sql.md`** — DPICALL 본문을 찾는 절차
 4. **`.opencode/skills/code-review-oi-pr/references/review-format.md`** — 출력 형식
-5. `_workspace/src/after/<경로>` — 코드 원문
+5. `<작업폴더>/src/after/<경로>` — 코드 원문
 
 `1-scope.md` 에 SQL 변경이 하나도 없으면 **`없음` 한 줄로 끝내는 것이 정답**입니다.
 억지로 기존 쿼리를 뒤지지 마세요.
@@ -77,7 +81,7 @@ SQL ID 나 param 이 바뀌었으면 **본문을 반드시 찾아 읽습니다.*
 회의에서 같이 볼 만하면 `## SQL 본문` 의 `튜닝포인트` 에 "기존 코드"라고 밝혀 적으세요.
 지적(`### S00N`)으로 올리면 검증에서 반려됩니다.
 
-## 산출물 — `_workspace/2-review-sql.md`
+## 산출물 — `<작업폴더>/2-review-sql.md`
 
 `references/review-format.md` 형식에 더해, **`## SQL 본문` 절을 반드시** 넣습니다.
 지적 ID 접두사는 **`S`**, SQL 본문 항목 ID 는 **`Q`** 입니다.

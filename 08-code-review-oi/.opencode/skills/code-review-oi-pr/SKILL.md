@@ -23,11 +23,11 @@ PR 하나를 **세 관점이 동시에** 리뷰하고, 지적을 **검증으로 
 ```bash
 cd 08-code-review-oi
 
-opencode run "/review-pr 1234"     # 전체 사이클 → _workspace/review-1234.html
+opencode run "/review-pr 1234"     # 전체 사이클 → _workspace/pr-1234/review-1234.html
 opencode run "/scope-only 1234"    # Phase 1 만 — 변경단위 분류가 맞는지 먼저 확인
-opencode run "/report-only"        # 리뷰는 그대로 두고 HTML 만 다시 생성
+opencode run "/report-only 1234"   # 리뷰는 그대로 두고 HTML 만 다시 생성
 opencode run "/review-sample"      # gh 없이 도는 오프라인 데모
-opencode run "/status"             # 어디까지 갔는지
+opencode run "/status"             # 진행 중인 모든 PR 리뷰의 상태
 ```
 
 실 PR 에 처음 적용할 때는 **`/scope-only` 부터** 돌리세요.
@@ -35,8 +35,11 @@ opencode run "/status"             # 어디까지 갔는지
 
 ## 무엇이 만들어지나
 
+**PR 하나에 폴더 하나**입니다. 그래서 두 PR 을 동시에 리뷰해도 섞이지 않습니다.
+
 ```
-_workspace/
+_workspace/pr-1234/
+├── STATUS.md                 진행판
 ├── 1-diff.patch              gh pr diff 원본
 ├── 1-scope.md                파일별 변경 유형·우선순위·SQL 변경 여부
 ├── 1-hunks.md                변경단위 표 (L1, L2 … ← 세 리뷰어가 공유하는 ID)
@@ -46,8 +49,11 @@ _workspace/
 ├── 2-review-sql.md           SQL 관점
 ├── 3-verify.md               지적별 CONFIRMED / NEEDS-INFO / REJECTED
 ├── 4-findings.json           HTML 입력 (스키마 고정)
-└── review-<PR번호>.html       ★ 회의에서 여는 파일
+└── review-1234.html          ★ 회의에서 여는 파일
 ```
+
+터미널 두 개로 `/review-pr 1234` 와 `/review-pr 5678` 을 동시에 돌리면
+`pr-1234/` 와 `pr-5678/` 이 각각 채워집니다. `/status` 로 둘 다 한눈에 봅니다.
 
 ## 리뷰 원칙 (세 관점 공통)
 

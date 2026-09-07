@@ -28,12 +28,12 @@ BLOCKER 를 남발하지 마세요. 결과가 생기는 시나리오를 못 쓰�
 
 ## 3. 변경단위 ID 를 반드시 붙인다
 
-`_workspace/1-hunks.md` 의 `L1`, `L2` … 를 씁니다.
+`<작업폴더>/1-hunks.md` 의 `L1`, `L2` … 를 씁니다.
 **표에 없는 라인은 리뷰 대상이 아닙니다.** 지적하면 검증에서 `REJECTED` 됩니다.
 
 ## 4. 산출물 형식
 
-자기 파일(`_workspace/2-review-<관점>.md`)에 **이 형식 그대로** 씁니다.
+자기 파일(`<작업폴더>/2-review-<관점>.md` — 작업 폴더는 오케스트레이터가 알려줍니다)에 **이 형식 그대로** 씁니다.
 
 ````markdown
 # <관점> 리뷰
@@ -130,7 +130,7 @@ private bool IsValidLotStatus(string lotId)
 ```
 ## <관점> 리뷰 완료
 
-- 산출물: _workspace/2-review-<관점>.md
+- 산출물: <작업폴더>/2-review-<관점>.md
 - 판정: PASS / FAIL
 - BLOCKER N · MAJOR N · MINOR N
 - 확인 못 한 것: N건

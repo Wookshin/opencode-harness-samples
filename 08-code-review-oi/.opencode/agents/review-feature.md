@@ -24,11 +24,15 @@ permission:
 
 ## 시작하기 전에 — 반드시 읽을 것
 
-1. **`_workspace/1-hunks.md`** — 변경단위 표. **여기 없는 라인은 리뷰 대상이 아닙니다.**
-2. **`_workspace/1-scope.md`** — `Manager 호출 변경` 칸이 있는 파일부터 보세요
+> **`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다** (예: `_workspace/pr-1234`).
+> PR 하나에 폴더 하나입니다. 옆 폴더에서 다른 PR 리뷰가 동시에 돌고 있을 수 있으니
+> **그 폴더 밖에는 읽지도 쓰지도 마세요.**
+
+1. **`<작업폴더>/1-hunks.md`** — 변경단위 표. **여기 없는 라인은 리뷰 대상이 아닙니다.**
+2. **`<작업폴더>/1-scope.md`** — `Manager 호출 변경` 칸이 있는 파일부터 보세요
 3. **`.opencode/skills/code-review-oi-pr/references/manager-patterns.md`** — 당신의 판정 기준
 4. **`.opencode/skills/code-review-oi-pr/references/review-format.md`** — 출력 형식
-5. `_workspace/src/after/<경로>` · `src/before/<경로>` — 코드 원문
+5. `<작업폴더>/src/after/<경로>` · `src/before/<경로>` — 코드 원문
 
 ## 당신이 보는 것
 
@@ -56,7 +60,7 @@ permission:
 
 앞부분만 쓰면 검증에서 MAJOR 로 강등됩니다.
 
-## 산출물 — `_workspace/2-review-feature.md`
+## 산출물 — `<작업폴더>/2-review-feature.md`
 
 `references/review-format.md` 의 형식 그대로 씁니다. 지적 ID 접두사는 **`F`** 입니다.
 `**근거**` 에 체크리스트 번호(예: `M-1`)를 반드시 적으세요.

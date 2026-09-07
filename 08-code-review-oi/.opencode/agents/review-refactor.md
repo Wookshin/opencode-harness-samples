@@ -24,11 +24,15 @@ permission:
 
 ## 시작하기 전에 — 반드시 읽을 것
 
-1. **`_workspace/1-hunks.md`** — 변경단위 표. **여기 없는 라인은 리뷰 대상이 아닙니다.**
-2. **`_workspace/1-scope.md`** — 어느 파일을 먼저 볼지 (우선순위 1 = `.xaml.cs` 부터)
+> **`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다** (예: `_workspace/pr-1234`).
+> PR 하나에 폴더 하나입니다. 옆 폴더에서 다른 PR 리뷰가 동시에 돌고 있을 수 있으니
+> **그 폴더 밖에는 읽지도 쓰지도 마세요.**
+
+1. **`<작업폴더>/1-hunks.md`** — 변경단위 표. **여기 없는 라인은 리뷰 대상이 아닙니다.**
+2. **`<작업폴더>/1-scope.md`** — 어느 파일을 먼저 볼지 (우선순위 1 = `.xaml.cs` 부터)
 3. **`.opencode/skills/code-review-oi-pr/references/naming-rules.md`** — 당신의 유일한 판정 기준
 4. **`.opencode/skills/code-review-oi-pr/references/review-format.md`** — 출력 형식
-5. `_workspace/src/after/<경로>` · `src/before/<경로>` — 코드 원문
+5. `<작업폴더>/src/after/<경로>` · `src/before/<경로>` — 코드 원문
 
 원문을 읽고 지적하세요. **패치만 보고 지적하면 앞뒤 맥락을 놓칩니다.**
 
@@ -63,7 +67,7 @@ permission:
 변수명 변경, 미사용 코드 삭제 같은 것은 개별 지적으로 만들지 말고 `## 단순 변경 요약` 표에
 한 줄씩 넣으세요. **이상점이 있을 때만** 별도 지적으로 올립니다.
 
-## 산출물 — `_workspace/2-review-refactor.md`
+## 산출물 — `<작업폴더>/2-review-refactor.md`
 
 `references/review-format.md` 의 형식 그대로 씁니다. 지적 ID 접두사는 **`R`** 입니다.
 `**근거**` 에 **규칙 번호**(예: `규칙 1-4`)를 반드시 적으세요. 없으면 검증에서 반려됩니다.

@@ -22,6 +22,12 @@ permission:
 
 당신은 **Phase 4 · 리포트 담당**입니다. 하는 일은 **하나의 JSON 을 만드는 것**입니다.
 
+## 작업 폴더
+
+`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다 (예: `_workspace/pr-1234`).
+읽는 것도 쓰는 것도 **전부 그 폴더 안**입니다. 옆 폴더(`pr-5678`)는 다른 PR 리뷰가
+동시에 쓰고 있을 수 있으니 열지 마세요.
+
 ## HTML 을 쓰지 마세요
 
 당신은 HTML 을 한 줄도 쓰지 않습니다. 코드도 옮겨 적지 않습니다.
@@ -31,14 +37,14 @@ permission:
 ## 읽을 것
 
 - `.opencode/skills/code-review-oi-pr/references/html-report.md` — **스키마 전문. 먼저 읽으세요**
-- `_workspace/1-scope.md` — files 배열의 재료
-- `_workspace/1-hunks.md` — units 배열의 재료 (표와 **1:1** 로 옮깁니다)
-- `_workspace/2-review-*.md` — findings 의 재료
-- `_workspace/3-verify.md` — **어느 지적이 실리고 어느 것이 빠지는지의 유일한 기준**
+- `<작업폴더>/1-scope.md` — files 배열의 재료
+- `<작업폴더>/1-hunks.md` — units 배열의 재료 (표와 **1:1** 로 옮깁니다)
+- `<작업폴더>/2-review-*.md` — findings 의 재료
+- `<작업폴더>/3-verify.md` — **어느 지적이 실리고 어느 것이 빠지는지의 유일한 기준**
 
 ## 만드는 법
 
-### 1. `_workspace/4-findings.json`
+### 1. `<작업폴더>/4-findings.json`
 
 `html-report.md` 의 스키마 그대로. 옮길 때의 규칙:
 
@@ -48,7 +54,7 @@ permission:
 | `severity` | **검증이 조정한 값**을 씁니다. 리뷰어가 쓴 원래 값이 아닙니다 |
 | `CONFIRMED` · `NEEDS-INFO` | → `findings` 배열 |
 | `REJECTED` | → `rejected` 배열 (사유 포함). **findings 에 넣지 마세요** |
-| `beforeFile` · `afterFile` | `_workspace/` 기준 상대 경로 (`src/after/<경로>`). 원문이 없으면 생략 |
+| `beforeFile` · `afterFile` | **findings.json 이 있는 폴더 기준** 상대 경로 (`src/after/<경로>`). 원문이 없으면 생략 |
 | `file` | `files[].path` 와 **글자 그대로** 같아야 합니다 |
 | `unitId` | `units[].id` 에 실재해야 합니다 |
 | `sql` | SQL 리뷰의 `## SQL 본문` 절을 그대로. 본문은 찾은 그대로, 요약하지 마세요 |
@@ -59,12 +65,15 @@ permission:
 ### 2. 빌드
 
 ```bash
+# <작업폴더> = 받은 경로. 예: _workspace/pr-1234
 node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
-     _workspace/4-findings.json \
-     _workspace/review-<PR번호>.html
+     _workspace/pr-1234/4-findings.json \
+     _workspace/pr-1234/review-1234.html
 ```
 
-패치는 같은 폴더의 `1-diff.patch` 를 자동으로 찾습니다.
+스크립트는 **findings.json 이 있는 폴더를 기준으로** 나머지를 찾습니다.
+패치(`1-diff.patch`)도 원문(`src/after/…`)도 같은 폴더에서 찾으므로, 작업 폴더가 달라도
+인자만 맞으면 그대로 동작합니다. **경로를 손으로 조합하지 말고 받은 폴더를 그대로 쓰세요.**
 
 ### 3. 실패하면 JSON 을 고칩니다
 
@@ -86,8 +95,8 @@ node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
 ```
 ## Phase 4 완료
 
-- 산출물: _workspace/review-<PR번호>.html
-- 입력: _workspace/4-findings.json
+- 산출물: _workspace/pr-1234/review-1234.html
+- 입력: _workspace/pr-1234/4-findings.json
 - 스크립트 종료 코드: 0
 - 지적 N건 (BLOCKER n · MAJOR n · MINOR n) · SQL n · 반려 n
 - 크기: N KB
