@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // ── 모델 3종 ──────────────────────────────────────────────────────────
+  //   codemate/CodeLLMImage  저렴 — 기계적인 작업 (변경분 수집, 네이밍 규칙 대조, JSON 변환)
+  //   codemate/CodeLLMPro    무난 — 판단이 필요한 작업 (기능 리뷰, 오케스트레이션)
+  //   codemate/CodeLLMMax    고가 — 놓치면 비싼 작업 (SQL 리뷰, 지적 검증)
+  //
+  // SQL 리뷰에 가장 비싼 모델을 준 것은 의도적입니다.
+  // 운영 DB에 나가는 쿼리를 잘못 통과시키는 비용이, 한 번 더 보는 비용보다 큽니다.
+  "model": "codemate/CodeLLMPro",
+
+  "subagent_depth": 1,
+
+  // 이 하네스는 아무것도 고치지 않습니다. 전역 기본값부터 편집을 닫아 둡니다.
+  // 각 에이전트가 자기 보고서를 쓸 수 있도록 "*_workspace/*" 만 개별로 엽니다.
+  "permission": {
+    "edit": "deny",
+    "bash": "ask"
+  }
+}

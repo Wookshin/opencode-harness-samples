@@ -1,0 +1,178 @@
+diff --git a/YOEDSMOV/Common/SqlManager.cs b/YOEDSMOV/Common/SqlManager.cs
+index a24ae59..ecdade9 100644
+--- a/YOEDSMOV/Common/SqlManager.cs
++++ b/YOEDSMOV/Common/SqlManager.cs
+@@ -29,12 +29,13 @@ namespace YOEDSMOV
+ 
+             _sql.AddSql($@"
+                 SELECT /*QR220728-023-01*//*OI_YOEDSMOV_2022-7-28_sw1027.chae*/
+-                       l.lot_id, m.mat_id, l.lot_qty
++                       l.lot_id, m.mat_id, l.lot_qty, l.lot_sub_status_seg AS lot_status
+                   FROM mc_lot l, mc_mat m
+                  WHERE 1=1
+                    AND (l.lot_sub_status_seg NOT IN ('WAIT', 'HELD') OR m.mat_sub_status_seg NOT IN ('WAIT', 'HELD'))
+                    AND l.object_id = m.lot_object_id
+-                   AND l.lot_id = {_sql.Bind("lotId")}
++                   AND TRIM(l.lot_id) = {_sql.Bind("lotId")}
++                   AND l.line_id = '{vo.lineId}'
+             ");
+ 
+             RVMessageResult rvResult = new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON(SQLEXEC, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, _appName, _sql.GetSql(), 60);
+@@ -46,10 +47,26 @@ namespace YOEDSMOV
+         {
+             Dictionary<string, string> param = new Dictionary<string, string>
+             {
+-                { "lotId", vo.lotId }
++                { "lotId", vo.lotId },
++                { "lineId", vo.lineId }
+             };
+ 
+-            RVMessageResult rvResult = new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON(DPICALL, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, "lot.selectMcLot", _appName, param);
++            RVMessageResult rvResult = new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON(DPICALL, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, "lot.selectMcLotWithLine", _appName, param);
++
++            return rvResult;
++        }
++
++        public RVMessageResult GetLotInfoList(LotInfoVO vo)
++        {
++            _sql.param.Add("lotId", vo.lotId);
++
++            _sql.AddSql($@"
++                SELECT l.lot_id, l.lot_qty
++                  FROM mc_lot l
++                 WHERE l.lot_id = '{vo.lotId}'
++            ");
++
++            RVMessageResult rvResult = new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON(SQLEXEC, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, _appName, _sql.GetSql(), 60);
+ 
+             return rvResult;
+         }
+diff --git a/YOEDSMOV/YOEDSMOV.xaml.cs b/YOEDSMOV/YOEDSMOV.xaml.cs
+index 28e0e62..5759106 100644
+--- a/YOEDSMOV/YOEDSMOV.xaml.cs
++++ b/YOEDSMOV/YOEDSMOV.xaml.cs
+@@ -19,6 +19,8 @@ namespace YOEDSMOV
+         private string _operId = string.Empty;
+         private bool _isFirstLoaded = false;
+ 
++        private int MaxRowCount = 1000;
++
+         private RVMessageResult _rvResult = null;
+ 
+         public YOEDSMOV()
+@@ -33,14 +35,15 @@ namespace YOEDSMOV
+             grdLot.AddTextColumn("LOT_ID", "Lot ID", 140);
+             grdLot.AddTextColumn("MAT_ID", "Material", 140);
+             grdLot.AddTextColumn("LOT_QTY", "수량", 80);
++            grdLot.AddTextColumn("LOT_STATUS", "상태", 90);
+         }
+ 
+         private void OnLoaded(object sender, RoutedEventArgs e)
+         {
+             if (_isFirstLoaded) return;
+ 
+-            _lineId = UserInfo.LineId;
+-            _operId = UserInfo.OperId;
++            this._lineId = UserInfo.LineId;
++            this._operId = UserInfo.OperId;
+             _isFirstLoaded = true;
+         }
+ 
+@@ -55,7 +58,8 @@ namespace YOEDSMOV
+ 
+             GetMatIdListVO vo = new GetMatIdListVO
+             {
+-                lotId = txtLotId.Text.Trim()
++                lotId = txtLotId.Text.Trim(),
++                lineId = _lineId
+             };
+ 
+             _rvResult = _sqlManager.GetMatIdList(vo);
+@@ -78,33 +82,72 @@ namespace YOEDSMOV
+ 
+         private void Confirm()
+         {
+-            DataRowView drv = grdLot.SelectedItem as DataRowView;
+-            if (drv == null)
++            List<string> lotId = GetSelectedLotIdList();
++            if (lotId.Count == 0)
+             {
+                 MessageBox.Show("Lot 을 선택하세요.");
+                 return;
+             }
+ 
+-            string lotId = drv["LOT_ID"].ToString();
+-            string sLotQty = drv["LOT_QTY"].ToString();
++            ShowLoading(true);
+ 
+-            ModAttrVO vo = new ModAttrVO
++            foreach (string id in lotId)
+             {
+-                lotId = lotId,
+-                operId = _operId,
+-                attr = string.Format("(EDS_MOV_QTY={0})", sLotQty)
+-            };
++                if (!CheckLot(id))
++                {
++                    continue;
++                }
++
++                LotInfoVO infoVo = new LotInfoVO { lotId = id };
++                RVMessageResult infoResult = _sqlManager.GetLotInfoList(infoVo);
++
++                string sLotQty = infoResult.DataTable.Rows[0]["LOT_QTY"].ToString();
++
++                ModAttrVO vo = new ModAttrVO
++                {
++                    lotId = id,
++                    operId = _operId,
++                    attr = string.Format("(EDS_MOV_QTY={0})", sLotQty)
++                };
++
++                _rvResult = _ruleManager.SendModAttr(vo);
++
++                if (!_rvResult.IsSuccess)
++                {
++                    MessageBox.Show(_rvResult.Message);
++                    return;
++                }
++            }
+ 
+-            _rvResult = _ruleManager.SendModAttr(vo);
++            MessageBox.Show("반출 확정되었습니다.");
++            ShowLoading(false);
++            Search();
++        }
+ 
+-            if (!_rvResult.IsSuccess)
++        /// <summary>
++        /// 반출 가능한 상태인지 확인합니다.
++        /// </summary>
++        private bool CheckLot(string lotId)
++        {
++            GetLotStatusVO vo = new GetLotStatusVO { lotId = lotId };
++
++            RVMessageResult rvResult = _sqlManager.GetLotStatus(vo);
++
++            string lotStatus = rvResult.DataTable.Rows[0]["LOT_STATUS"].ToString();
++
++            return lotStatus == "WAIT" || lotStatus == "HELD";
++        }
++
++        private List<string> GetSelectedLotIdList()
++        {
++            List<string> lotIdList = new List<string>();
++
++            foreach (DataRowView drv in grdLot.SelectedItems)
+             {
+-                MessageBox.Show(_rvResult.Message);
+-                return;
++                lotIdList.Add(drv["LOT_ID"].ToString());
+             }
+ 
+-            MessageBox.Show("반출 확정되었습니다.");
+-            Search();
++            return lotIdList;
+         }
+ 
+         private void ShowLoading(bool isVisible)

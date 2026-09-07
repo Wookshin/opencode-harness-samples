@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  /review-sample 전용 가짜 DPImgr 트리입니다.
+  실제 환경에서는 dpimgr-dir.txt 가 가리키는 D:\Git\DPImgr\...\dao\lot\ 아래에 있습니다.
+  SQL 리뷰어가 read-sql.md 절차대로 이 파일을 찾아 본문을 읽는 것을 시연합니다.
+-->
+<sqlMap namespace="lot">
+
+  <select id="selectMcLot" resultType="map">
+    SELECT /*QR200114-011-03*//*DPI_lot.selectMcLot_2020-1-14_hj.park*/
+           l.lot_id
+         , l.lot_qty
+         , l.lot_sub_status_seg AS lot_status
+         , l.line_id
+      FROM mc_lot l
+     WHERE 1=1
+       AND l.lot_id = #{lotId}
+  </select>
+
+  <select id="selectMcLotList" resultType="map">
+    SELECT /*QR200114-011-04*//*DPI_lot.selectMcLotList_2020-1-14_hj.park*/
+           l.lot_id
+         , l.lot_qty
+         , l.lot_sub_status_seg AS lot_status
+      FROM mc_lot l
+     WHERE 1=1
+       AND l.lot_id IN
+       <foreach collection="lotIdList" item="lotId" open="(" close=")" separator=",">
+         #{lotId}
+       </foreach>
+  </select>
+
+  <update id="updateLotAttr">
+    UPDATE /*QR210330-002-01*//*DPI_lot.updateLotAttr_2021-3-30_hj.park*/
+           mc_lot
+       SET lot_attr  = #{attr}
+         , upd_tmstp = SYSDATE
+         , upd_user  = #{operId}
+     WHERE lot_id = #{lotId}
+  </update>
+
+</sqlMap>
