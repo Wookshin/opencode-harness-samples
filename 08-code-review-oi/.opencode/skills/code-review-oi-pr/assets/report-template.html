@@ -14,24 +14,56 @@
   --add-bg:#e6ffed; --add-mark:#22863a;
   --del-bg:#ffeef0; --del-mark:#b31d28;
   --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
-  /* 문법 하이라이트 */
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
+  color-scheme:light;
 }
+
+/* 시스템 설정을 따르는 기본 상태 — 사용자가 라이트를 고르면 적용하지 않습니다 */
 @media (prefers-color-scheme:dark){
-  :root{
-    --bg:#14171a; --panel:#1c2024; --ink:#e6e8eb; --muted:#9aa1ab; --line:#2c3138;
-    --accent:#6ea8ff; --accent-soft:#1c2b46;
-    --blocker:#fca5a5; --blocker-bg:#3b1414;
-    --major:#fcd34d;  --major-bg:#3a2b08;
-    --minor:#bef264;  --minor-bg:#1f2d0b;
-    --add-bg:#122b1a; --add-mark:#4ade80;
-    --del-bg:#331418; --del-mark:#fca5a5;
-    --code:#12151a; --shadow:none;
-    --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
-    --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
+  :root:not([data-theme="light"]){
+  --bg:#14171a; --panel:#1c2024; --ink:#e6e8eb; --muted:#9aa1ab; --line:#2c3138;
+  --accent:#6ea8ff; --accent-soft:#1c2b46;
+  --blocker:#fca5a5; --blocker-bg:#3b1414;
+  --major:#fcd34d;  --major-bg:#3a2b08;
+  --minor:#bef264;  --minor-bg:#1f2d0b;
+  --add-bg:#122b1a; --add-mark:#4ade80;
+  --del-bg:#331418; --del-mark:#fca5a5;
+  --code:#12151a; --shadow:none;
+  --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
+  --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
+  color-scheme:dark;
   }
 }
+
+/* 버튼으로 고른 값이 시스템 설정을 이깁니다 */
+:root[data-theme="dark"]{
+  --bg:#14171a; --panel:#1c2024; --ink:#e6e8eb; --muted:#9aa1ab; --line:#2c3138;
+  --accent:#6ea8ff; --accent-soft:#1c2b46;
+  --blocker:#fca5a5; --blocker-bg:#3b1414;
+  --major:#fcd34d;  --major-bg:#3a2b08;
+  --minor:#bef264;  --minor-bg:#1f2d0b;
+  --add-bg:#122b1a; --add-mark:#4ade80;
+  --del-bg:#331418; --del-mark:#fca5a5;
+  --code:#12151a; --shadow:none;
+  --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
+  --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#f6f7f9; --panel:#fff; --ink:#1c2024; --muted:#6b7280; --line:#e2e5ea;
+  --accent:#2563eb; --accent-soft:#eaf0ff;
+  --blocker:#b91c1c; --blocker-bg:#fee2e2;
+  --major:#b45309;  --major-bg:#fef3c7;
+  --minor:#3f6212;  --minor-bg:#ecfccb;
+  --add-bg:#e6ffed; --add-mark:#22863a;
+  --del-bg:#ffeef0; --del-mark:#b31d28;
+  --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+  --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
+  --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
+  color-scheme:light;
+}
+
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
   font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;}
@@ -226,7 +258,20 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 
 /* ── 인쇄 ───────────────────────────────────────── */
 @media print{
-  :root{--bg:#fff;--panel:#fff;--code:#f7f7f7;--shadow:none}
+  /* 화면 테마와 무관하게 종이는 항상 밝게. 속성 선택자보다 뒤에 와야 이깁니다 */
+  :root,:root[data-theme="dark"],:root[data-theme="light"]{
+  --bg:#fff; --panel:#fff; --ink:#1c2024; --muted:#6b7280; --line:#e2e5ea;
+  --accent:#2563eb; --accent-soft:#eaf0ff;
+  --blocker:#b91c1c; --blocker-bg:#fee2e2;
+  --major:#b45309;  --major-bg:#fef3c7;
+  --minor:#3f6212;  --minor-bg:#ecfccb;
+  --add-bg:#e6ffed; --add-mark:#22863a;
+  --del-bg:#ffeef0; --del-mark:#b31d28;
+  --code:#f7f7f7; --shadow:none;
+  --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
+  --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
+  color-scheme:light;
+  }
   body{font-size:10.5pt}
   .filters,.btns,nav.toc,.decide textarea,.seecode{display:none!important}
   .layout{display:block}
@@ -242,6 +287,16 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   a{color:#000;text-decoration:none}
 }
 </style>
+<script>
+/* 저장된 테마를 첫 페인트 전에 적용합니다 (안 그러면 잘못된 색이 한 번 번쩍입니다).
+   키는 PR 별 저장소와 분리 — 테마는 사람 취향이라 리포트마다 다를 이유가 없습니다. */
+(function(){
+  try {
+    var t = localStorage.getItem('oi-review-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+  } catch(e){}
+})();
+</script>
 </head>
 <body>
 <header>
@@ -255,6 +310,7 @@ h2.sec{font-size:16px;margin:26px 0 12px}
         <button id="b-md">회의 결과 마크다운 복사</button>
         <button id="b-json">결정 JSON 저장</button>
         <button id="b-open">코드 전부 펼치기</button>
+        <button id="b-theme" title="시스템 → 라이트 → 다크 순으로 바뀝니다">테마: 시스템</button>
         <button id="b-reset">결정 초기화</button>
         <button onclick="window.print()">인쇄</button>
       </div>
@@ -863,6 +919,31 @@ document.getElementById('b-open').addEventListener('click', function(){
   document.querySelectorAll('details').forEach(function(d){ d.open = any; });
   this.textContent = any ? '코드 전부 접기' : '코드 전부 펼치기';
 });
+/* ── 테마 전환 (시스템 → 라이트 → 다크) ──────── */
+(function(){
+  var btn = document.getElementById('b-theme');
+  var TK = 'oi-review-theme';
+  var CYCLE = ['system','light','dark'];
+  var NAME = {system:'시스템', light:'라이트', dark:'다크'};
+  var cur = 'system';
+  try {
+    var saved = localStorage.getItem(TK);
+    if (saved === 'light' || saved === 'dark') cur = saved;
+  } catch(e){}
+
+  function paint(){
+    if (cur === 'system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', cur);
+    btn.textContent = '테마: ' + NAME[cur];
+    try { cur === 'system' ? localStorage.removeItem(TK) : localStorage.setItem(TK, cur); } catch(e){}
+  }
+  btn.addEventListener('click', function(){
+    cur = CYCLE[(CYCLE.indexOf(cur) + 1) % CYCLE.length];
+    paint();
+  });
+  paint();
+})();
+
 document.getElementById('b-reset').addEventListener('click', function(){
   if (!confirm('이 PR 의 회의 결정과 메모를 모두 지웁니다. 계속할까요?')) return;
   store = {}; save(); location.reload();
