@@ -18,7 +18,7 @@ Phase 1 에서 `diff-scoper` 에게 이렇게 시키세요.
 > 작업 폴더는 `_workspace/pr-sample` 입니다. `gh` 를 부르지 말고 아래 명령으로 수집하세요.
 >
 > ```
-> node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr sample --ws _workspace/pr-sample \
+> python .opencode/skills/code-review-oi-pr/assets/collect.py --pr sample --ws _workspace/pr-sample \
 >      --patch sample/pr-sample.patch --after sample/after --before sample/before \
 >      --head feature/YOEDSMOV-multi-confirm --title "EDS 반출 다건 확정 + Lot 상태 검증 추가"
 > ```

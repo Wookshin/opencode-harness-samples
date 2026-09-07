@@ -1,5 +1,5 @@
 ---
-description: PR 번호를 받아 collect.mjs 로 변경분과 파일 원문을 작업 폴더에 수집하고, 변경분을 논리적 변경단위(L1, L2 …)로 쪼개 표로 확정합니다. 리뷰는 하지 않습니다.
+description: PR 번호를 받아 collect.py 로 변경분과 파일 원문을 작업 폴더에 수집하고, 변경분을 논리적 변경단위(L1, L2 …)로 쪼개 표로 확정합니다. 리뷰는 하지 않습니다.
 mode: subagent
 model: codemate/CodeLLMMax
 temperature: 0
@@ -13,7 +13,8 @@ permission:
   list: allow
   bash:
     "*": deny
-    "node *": allow
+    "python*": allow
+    "py *": allow
     "gh pr view*": allow
     "git log*": allow
     "git rev-parse*": allow
@@ -49,13 +50,16 @@ PR 하나에 폴더 하나이고, 옆 폴더에서 다른 PR 리뷰가 **동시�
 **셸 명령을 직접 조합하지 마세요.** 이 한 줄이 전부입니다.
 
 ```bash
-node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr 1234 --ws _workspace/pr-1234
+python .opencode/skills/code-review-oi-pr/assets/collect.py --pr 1234 --ws _workspace/pr-1234
 ```
+
+> **`python` 이 안 먹히면** Windows 는 `py`, 리눅스·맥은 `python3` 로 부르세요.
+> 셋 중 하나는 됩니다. 한 번 확인해 두면 그다음부터는 그것만 쓰면 됩니다.
 
 오프라인 데모(`/review-sample`)면 이렇게 부릅니다.
 
 ```bash
-node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr sample --ws _workspace/pr-sample \
+python .opencode/skills/code-review-oi-pr/assets/collect.py --pr sample --ws _workspace/pr-sample \
      --patch sample/pr-sample.patch --after sample/after --before sample/before
 ```
 
@@ -69,7 +73,7 @@ node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr sample --ws _wor
 기본 인코딩이 셸·버전마다 다릅니다. Windows PowerShell 5.1 은 UTF-16LE 로 써서
 **오류 하나 없이 패치와 원문이 통째로 깨집니다.**
 
-`collect.mjs` 는 gh/git 을 직접 부르고 출력을 **버퍼 그대로** 파일에 씁니다.
+`collect.py` 는 gh/git 을 직접 부르고 출력을 **바이트 그대로** 파일에 씁니다.
 어느 셸에서 돌리든 결과가 같습니다.
 
 ## 2. 스크립트가 만들어 주는 것
@@ -102,7 +106,7 @@ node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr sample --ws _wor
 - PR: #1234 «EDS 반출 다건 확정»
 - 작성: sw1027.chae
 - 대상: develop ← feature/YOEDSMOV-multi-confirm (a1b2c3d)
-- 수집: collect.mjs (gh pr diff + git show, 체크아웃 없음)
+- 수집: collect.py (gh pr diff + git show, 체크아웃 없음)
 
 | 우선 | 파일 | 변경 유형 | 헝크 | SQL 변경 | Manager 호출 변경 | 원문 |
 |---|---|---|---|---|---|---|
@@ -183,7 +187,7 @@ diff 를 **의미 단위로** 쪼갭니다. 헝크 하나가 곧 변경단위는
 - 소스 코드를 고치지 마세요. 권한으로도 막혀 있습니다.
 - 브랜치를 체크아웃하거나 stash 하지 마세요. 스크립트도 하지 않습니다.
 - **셸 리디렉션(`>`)으로 파일을 만들지 마세요.** 인코딩이 셸마다 달라 조용히 깨집니다.
-  파일을 써야 하면 편집 도구를 쓰거나 `collect.mjs` 에 맡기세요.
+  파일을 써야 하면 편집 도구를 쓰거나 `collect.py` 에 맡기세요.
 - 변경 유형을 짐작으로 적지 마세요. before 원문이 근거입니다.
 
 ## 오케스트레이터에게 돌려줄 말

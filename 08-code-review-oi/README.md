@@ -36,7 +36,7 @@ opencode run "/review-pr 1234"      opencode run "/review-pr 5678"
 **LLM 없이 렌더링만 먼저 보고 싶다면** 빌드 스크립트를 단독으로 돌릴 수 있습니다.
 
 ```bash
-node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
+python .opencode/skills/code-review-oi-pr/assets/build-report.py \
      sample/expected-findings.json /tmp/out.html sample/pr-sample.patch
 # → /tmp/out.html 을 브라우저로 열어 보세요
 ```
@@ -47,7 +47,7 @@ C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 여섯입니다.
 
 | Phase | 담당 | 패턴 | 하는 일 | 모델 |
 |---|---|---|---|---|
-| 1 | `diff-scoper` | 파이프라인 | `collect.mjs` 로 수집 → **변경단위(L1, L2 …) 확정** | **고가** |
+| 1 | `diff-scoper` | 파이프라인 | `collect.py` 로 수집 → **변경단위(L1, L2 …) 확정** | **고가** |
 | 2 | `review-refactor` | **팬아웃** | 명명 규칙 (`naming-rules.md`) | 무난 |
 | 2 | `review-feature` | **팬아웃** | 로직·예외·Manager 규범 (`manager-patterns.md`) | 무난 |
 | 2 | `review-sql` | **팬아웃** | DPICALL 본문 조회, 바인딩·인덱스 (`read-sql.md`) | **고가** |
@@ -153,11 +153,11 @@ SqlManager 의 인라인 쿼리를 리뷰할 때 이게 가장 크게 체감됩�
 ### ⑥ LLM 이 HTML 을 쓰지 않는다
 
 `report-builder` 가 만드는 것은 `4-findings.json` 하나입니다.
-HTML 은 `build-report.mjs` 가 만듭니다. 그리고 **코드는 JSON 에 들어가지 않습니다.**
+HTML 은 `build-report.py` 가 만듭니다. 그리고 **코드는 JSON 에 들어가지 않습니다.**
 
 ```
 1-diff.patch  ─┐
-src/after/…   ─┼→ build-report.mjs → 라인별 add/del 계산 → HTML
+src/after/…   ─┼→ build-report.py → 라인별 add/del 계산 → HTML
 4-findings.json ┘   (지적 내용 + 좌표만)
 ```
 
@@ -317,19 +317,22 @@ _workspace/
 ### 그래서 수집을 스크립트로 옮겼습니다
 
 ```bash
-node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr 1234 --ws _workspace/pr-1234
+python .opencode/skills/code-review-oi-pr/assets/collect.py --pr 1234 --ws _workspace/pr-1234
 ```
 
-`collect.mjs` 가 `gh`·`git` 을 직접 부르고 출력을 **버퍼 그대로** 씁니다.
+`collect.py` 가 `gh`·`git` 을 직접 부르고 출력을 **바이트 그대로** 씁니다.
 폴더 생성, 이전 실행 밀어내기, 파일별 상태 판별까지 여기서 합니다.
 PowerShell 이든 bash 든 **결과가 바이트까지 같습니다.**
+
+> 스크립트를 **Python 으로 쓴 이유**도 같습니다 — 팀 PC 에 대부분 깔려 있고,
+> Windows·리눅스·맥에서 같은 파일이 그대로 돕니다. `pip install` 은 필요 없습니다.
 
 에이전트에게 남은 bash 권한도 그래서 짧습니다.
 
 | 에이전트 | 열린 명령 |
 |---|---|
-| `diff-scoper` | `node` · `gh pr view` · `git log` · `git rev-parse` |
-| `report-builder` | `node` |
+| `diff-scoper` | `python` · `gh pr view` · `git log` · `git rev-parse` |
+| `report-builder` | `python` |
 | `review-lead` | `git status` · `git rev-parse` |
 | 리뷰어 3인 | `git show` · `git diff` · `git log` |
 | `review-sql` | 위 + 검색기 (`rg` · `findstr` · `Select-String` · `grep`) |
@@ -337,19 +340,21 @@ PowerShell 이든 bash 든 **결과가 바이트까지 같습니다.**
 파일 목록·내용 확인은 전부 **`list` · `read` · `grep` · `glob` 도구**로 합니다.
 셸을 거치지 않으므로 환경 차이가 없습니다.
 
-`build-report.mjs` 도 방어선을 하나 갖고 있습니다. 읽는 파일이 UTF-16 이면
+`build-report.py` 도 방어선을 하나 갖고 있습니다. 읽는 파일이 UTF-16 이면
 **감지해서 디코딩하고 경고**합니다. 다른 경로로 만든 파일이 섞여 들어와도 조용히 깨지지 않습니다.
 
 ### 필요한 것
 
 | | |
 |---|---|
-| **Node.js** | `collect.mjs` · `build-report.mjs` 가 씁니다. `node --version` 으로 확인 |
+| **Python 3.8+** | `collect.py` · `build-report.py` 가 씁니다. `python --version` 으로 확인. **pip 설치는 필요 없습니다** — 표준 라이브러리만 씁니다 |
 | **gh CLI** | `gh auth login` 이 되어 있어야 합니다 |
 | **git** | PR 원문을 받습니다 (체크아웃은 하지 않습니다) |
 | ripgrep (선택) | DPImgr SQL 검색이 빨라집니다. 없으면 `findstr`·`Select-String` 을 씁니다 |
 
-경로는 `_workspace/pr-1234` 처럼 **슬래시로 적어도 됩니다.** Node 와 git 이 알아서 처리합니다.
+경로는 `_workspace/pr-1234` 처럼 **슬래시로 적어도 됩니다.** Python 의 `pathlib` 과 git 이 알아서 처리합니다.
+
+인터프리터 이름은 환경마다 다릅니다. `python` 이 안 되면 `py`(Windows) 또는 `python3`(리눅스·맥)를 쓰세요.
 
 ## 실제 저장소에 적용하려면
 
@@ -408,9 +413,9 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 │       │   ├── review-format.md         3인 공통 출력 형식 · 심각도 기준
 │       │   └── html-report.md           findings.json 스키마
 │       └── assets/
-│           ├── collect.mjs              gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
+│           ├── collect.py              gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
 │           ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
-│           └── build-report.mjs         스키마 검증 + diff 계산 + 렌더 (Node 내장 모듈만)
+│           └── build-report.py         스키마 검증 + diff 계산 + 렌더 (표준 라이브러리만)
 ├── _workspace/
 │   ├── README.md                        단계 사이 우편함 규약 (PR 별 폴더 구조 설명)
 │   └── pr-<번호>/                        실행할 때 생김 — PR 하나에 폴더 하나 (.gitignore)

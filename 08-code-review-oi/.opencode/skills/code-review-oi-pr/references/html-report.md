@@ -9,7 +9,7 @@
 ## 빌드
 
 ```bash
-node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
+python .opencode/skills/code-review-oi-pr/assets/build-report.py \
      _workspace/pr-1234/4-findings.json \
      _workspace/pr-1234/review-1234.html
 ```
@@ -19,6 +19,10 @@ node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
 | 1 | ● | findings.json 경로 |
 | 2 | ● | 출력 HTML 경로 |
 | 3 | | 패치 경로. 생략하면 findings.json 과 같은 폴더의 `1-diff.patch` |
+
+> **`python` 이 안 먹히면** Windows 는 `py`, 리눅스·맥은 `python3` 로 부르세요.
+> 셋 중 하나는 됩니다. 한 번 확인해 두면 그다음부터는 그것만 쓰면 됩니다.
+
 
 **기준은 findings.json 이 있는 폴더입니다.** 패치도 `src/before/`·`src/after/` 도 거기서 찾습니다.
 그래서 작업 폴더가 `pr-1234` 든 `pr-5678` 이든 인자만 맞으면 그대로 동작합니다 —

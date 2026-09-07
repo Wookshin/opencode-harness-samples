@@ -13,7 +13,8 @@ permission:
   list: allow
   bash:
     "*": deny
-    "node *": allow
+    "python*": allow
+    "py *": allow
   webfetch: deny
   websearch: deny
 ---
@@ -64,10 +65,13 @@ permission:
 
 ```bash
 # <작업폴더> = 받은 경로. 예: _workspace/pr-1234
-node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
+python .opencode/skills/code-review-oi-pr/assets/build-report.py \
      _workspace/pr-1234/4-findings.json \
      _workspace/pr-1234/review-1234.html
 ```
+
+> **`python` 이 안 먹히면** Windows 는 `py`, 리눅스·맥은 `python3` 로 부르세요.
+> 셋 중 하나는 됩니다. 한 번 확인해 두면 그다음부터는 그것만 쓰면 됩니다.
 
 스크립트는 **findings.json 이 있는 폴더를 기준으로** 나머지를 찾습니다.
 패치(`1-diff.patch`)도 원문(`src/after/…`)도 같은 폴더에서 찾으므로, 작업 폴더가 달라도
