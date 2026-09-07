@@ -6,6 +6,9 @@
 PR 하나를 세 관점이 동시에 리뷰하고, 지적을 검증으로 걸러낸 뒤,
 팀원들이 **모여 앉아 같이 보는 단일 HTML 파일**을 만듭니다.
 
+> 📖 **동작 원리를 알고 싶거나 남에게 설명해야 한다면 → [docs/how-it-works.md](docs/how-it-works.md)**
+> 흐름도, Phase 별 상세, 설계 결정 여섯 가지, 처음 쓰는 사람 가이드, 치트시트가 있습니다.
+
 ## 바로 실행하기
 
 ```bash
@@ -416,6 +419,8 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 │           ├── collect.py              gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
 │           ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
 │           └── build-report.py         스키마 검증 + diff 계산 + 렌더 (표준 라이브러리만)
+├── docs/
+│   └── how-it-works.md                  ★ 동작 원리 · 발표용 · 입문용
 ├── _workspace/
 │   ├── README.md                        단계 사이 우편함 규약 (PR 별 폴더 구조 설명)
 │   └── pr-<번호>/                        실행할 때 생김 — PR 하나에 폴더 하나 (.gitignore)
