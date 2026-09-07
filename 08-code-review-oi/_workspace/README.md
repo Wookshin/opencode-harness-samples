@@ -38,10 +38,11 @@ _workspace/
 | 파일 | 누가 쓰나 | 내용 |
 |---|---|---|
 | `STATUS.md` | 오케스트레이터 | 진행판. 다른 사람은 손대지 않습니다 |
-| `1-diff.patch` | diff-scoper | `gh pr diff` 원본 |
+| `1-diff.patch` | collect.mjs | `gh pr diff` 원본 (UTF-8) |
+| `1-meta.json` · `1-files.json` | collect.mjs | PR 메타데이터 · 파일별 상태(신규/변경/이름변경/이동/삭제) |
 | `1-scope.md` | diff-scoper | 파일별 변경 유형·우선순위·SQL 변경 여부 |
 | `1-hunks.md` | diff-scoper | **변경단위 표 (L1, L2 …)** — 세 리뷰어가 공유하는 ID |
-| `src/after/<경로>` · `src/before/<경로>` | diff-scoper | 변경 파일 원문. HTML 이 이걸 읽어 코드를 그립니다 |
+| `src/after/<경로>` · `src/before/<경로>` | collect.mjs | 변경 파일 원문. HTML 이 이걸 읽어 코드를 그립니다 |
 | `2-review-refactor.md` | review-refactor | 리팩토링 관점 지적 (`R###`) |
 | `2-review-feature.md` | review-feature | 기능 관점 지적 (`F###`) |
 | `2-review-sql.md` | review-sql | SQL 관점 지적 (`S###`) + SQL 본문 (`Q###`) |
@@ -91,17 +92,25 @@ permission:
 
 에이전트에게는 `rm` 권한이 없습니다. 같은 PR 을 새로 돌릴 때도 **지우지 않고 옆으로 밀어냅니다.**
 
-```bash
-mv _workspace/pr-1234 _workspace/pr-1234.prev-20260907-1403
+```
+_workspace/pr-1234  →  _workspace/pr-1234.prev-20260907-1403
 ```
 
-동시에 도는 다른 세션의 폴더를 실수로 날릴 수 없게 하기 위해서입니다.
-쌓인 것을 정리하려면 직접 지우세요.
+`collect.mjs` 가 해 줍니다. 동시에 도는 다른 세션의 폴더를 실수로 날릴 수 없게 하기 위해서입니다.
+쌓인 것을 정리하려면 **사람이** 직접 지우세요.
+
+```powershell
+# PowerShell
+Remove-Item -Recurse -Force _workspace\pr-1234           # 특정 PR 만
+Remove-Item -Recurse -Force _workspace\pr-*.prev-*       # 밀어 둔 이전 실행만
+Remove-Item -Recurse -Force _workspace\pr-*              # 전부 (다른 세션 확인하고!)
+```
 
 ```bash
-rm -rf _workspace/pr-1234              # 특정 PR 만
-rm -rf _workspace/pr-*.prev-*          # 밀어 둔 이전 실행만
-rm -rf _workspace/pr-*                 # 전부 (다른 세션이 돌고 있지 않은지 확인하고!)
+# bash / zsh
+rm -rf _workspace/pr-1234
+rm -rf _workspace/pr-*.prev-*
+rm -rf _workspace/pr-*
 ```
 
 산출물은 `.gitignore` 되어 커밋되지 않습니다. 이 README.md 는 규약 설명이라 유지됩니다.

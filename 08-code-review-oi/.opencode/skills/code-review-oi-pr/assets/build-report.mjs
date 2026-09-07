@@ -37,7 +37,7 @@ const patchPath = patchArg ? resolve(patchArg) : join(WS, '1-diff.patch');
 
 let D;
 try {
-  D = JSON.parse(readFileSync(findingsPath, 'utf8'));
+  D = JSON.parse(readFileSync(findingsPath, 'utf8').replace(/^\uFEFF/, ''));
 } catch (e) {
   die(`findings.json 이 올바른 JSON 이 아닙니다: ${e.message}`);
 }
@@ -216,18 +216,45 @@ function parsePatch(text) {
   return byPath;
 }
 
-const patchText = existsSync(patchPath) ? readFileSync(patchPath, 'utf8') : '';
+const patchText = existsSync(patchPath) ? readText(patchPath) : '';
 if (!patchText) {
   console.warn(`! 패치를 찾지 못했습니다 (${patchPath}) — 추가/삭제 색칠 없이 원문만 표시합니다.`);
 }
 const patch = parsePatch(patchText);
 
 /* ── 원문 읽기 ───────────────────────────────────────────────────────── */
+/**
+ * 텍스트 파일을 인코딩을 가려 읽습니다.
+ *
+ * 셸 리디렉션(`>`)의 기본 인코딩은 셸·버전마다 다릅니다. Windows PowerShell 5.1 은
+ * UTF-16LE 로 씁니다. 그대로 UTF-8 로 읽으면 **오류 없이** 패치가 통째로 안 읽히고,
+ * diff 색칠만 조용히 사라집니다. 그 사고를 여기서 잡습니다.
+ */
+function readText(p) {
+  const buf = readFileSync(p);
+  if (buf.length >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) {
+    console.warn(`! ${p} 가 UTF-16LE 입니다 — 디코딩해서 읽습니다.`);
+    console.warn('  (PowerShell 5.1 의 `>` 가 만든 파일입니다. collect.mjs 를 쓰면 생기지 않습니다)');
+    return buf.subarray(2).toString('utf16le');
+  }
+  if (buf.length >= 2 && buf[0] === 0xFE && buf[1] === 0xFF) {
+    console.warn(`! ${p} 가 UTF-16BE 입니다 — 디코딩해서 읽습니다.`);
+    const swapped = Buffer.from(buf.subarray(2));
+    swapped.swap16();
+    return swapped.toString('utf16le');
+  }
+  const head = buf.subarray(0, 2048);
+  if (head.length > 8 && head.filter(b => b === 0).length > head.length / 4) {
+    console.warn(`! ${p} 에 NUL 바이트가 많습니다 — UTF-16 을 UTF-8 로 잘못 읽고 있을 수 있습니다.`);
+  }
+  return buf.toString('utf8').replace(/^\uFEFF/, '');
+}
+
 function readSource(relPath) {
   if (!relPath) return null;
   const p = resolve(WS, relPath);
   if (!existsSync(p)) return null;
-  const lines = readFileSync(p, 'utf8').replace(/\r\n/g, '\n').split('\n');
+  const lines = readText(p).replace(/\r\n/g, '\n').split('\n');
   // 파일 끝 개행 때문에 생기는 빈 줄은 실제 코드 줄이 아닙니다.
   if (lines.length && lines[lines.length - 1] === '') lines.pop();
   return lines;

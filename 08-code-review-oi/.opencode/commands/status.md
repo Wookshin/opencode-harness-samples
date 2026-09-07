@@ -5,7 +5,9 @@ agent: review-lead
 
 `_workspace/` 아래의 **모든 작업 폴더**를 읽고 진행 상황을 정리해 주세요.
 
-1. `ls _workspace/` 로 작업 폴더 목록을 구합니다 (`pr-*`). `README.md` 는 규약 문서이니 제외합니다.
+1. **`list` 도구로** `_workspace/` 의 작업 폴더 목록을 구합니다 (`pr-*`).
+   `README.md` 는 규약 문서이니 제외합니다. 셸 명령(`ls`)을 쓰지 마세요 —
+   팀 환경이 PowerShell 이라 통하지 않습니다.
 2. 각 폴더의 `STATUS.md` 와 실제 파일 목록을 읽습니다.
 3. 아래 표로 정리합니다.
 

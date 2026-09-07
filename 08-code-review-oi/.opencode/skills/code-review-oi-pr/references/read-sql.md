@@ -24,11 +24,13 @@ lot.selectMcLot
 ### 1. 리뷰 중인 프로젝트의 Git root repository 이름을 확인한다
 
 ```bash
-git rev-parse --show-toplevel      # → …/OY_SWP
-basename "$(git rev-parse --show-toplevel)"
+git rev-parse --show-toplevel      # → D:/Git/OY_SWP 또는 /home/…/OY_SWP
 ```
 
-`OY_SWP`, `CA_SWP`, `XA_SWP` 처럼 나옵니다.
+출력 경로의 **마지막 폴더 이름**이 저장소 이름입니다 — `OY_SWP`, `CA_SWP`, `XA_SWP`.
+
+> `basename` 은 PowerShell 에 없습니다. 잘라내는 명령을 따로 쓰지 말고
+> **출력에서 눈으로 읽으세요.** 한 줄짜리 경로입니다.
 
 ### 2. `dpimgr-dir.txt` 에서 그 저장소에 매핑된 경로를 찾는다
 
@@ -54,17 +56,32 @@ SQL_MAP_ID 는 **폴더 이름**이고, 그 안의 xml 파일에 본문이 있�
 └── eqp/
 ```
 
+**셸이 팀마다 다릅니다.** 아래에서 **환경에 맞는 것 하나**를 고르세요.
+
+```powershell
+# PowerShell (Windows 기본 환경)
+Select-String -Path "<매핑 경로>\lot\*.xml" -Pattern 'id="selectMcLot"'
+Select-String -Path "<매핑 경로>\lot\*.xml" -Pattern 'id="selectMcLot"' -Context 0,40
+```
+
 ```bash
-# Unix / Git Bash
+# ripgrep — 설치돼 있으면 어느 셸에서든 가장 빠릅니다
 rg -n --no-heading 'id="selectMcLot"' "<매핑 경로>/lot/"
 rg -n -A 40 'id="selectMcLot"'        "<매핑 경로>/lot/"
 
-# Windows cmd
-findstr /S /N /C:"id=\"selectMcLot\"" "<매핑 경로>\lot\*.xml"
+# Unix / Git Bash
+grep -rn 'id="selectMcLot"' "<매핑 경로>/lot/"
 ```
 
+**어느 것이 되는지 모르면 `rg` 를 먼저 시도하고, 실패하면 그다음을 시도하세요.**
+셋 다 실패하면 `## 확인 못 한 것` 에 적고 넘어갑니다. 지어내지 마세요.
+
+> `ls -la`, `cat`, `basename` 같은 Unix 전용 명령은 PowerShell 에서 통하지 않습니다.
+> 파일 내용을 읽을 때는 `Get-Content`(PowerShell) 또는 `cat`(Unix)을 쓰거나,
+> **경로를 알면 `read` 도구가 더 확실합니다.**
+
 **DPImgr 는 리뷰 중인 저장소 밖에 있습니다.** `grep`/`glob` 툴은 프로젝트 안만 보므로
-반드시 `bash` 로 검색하세요. SQL 리뷰어에게만 `rg` / `ls` / `dir` 이 열려 있는 이유입니다.
+저장소 밖 검색만 `bash` 로 합니다. SQL 리뷰어에게만 검색기가 열려 있는 이유입니다.
 
 ### 4. 본문을 리포트에 옮긴다
 

@@ -15,11 +15,15 @@ agent: review-lead
 
 Phase 1 에서 `diff-scoper` 에게 이렇게 시키세요.
 
-> 작업 폴더는 `_workspace/pr-sample` 입니다. `gh` 를 부르지 말고
-> `sample/pr-sample.patch` 를 `_workspace/pr-sample/1-diff.patch` 로 복사하고,
-> `sample/after/` 와 `sample/before/` 를 각각 `_workspace/pr-sample/src/after/` ·
-> `_workspace/pr-sample/src/before/` 로 복사한 뒤 그 폴더에 `1-scope.md` 와 `1-hunks.md` 를 작성하세요.
-> PR 번호는 `sample`, base 는 `develop`, head 는 `feature/YOEDSMOV-multi-confirm` 으로 적으세요.
+> 작업 폴더는 `_workspace/pr-sample` 입니다. `gh` 를 부르지 말고 아래 명령으로 수집하세요.
+>
+> ```
+> node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr sample --ws _workspace/pr-sample \
+>      --patch sample/pr-sample.patch --after sample/after --before sample/before \
+>      --head feature/YOEDSMOV-multi-confirm --title "EDS 반출 다건 확정 + Lot 상태 검증 추가"
+> ```
+>
+> 그다음 `_workspace/pr-sample/1-files.json` 을 읽고 `1-scope.md` 와 `1-hunks.md` 를 작성하세요.
 
 SQL 리뷰어에게는 DPImgr 경로로 **`sample/dpimgr/`** 를 쓰라고 알려 주세요
 (실환경이라면 `dpimgr-dir.txt` 의 저장소 매핑을 따릅니다).

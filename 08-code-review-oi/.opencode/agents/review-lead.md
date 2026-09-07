@@ -13,10 +13,6 @@ permission:
   list: allow
   bash:
     "*": deny
-    "ls*": allow
-    "mkdir -p _workspace/*": allow
-    "mv _workspace/*": allow
-    "date*": allow
     "git status": allow
     "git rev-parse*": allow
   task: allow
@@ -85,24 +81,21 @@ Phase 4  report-builder    → <작업폴더>/4-findings.json → review-<번호
 | `/review-sample` (오프라인 데모) | `_workspace/pr-sample` |
 | PR 번호도 패치 경로도 없음 | **사용자에게 물어보고 멈춥니다** |
 
-```bash
-ls _workspace/            # 이미 있는 작업 폴더 확인
-```
+`_workspace/` 아래에 어떤 작업 폴더가 있는지 **`list` 도구로** 확인합니다.
+셸 명령을 쓰지 마세요 — 팀마다 셸이 다릅니다(Windows 는 PowerShell, `ls -la` 가 통하지 않습니다).
 
 **폴더가 이미 있으면** `<작업폴더>/STATUS.md` 를 읽고 사용자에게 물어봅니다.
 
-- **이어서 한다** → `STATUS.md` 의 **끊긴 지점부터** 재개합니다
-- **새로 시작한다** → 기존 폴더를 **옆으로 밀어냅니다. 지우지 않습니다.**
-
-  ```bash
-  mv _workspace/pr-1234 _workspace/pr-1234.prev-$(date +%Y%m%d-%H%M)
-  mkdir -p _workspace/pr-1234
-  ```
+- **이어서 한다** → `STATUS.md` 의 **끊긴 지점부터** 재개합니다.
+  Phase 1 을 다시 돌린다면 `collect.mjs` 에 `--resume` 을 붙이라고 알려 주세요
+- **새로 시작한다** → 그냥 Phase 1 로 갑니다. `collect.mjs` 가 기존 폴더를
+  `<작업폴더>.prev-<시각>` 으로 **밀어내고**(지우지 않습니다) 새로 만듭니다
 
   밀어내는 이유는 두 가지입니다. 이전 리뷰를 비교용으로 남기고, **새 폴더가 진짜로 비어 있어야**
   지난 실행의 `3-verify.md` 가 게이트를 잘못 통과시키지 않기 때문입니다.
 
-**폴더가 없으면** `mkdir -p <작업폴더>` 후 `STATUS.md` 를 만듭니다.
+**폴더 생성도 `collect.mjs` 가 합니다.** 당신이 만들 필요가 없습니다.
+`STATUS.md` 는 Phase 1 이 끝난 뒤 편집 도구로 씁니다.
 
 ```markdown
 # 진행 상황
@@ -128,9 +121,12 @@ PR: #1234
 ```
 task(subagent_type="diff-scoper", description="변경분 수집",
      prompt="작업 폴더는 _workspace/pr-1234 입니다. 이 폴더 밖에는 쓰지 마세요.
-             PR #1234 의 변경분과 원문을 이 폴더에 수집하고
+             collect.mjs 로 PR #1234 의 변경분과 원문을 수집한 뒤
              _workspace/pr-1234/1-scope.md 와 1-hunks.md 를 작성하세요.")
 ```
+
+수집은 `collect.mjs` 가 합니다. **셸 명령을 조합하라고 시키지 마세요** —
+셸이 팀마다 달라(PowerShell / bash) 리디렉션 인코딩 때문에 파일이 조용히 깨집니다.
 
 끝나면 **당신이 직접 `<작업폴더>/1-hunks.md` 를 읽습니다.**
 
@@ -194,11 +190,9 @@ task(subagent_type="report-builder", description="HTML 리포트 생성",
              _workspace/pr-1234/review-1234.html 을 생성하세요.")
 ```
 
-끝나면 **당신이 확인합니다.**
-
-```bash
-ls -la _workspace/pr-1234/review-1234.html
-```
+끝나면 **당신이 확인합니다.** `list` 도구로 `_workspace/pr-1234/` 를 보고
+`review-1234.html` 이 실제로 있는지, 크기가 0 이 아닌지 확인하세요.
+(`ls -la` 같은 셸 명령을 쓰지 마세요 — PowerShell 에서는 통하지 않습니다.)
 
 파일이 없거나 스크립트가 exit 1 이었으면 **완료를 선언하지 말고** 같은 세션으로 되돌려 고치게 하세요.
 
@@ -268,7 +262,9 @@ _workspace/pr-1234/review-1234.html
 - **다른 PR 의 작업 폴더를 읽거나 쓰지 마세요.** 당신의 폴더는 하나입니다.
   동시에 도는 다른 세션의 작업을 망가뜨립니다.
 - **`_workspace/` 루트에 파일을 만들지 마세요.** 공유 파일은 그 자체가 충돌 지점입니다.
-- **아무것도 지우지 마세요.** 새로 시작할 때도 `mv` 로 밀어냅니다. 정리는 사람이 합니다.
+- **아무것도 지우지 마세요.** 새로 시작할 때도 `collect.mjs` 가 밀어냅니다. 정리는 사람이 합니다.
+- **셸로 파일을 만들거나 옮기지 마세요.** 팀 환경이 PowerShell 이라
+  `ls -la` · `mkdir -p` · `mv` · `date +…` 가 통하지 않습니다. 도구와 스크립트를 쓰세요.
 - 단계를 건너뛰거나 순서를 바꾸지 마세요.
 - 세 명이 다 끝나기 전에 검증으로 넘어가지 마세요.
 - 검증이 FAIL 인데 "사소하니 넘어가자"고 판단하지 마세요.

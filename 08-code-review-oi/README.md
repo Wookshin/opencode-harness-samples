@@ -47,7 +47,7 @@ C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 여섯입니다.
 
 | Phase | 담당 | 패턴 | 하는 일 | 모델 |
 |---|---|---|---|---|
-| 1 | `diff-scoper` | 파이프라인 | 변경분·원문 수집, **변경단위(L1, L2 …) 확정** | **고가** |
+| 1 | `diff-scoper` | 파이프라인 | `collect.mjs` 로 수집 → **변경단위(L1, L2 …) 확정** | **고가** |
 | 2 | `review-refactor` | **팬아웃** | 명명 규칙 (`naming-rules.md`) | 무난 |
 | 2 | `review-feature` | **팬아웃** | 로직·예외·Manager 규범 (`manager-patterns.md`) | 무난 |
 | 2 | `review-sql` | **팬아웃** | DPICALL 본문 조회, 바인딩·인덱스 (`read-sql.md`) | **고가** |
@@ -294,11 +294,75 @@ _workspace/
 - **자기 팀 규칙으로 바꿔 보세요.** `references/naming-rules.md` 를 팀 컨벤션으로 갈아 끼우면
   리팩토링 리뷰어의 판정 기준이 통째로 바뀝니다. 에이전트는 손대지 않습니다.
 
+## Windows · PowerShell 에서 돌릴 때
+
+이 하네스는 **PowerShell 을 기본 환경으로 가정하고** 만들었습니다. 팀 개발 환경이 Windows 이기 때문입니다.
+
+### 셸에 의존하지 않게 만든 이유
+
+에이전트가 셸 명령을 조합하면 환경마다 다르게 깨집니다.
+
+| Unix 에서 쓰던 것 | PowerShell 에서 |
+|---|---|
+| `ls -la` | `-la` 라는 파라미터가 없어 **오류** |
+| `mkdir -p foo/bar` | `-p` 가 없어 **오류** |
+| `$(dirname …)` · `$(date +%Y%m%d)` | 그런 명령이 **없음** |
+| `rm -rf` · `cp -r` | `-rf` 는 오류, `-r` 은 우연히 동작 |
+| `wc -l` · `basename` | **없음** |
+| **`명령 > 파일`** | Windows PowerShell 5.1 은 **UTF-16LE** 로 씁니다 |
+
+마지막 줄이 가장 위험합니다. **오류가 나지 않습니다.** `gh pr diff 1234 > 1-diff.patch` 가
+멀쩡히 끝나고, 리포트에는 diff 색칠이 통째로 빠진 채 나옵니다. 아무도 모릅니다.
+
+### 그래서 수집을 스크립트로 옮겼습니다
+
+```bash
+node .opencode/skills/code-review-oi-pr/assets/collect.mjs --pr 1234 --ws _workspace/pr-1234
+```
+
+`collect.mjs` 가 `gh`·`git` 을 직접 부르고 출력을 **버퍼 그대로** 씁니다.
+폴더 생성, 이전 실행 밀어내기, 파일별 상태 판별까지 여기서 합니다.
+PowerShell 이든 bash 든 **결과가 바이트까지 같습니다.**
+
+에이전트에게 남은 bash 권한도 그래서 짧습니다.
+
+| 에이전트 | 열린 명령 |
+|---|---|
+| `diff-scoper` | `node` · `gh pr view` · `git log` · `git rev-parse` |
+| `report-builder` | `node` |
+| `review-lead` | `git status` · `git rev-parse` |
+| 리뷰어 3인 | `git show` · `git diff` · `git log` |
+| `review-sql` | 위 + 검색기 (`rg` · `findstr` · `Select-String` · `grep`) |
+
+파일 목록·내용 확인은 전부 **`list` · `read` · `grep` · `glob` 도구**로 합니다.
+셸을 거치지 않으므로 환경 차이가 없습니다.
+
+`build-report.mjs` 도 방어선을 하나 갖고 있습니다. 읽는 파일이 UTF-16 이면
+**감지해서 디코딩하고 경고**합니다. 다른 경로로 만든 파일이 섞여 들어와도 조용히 깨지지 않습니다.
+
+### 필요한 것
+
+| | |
+|---|---|
+| **Node.js** | `collect.mjs` · `build-report.mjs` 가 씁니다. `node --version` 으로 확인 |
+| **gh CLI** | `gh auth login` 이 되어 있어야 합니다 |
+| **git** | PR 원문을 받습니다 (체크아웃은 하지 않습니다) |
+| ripgrep (선택) | DPImgr SQL 검색이 빨라집니다. 없으면 `findstr`·`Select-String` 을 씁니다 |
+
+경로는 `_workspace/pr-1234` 처럼 **슬래시로 적어도 됩니다.** Node 와 git 이 알아서 처리합니다.
+
 ## 실제 저장소에 적용하려면
 
 이 폴더는 샘플이라 `sample/` 로 시연하지만, 실무 저장소에서는 **`.opencode/` 만 복사**하면 됩니다.
 
+```powershell
+# PowerShell
+Copy-Item -Recurse 08-code-review-oi\.opencode  D:\Git\OY_SWP\
+Copy-Item -Recurse 08-code-review-oi\_workspace D:\Git\OY_SWP\
+```
+
 ```bash
+# bash / zsh
 cp -r 08-code-review-oi/.opencode  /path/to/OY_SWP/
 cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 ```
@@ -344,6 +408,7 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 │       │   ├── review-format.md         3인 공통 출력 형식 · 심각도 기준
 │       │   └── html-report.md           findings.json 스키마
 │       └── assets/
+│           ├── collect.mjs              gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
 │           ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
 │           └── build-report.mjs         스키마 검증 + diff 계산 + 렌더 (Node 내장 모듈만)
 ├── _workspace/

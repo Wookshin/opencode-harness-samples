@@ -15,9 +15,6 @@ permission:
     "*": deny
     "git show*": allow
     "git diff*": allow
-    "rg*": allow
-    "grep*": allow
-    "ls*": allow
   webfetch: deny
   websearch: deny
 ---
@@ -110,6 +107,8 @@ PASS 또는 FAIL
 - 지적 내용을 **고쳐 쓰지 마세요.** 판정만 합니다 (심각도 조정은 예외).
 - 리뷰어 셋이 다 놓친 것을 찾으려 하지 마세요. 그건 다음 라운드의 일입니다.
 - 확인하지 않고 `CONFIRMED` 를 주지 마세요. **원문을 열어 대조한 것만** 통과입니다.
+- 파일을 찾을 때 셸을 쓰지 마세요. `read` · `grep` · `glob` 도구로 충분하고,
+  팀 환경이 PowerShell 이라 `ls` · `grep` 이 그대로 통하지 않습니다.
 
 ## 오케스트레이터에게 돌려줄 말
 

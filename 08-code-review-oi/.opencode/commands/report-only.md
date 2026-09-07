@@ -1,5 +1,5 @@
 ---
-description: 이미 있는 리뷰·검증 결과로 HTML 리포트만 다시 생성합니다 (인자: PR 번호)
+description: 이미 있는 리뷰·검증 결과로 HTML 리포트만 다시 생성합니다. PR 번호를 인자로 받습니다
 agent: review-lead
 ---
 
@@ -7,7 +7,7 @@ agent: review-lead
 
 1. **작업 폴더를 정합니다.**
    - 인자가 있으면 → `_workspace/pr-<번호>`
-   - 인자가 비어 있으면 → `ls _workspace/` 로 작업 폴더 목록을 보여 주고
+   - 인자가 비어 있으면 → `list` 도구로 `_workspace/` 의 작업 폴더 목록을 보여 주고
      **어느 PR 인지 물어본 뒤 멈춥니다.** 임의로 고르지 마세요.
      여러 PR 리뷰가 동시에 진행 중일 수 있습니다.
 2. 그 폴더에 `1-hunks.md` · `2-review-*.md` · `3-verify.md` 가 다 있는지 확인합니다.

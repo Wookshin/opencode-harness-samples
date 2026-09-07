@@ -14,8 +14,6 @@ permission:
   bash:
     "*": deny
     "node *": allow
-    "ls*": allow
-    "wc*": allow
   webfetch: deny
   websearch: deny
 ---
@@ -89,6 +87,8 @@ node .opencode/skills/code-review-oi-pr/assets/build-report.mjs \
 - `REJECTED` 지적을 본문(`findings`)에 넣지 마세요.
 - 지적 내용을 요약하거나 줄이지 마세요. 회의에서 그 문장을 그대로 읽습니다.
 - 스크립트가 exit 1 인데 완료라고 보고하지 마세요.
+- 셸로 파일 목록이나 크기를 확인하지 마세요. `list` 도구를 쓰세요 —
+  팀 환경이 PowerShell 이라 `ls -la` · `wc -l` 이 통하지 않습니다.
 
 ## 오케스트레이터에게 돌려줄 말
 

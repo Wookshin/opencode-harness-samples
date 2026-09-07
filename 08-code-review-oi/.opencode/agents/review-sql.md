@@ -17,15 +17,15 @@ permission:
     "git diff*": allow
     "git log*": allow
     "git rev-parse*": allow
-    "rg*": allow
-    "grep*": allow
-    "findstr*": allow
-    "ls*": allow
-    "dir*": allow
-    "find*": allow
-    "cat*": allow
-    "type*": allow
-    "basename*": allow
+    # DPImgr 는 저장소 밖이라 grep/glob 도구가 닿지 않습니다. 검색기만 엽니다.
+    "rg*": allow                 # ripgrep — 있으면 가장 빠르고 bash·PowerShell 공통
+    "findstr*": allow            # Windows 기본
+    "Select-String*": allow      # PowerShell 기본
+    "Get-ChildItem*": allow      # PowerShell — 폴더 확인
+    "Get-Content*": allow        # PowerShell — 파일 읽기
+    "grep*": allow               # Unix
+    "ls*": allow                 # Unix
+    "cat*": allow                # Unix
   webfetch: deny
   websearch: deny
 ---
