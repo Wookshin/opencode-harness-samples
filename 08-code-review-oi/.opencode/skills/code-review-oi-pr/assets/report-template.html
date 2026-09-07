@@ -14,6 +14,9 @@
   --add-bg:#e6ffed; --add-mark:#22863a;
   --del-bg:#ffeef0; --del-mark:#b31d28;
   --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+  /* 문법 하이라이트 */
+  --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
+  --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
 }
 @media (prefers-color-scheme:dark){
   :root{
@@ -25,6 +28,8 @@
     --add-bg:#122b1a; --add-mark:#4ade80;
     --del-bg:#331418; --del-mark:#fca5a5;
     --code:#12151a; --shadow:none;
+    --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
+    --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
   }
 }
 *{box-sizing:border-box}
@@ -71,6 +76,35 @@ table.mini th{color:var(--muted);font-weight:600;font-size:12px}
 table.mini td.n{text-align:right;font-variant-numeric:tabular-nums}
 .zero{color:var(--muted)}
 
+/* ── 요약 섹션 (체크리스트 · 변경 요약) ─────────── */
+section.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
+section.panel>h2{margin:0;padding:12px 16px;font-size:15px;background:var(--code);
+  border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+section.panel>h2 .note{font-size:12px;font-weight:400;color:var(--muted)}
+.tblwrap{overflow-x:auto}
+table.list{width:100%;border-collapse:collapse;font-size:13px}
+table.list th{position:sticky;top:0;background:var(--panel);text-align:left;font-size:12px;color:var(--muted);
+  font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+table.list td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.list tr[data-jump]{cursor:pointer}
+table.list tr[data-jump]:hover td{background:var(--accent-soft)}
+table.list td.t{width:100%}
+table.list td.nw{white-space:nowrap}
+table.list .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
+.dec{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;
+  background:var(--code);color:var(--muted)}
+.dec.agree{background:var(--minor-bg);color:var(--minor)}
+.dec.hold{background:var(--major-bg);color:var(--major)}
+.dec.deny{background:var(--blocker-bg);color:var(--blocker)}
+tr.grp td{background:var(--code);font-weight:700;font-size:12px;color:var(--muted);
+  letter-spacing:.03em;padding:6px 10px}
+.hitn{font-variant-numeric:tabular-nums;white-space:nowrap}
+.hitn .b{color:var(--blocker);font-weight:700}
+.hitn .m{color:var(--major);font-weight:700}
+.hitn .n{color:var(--minor)}
+.hitn .none{color:var(--muted)}
+
 /* ── 본문 레이아웃 ──────────────────────────────── */
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:24px;align-items:start}
 .layout>main{min-width:0}
@@ -99,9 +133,22 @@ section.file{background:var(--panel);border:1px solid var(--line);border-radius:
 .unit>h3 .uid{font-weight:800;color:var(--accent)}
 .unit>h3 .sum{font-weight:500;color:var(--ink)}
 .unit>h3 .rng{color:var(--muted);font-size:12px;font-weight:400}
+.unit:target>h3 .uid,.finding:target .fid{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+.flash{animation:flash 1.4s ease-out}
+@keyframes flash{0%{background:var(--accent-soft)}100%{background:transparent}}
 
 /* ── 코드 ───────────────────────────────────────── */
-.code{background:var(--code);border:1px solid var(--line);border-radius:8px;overflow-x:auto;margin:0 0 12px}
+details.fold{margin:0 0 12px;border:1px solid var(--line);border-radius:8px;background:var(--code)}
+details.fold>summary{cursor:pointer;font-size:12.5px;color:var(--muted);padding:7px 12px;
+  list-style:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap;user-select:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:"▸";color:var(--muted);font-size:11px}
+details.fold[open]>summary::before{content:"▾"}
+details.fold>summary:hover{color:var(--accent)}
+details.fold>summary .plus{color:var(--add-mark);font-weight:700}
+details.fold>summary .minus{color:var(--del-mark);font-weight:700}
+details.fold[open]>summary{border-bottom:1px solid var(--line)}
+.code{overflow-x:auto}
 .code table{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.55}
 .code td{padding:0 8px;vertical-align:top;white-space:pre;font-family:"D2Coding",ui-monospace,SFMono-Regular,Consolas,monospace}
 .code td.ln{text-align:right;color:var(--muted);user-select:none;width:1%;white-space:nowrap;
@@ -112,9 +159,16 @@ section.file{background:var(--panel);border:1px solid var(--line);border-radius:
 .code tr.del td.ln{color:var(--del-mark)}
 .code tr.hit{box-shadow:inset 3px 0 0 var(--accent)}
 .code tr.hit td.ln{color:var(--accent);font-weight:700}
-details.src{margin:0 0 12px}
-details.src>summary{cursor:pointer;font-size:12.5px;color:var(--muted);padding:4px 0}
-details.src>summary:hover{color:var(--accent)}
+
+/* 문법 토큰 */
+.t-com{color:var(--t-com);font-style:italic}
+.t-kw{color:var(--t-kw)}
+.t-type{color:var(--t-type)}
+.t-str{color:var(--t-str)}
+.t-num{color:var(--t-num)}
+.t-sql{color:var(--t-sql);font-weight:600}
+.t-fn{color:var(--t-fn)}
+.t-op{color:var(--t-op)}
 
 /* ── 지적 카드 ──────────────────────────────────── */
 .finding{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;
@@ -138,6 +192,7 @@ details.src>summary:hover{color:var(--accent)}
   padding:8px 10px;overflow-x:auto;font-size:12.5px;line-height:1.5}
 .finding dd pre.was{background:var(--del-bg)}
 .finding dd pre.now{background:var(--add-bg)}
+.seecode{font-size:12px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
 
 /* ── 회의 진행 ──────────────────────────────────── */
 .decide{margin-top:11px;padding-top:10px;border-top:1px dashed var(--line);
@@ -154,7 +209,6 @@ details.src>summary:hover{color:var(--accent)}
 .decide label:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
 .decide textarea{flex:1 1 220px;min-width:180px;font:inherit;font-size:12.5px;padding:5px 8px;
   border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical;min-height:32px}
-.finding.decided{background:linear-gradient(90deg,var(--accent-soft) 0 3px,transparent 3px)}
 
 /* ── SQL · 반려 · 미확인 ────────────────────────── */
 .sqlbox{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;background:var(--panel)}
@@ -174,14 +228,16 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 @media print{
   :root{--bg:#fff;--panel:#fff;--code:#f7f7f7;--shadow:none}
   body{font-size:10.5pt}
-  .filters,.btns,nav.toc,.decide textarea{display:none!important}
+  .filters,.btns,nav.toc,.decide textarea,.seecode{display:none!important}
   .layout{display:block}
   header{border-bottom:2px solid #000}
+  section.panel{break-inside:auto;page-break-inside:auto}
   section.file{break-inside:auto;page-break-inside:auto;border:1px solid #bbb;box-shadow:none}
   .unit{break-inside:avoid;page-break-inside:avoid}
   .finding{break-inside:avoid;page-break-inside:avoid}
-  details.src,details.audit{display:block}
-  details.src[open]>summary{list-style:none}
+  table.list th{position:static}
+  details.fold,details.audit{display:block}
+  details.fold>summary{list-style:none}
   .decide label{border:1px solid #999}
   a{color:#000;text-decoration:none}
 }
@@ -198,7 +254,7 @@ h2.sec{font-size:16px;margin:26px 0 12px}
       <div class="btns">
         <button id="b-md">회의 결과 마크다운 복사</button>
         <button id="b-json">결정 JSON 저장</button>
-        <button id="b-open">원문 전부 펼치기</button>
+        <button id="b-open">코드 전부 펼치기</button>
         <button id="b-reset">결정 초기화</button>
         <button onclick="window.print()">인쇄</button>
       </div>
@@ -227,6 +283,16 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 
   <div class="cards" id="dash"></div>
 
+  <section class="panel" id="checklist">
+    <h2>리뷰 체크리스트 <span class="note" id="cl-note"></span></h2>
+    <div class="tblwrap"><table class="list" id="cl-table"></table></div>
+  </section>
+
+  <section class="panel" id="changes">
+    <h2>변경 요약 <span class="note">이 PR 이 무엇을 바꿨는지. 행을 누르면 해당 코드로 이동합니다</span></h2>
+    <div class="tblwrap"><table class="list" id="ch-table"></table></div>
+  </section>
+
   <div class="layout">
     <nav class="toc" id="toc"></nav>
     <main id="main"></main>
@@ -240,16 +306,137 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 var D = JSON.parse(document.getElementById('payload').textContent);
 var PERSP = {refactor:'리팩토링', feature:'기능', sql:'SQL'};
 var SEVS = ['BLOCKER','MAJOR','MINOR'];
+var LABEL = {agree:'합의', hold:'보류', deny:'반려'};
 var KEY = 'oi-review-' + (D.meta.prNumber || 'x');
 
 function esc(s){ return String(s==null?'':s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function el(html){ var t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
 
+/* ══ 문법 하이라이트 ═══════════════════════════════════════════════
+   외부 라이브러리를 못 쓰므로(폐쇄망·외부 요청 0) 작은 토크나이저를 직접 둡니다.
+   diff 는 줄 단위로 그려지니, 여러 줄에 걸친 블록 주석과 축자 문자열(@"…")을
+   놓치지 않도록 **줄 사이에 상태를 들고 갑니다.**                        */
+
+var CS_KW = ('abstract as async await base break case catch checked class const continue default delegate ' +
+  'do else enum event explicit extern finally fixed for foreach get goto if implicit in interface internal ' +
+  'is lock namespace new null operator out override params partial private protected public readonly ref ' +
+  'return sealed set sizeof stackalloc static struct switch this throw try typeof unchecked unsafe using ' +
+  'value virtual volatile where while yield true false nameof').split(' ');
+var CS_TYPE = ('bool byte char decimal double float int long object sbyte short string uint ulong ushort void var ' +
+  'dynamic List Dictionary IEnumerable Task Nullable').split(' ');
+var SQL_KW = ('select from where and or not in exists between like is null as inner left right outer full join on ' +
+  'group by having order asc desc union all insert into values update set delete create alter drop table view ' +
+  'index distinct count sum avg min max case when then else end with over partition trim substr to_char to_date ' +
+  'nvl decode sysdate rownum dual limit offset').split(' ');
+
+var CSKW = {}, CSTY = {}, SQLK = {};
+CS_KW.forEach(function(k){ CSKW[k]=1; });
+CS_TYPE.forEach(function(k){ CSTY[k]=1; });
+SQL_KW.forEach(function(k){ SQLK[k.toUpperCase()]=1; });
+
+function span(cls, txt){ return '<span class="t-' + cls + '">' + esc(txt) + '</span>'; }
+
+/** SQL 한 조각 (문자열 안이든 밖이든) */
+function hlSqlText(src){
+  var out = '', re = /(--[^\n]*)|('(?:''|[^'])*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z0-9_$#]*)|(:\w+|#\{\w+\}|\{[^}]*\})/g;
+  var last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    if (m[1])      out += span('com', m[1]);
+    else if (m[2]) out += span('str', m[2]);
+    else if (m[3]) out += span('num', m[3]);
+    else if (m[5]) out += span('type', m[5]);          // 바인드 변수
+    else if (m[4]) out += SQLK[m[4].toUpperCase()] ? span('sql', m[4]) : esc(m[4]);
+    last = re.lastIndex;
+  }
+  return out + esc(src.slice(last));
+}
+
+function looksSql(s){ return /\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE)\b/i.test(s); }
+
+/** C# 한 줄. st 는 줄 사이로 이어지는 상태 {block, verb, sql} */
+function hlCsLine(src, st){
+  var out = '';
+
+  // 이어지는 블록 주석
+  if (st.block) {
+    var e = src.indexOf('*/');
+    if (e < 0) return span('com', src);
+    out += span('com', src.slice(0, e + 2)); st.block = false; src = src.slice(e + 2);
+  }
+  // 이어지는 축자 문자열 — SqlManager 의 $@"…" 여러 줄 SQL 이 여기 걸립니다
+  if (st.verb) {
+    var i = 0, close = -1;
+    while (i < src.length) {
+      if (src[i] === '"') { if (src[i+1] === '"') { i += 2; continue; } close = i; break; }
+      i++;
+    }
+    var chunk = close < 0 ? src : src.slice(0, close + 1);
+    out += '<span class="t-str">' + (st.sql ? hlSqlText(chunk) : esc(chunk)) + '</span>';
+    if (close < 0) return out;
+    st.verb = false; st.sql = false; src = src.slice(close + 1);
+  }
+
+  var re = /(\/\/[^\n]*)|(\/\*)|([@$]{1,2}")|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b\d[\d_]*(?:\.\d+)?[fFdDmMuUlL]*\b)|(#\s*\w+)|([A-Za-z_]\w*)/g;
+  var last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    last = re.lastIndex;
+
+    if (m[1]) { out += span('com', m[1]); continue; }
+    if (m[2]) {                                    // 블록 주석 시작
+      var end = src.indexOf('*/', m.index + 2);
+      if (end < 0) { out += span('com', src.slice(m.index)); return out; }
+      out += span('com', src.slice(m.index, end + 2)); re.lastIndex = last = end + 2; continue;
+    }
+    if (m[3]) {                                    // 축자/보간 문자열 시작
+      var j = m.index + m[3].length, cl = -1;
+      while (j < src.length) {
+        if (src[j] === '"') { if (src[j+1] === '"') { j += 2; continue; } cl = j; break; }
+        j++;
+      }
+      var body = cl < 0 ? src.slice(m.index) : src.slice(m.index, cl + 1);
+      var sqlish = looksSql(body) || (cl < 0 && /AddSql|SELECT/i.test(src));
+      out += '<span class="t-str">' + (sqlish ? hlSqlText(body) : esc(body)) + '</span>';
+      if (cl < 0) { st.verb = true; st.sql = sqlish; return out; }
+      re.lastIndex = last = cl + 1; continue;
+    }
+    if (m[4]) { out += span('str', m[4]); continue; }
+    if (m[5]) { out += span('num', m[5]); continue; }
+    if (m[6]) { out += span('com', m[6]); continue; }
+    if (m[7]) {
+      var w = m[7];
+      if (CSKW[w])      out += span('kw', w);
+      else if (CSTY[w]) out += span('type', w);
+      else if (src[re.lastIndex] === '(') out += span('fn', w);
+      else if (/^[A-Z]/.test(w)) out += span('type', w);
+      else out += esc(w);
+      continue;
+    }
+  }
+  return out + esc(src.slice(last));
+}
+
+function newState(){ return {block:false, verb:false, sql:false}; }
+function hlLine(src, st, lang){
+  if (lang === 'cs')  return hlCsLine(src, st);
+  if (lang === 'sql') return hlSqlText(src);
+  return esc(src);
+}
+/** 여러 줄 덩어리 (지적 카드의 코드 조각, SQL 본문) */
+function hlBlock(src, lang){
+  if (lang === 'sql') return hlSqlText(String(src));
+  if (lang !== 'cs')  return esc(src);
+  var st = newState();
+  return String(src).split('\n').map(function(l){ return hlCsLine(l, st); }).join('\n');
+}
+
 /* ── 저장된 결정 ─────────────────────────────── */
 var store = {};
 try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ store = {}; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+function decOf(id){ return (store[id] || {}).decision || ''; }
 
 /* ── 헤더 ────────────────────────────────────── */
 var m = D.meta;
@@ -262,24 +449,22 @@ if (m.headSha) subs.push('<span class="mono">' + esc(String(m.headSha).slice(0,1
 if (m.generatedAt) subs.push('생성 ' + esc(m.generatedAt));
 if (m.reviewers) subs.push(Object.keys(m.reviewers).map(function(k){
   return (PERSP[k]||k) + ' ' + m.reviewers[k]; }).join(' · '));
-document.getElementById('h-sub').innerHTML = subs.join(' &nbsp;·&nbsp; ');
-if (m.url) document.getElementById('h-sub').innerHTML +=
-  ' &nbsp;·&nbsp; <a href="' + esc(m.url) + '">PR 열기</a>';
+document.getElementById('h-sub').innerHTML = subs.join(' &nbsp;·&nbsp; ') +
+  (m.url ? ' &nbsp;·&nbsp; <a href="' + esc(m.url) + '">PR 열기</a>' : '');
 var vd = document.getElementById('h-verdict');
 vd.textContent = m.verdict || '—'; vd.className = 'verdict ' + (m.verdict || '');
 
 /* ── 대시보드 ────────────────────────────────── */
+var counts = {}, tot = {BLOCKER:0,MAJOR:0,MINOR:0};
+Object.keys(PERSP).forEach(function(p){ counts[p] = {BLOCKER:0,MAJOR:0,MINOR:0}; });
+D.findings.forEach(function(f){
+  if (!counts[f.perspective]) counts[f.perspective] = {BLOCKER:0,MAJOR:0,MINOR:0};
+  counts[f.perspective][f.severity]++; tot[f.severity]++;
+});
 (function(){
-  var counts = {}, tot = {BLOCKER:0,MAJOR:0,MINOR:0};
-  Object.keys(PERSP).forEach(function(p){ counts[p] = {BLOCKER:0,MAJOR:0,MINOR:0}; });
-  D.findings.forEach(function(f){
-    if (!counts[f.perspective]) counts[f.perspective] = {BLOCKER:0,MAJOR:0,MINOR:0};
-    counts[f.perspective][f.severity]++; tot[f.severity]++;
-  });
   var rows = Object.keys(counts).map(function(p){
     return '<tr><td>' + (PERSP[p]||p) + '</td>' + SEVS.map(function(s){
-      var n = counts[p][s];
-      return '<td class="n' + (n?'':' zero') + '">' + n + '</td>';
+      var n = counts[p][s]; return '<td class="n' + (n?'':' zero') + '">' + n + '</td>';
     }).join('') + '<td class="n"><b>' + SEVS.reduce(function(a,s){return a+counts[p][s];},0) + '</b></td></tr>';
   }).join('');
   var byFile = {};
@@ -307,33 +492,139 @@ vd.textContent = m.verdict || '—'; vd.className = 'verdict ' + (m.verdict || '
     '</table></div>';
 })();
 
+/* ── 이동 ────────────────────────────────────── */
+function jump(id){
+  var t = document.getElementById(id);
+  if (!t) return;
+  var fold = t.closest('.unit') && t.closest('.unit').querySelector('details.fold');
+  if (t.classList.contains('finding') && fold) { /* 코드는 필요할 때만 */ }
+  t.scrollIntoView({behavior:'smooth', block:'center'});
+  t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash');
+}
+
+/* ── 리뷰 체크리스트 (가장 먼저 보는 표) ─────── */
+var order = {BLOCKER:0, MAJOR:1, MINOR:2};
+var sorted = D.findings.slice().sort(function(a,b){
+  return (order[a.severity] - order[b.severity]) || a.id.localeCompare(b.id);
+});
+(function(){
+  var t = document.getElementById('cl-table');
+  if (!D.findings.length) {
+    document.getElementById('checklist').innerHTML =
+      '<h2>리뷰 체크리스트</h2><div class="empty" style="padding:14px 16px">지적 없음 — 회의에서 볼 항목이 없습니다.</div>';
+    return;
+  }
+  var html = '<tr><th>결정</th><th>심각도</th><th>관점</th><th>ID</th><th>지적</th><th>위치</th><th>단위</th></tr>';
+  var cur = null;
+  sorted.forEach(function(f){
+    if (f.severity !== cur) {
+      cur = f.severity;
+      var n = D.findings.filter(function(x){ return x.severity === cur; }).length;
+      html += '<tr class="grp cl-grp" data-s="' + cur + '"><td colspan="7">' + cur + ' ' + n + '건' +
+              (cur === 'BLOCKER' ? ' — 이대로 병합하면 안 되는 것. 여기부터 보세요' : '') + '</td></tr>';
+    }
+    var d = decOf(f.id);
+    html += '<tr data-jump="f-' + esc(f.id) + '" data-fid="' + esc(f.id) + '"' +
+      ' data-p="' + esc(f.perspective) + '" data-s="' + esc(f.severity) + '" class="cl-row">' +
+      '<td class="nw"><span class="dec ' + d + '">' + (LABEL[d] || '미결정') + '</span></td>' +
+      '<td class="nw"><span class="sev ' + f.severity + '">' + f.severity + '</span></td>' +
+      '<td class="nw"><span class="persp">' + (PERSP[f.perspective]||f.perspective) + '</span></td>' +
+      '<td class="nw"><span class="fid">' + esc(f.id) + '</span></td>' +
+      '<td class="t">' + esc(f.title) +
+        (f.verdict === 'NEEDS-INFO' ? ' <span class="needsinfo">확인 필요</span>' : '') +
+        '<div class="loc" style="margin-top:2px">근거 ' + esc(f.basis) + '</div></td>' +
+      '<td class="nw loc">' + esc(f.file.split('/').pop()) + ':' + esc(f.line) + '</td>' +
+      '<td class="nw"><a href="#unit-' + esc(f.unitId) + '">' + esc(f.unitId) + '</a></td></tr>';
+  });
+  t.innerHTML = html;
+  t.querySelectorAll('tr[data-jump]').forEach(function(tr){
+    tr.addEventListener('click', function(e){
+      if (e.target.tagName === 'A') return;
+      jump(tr.dataset.jump);
+    });
+  });
+  document.getElementById('cl-note').textContent =
+    '심각도 순. 행을 누르면 상세로 이동합니다 — 코드는 필요할 때만 펼치세요';
+})();
+
+/* ── 변경 요약 ───────────────────────────────── */
+(function(){
+  var byUnit = {};
+  D.findings.forEach(function(f){ (byUnit[f.unitId] = byUnit[f.unitId] || []).push(f); });
+  var files = D.files.slice().sort(function(a,b){
+    return (a.priority - b.priority) || a.path.localeCompare(b.path); });
+  var html = '<tr><th>단위</th><th>파일</th><th>유형</th><th>무엇이 바뀌었나</th><th>지적</th></tr>';
+  files.forEach(function(file){
+    D.units.filter(function(u){ return u.file === file.path; }).forEach(function(u){
+      var fs = byUnit[u.id] || [];
+      var c = {BLOCKER:0,MAJOR:0,MINOR:0};
+      fs.forEach(function(f){ c[f.severity]++; });
+      var badge = fs.length
+        ? (c.BLOCKER ? '<span class="b">BLOCKER ' + c.BLOCKER + '</span> ' : '') +
+          (c.MAJOR   ? '<span class="m">MAJOR ' + c.MAJOR + '</span> ' : '') +
+          (c.MINOR   ? '<span class="n">MINOR ' + c.MINOR + '</span>' : '')
+        : '<span class="none">없음</span>';
+      html += '<tr data-jump="unit-' + esc(u.id) + '" class="ch-row">' +
+        '<td class="nw"><b style="color:var(--accent)">' + esc(u.id) + '</b></td>' +
+        '<td class="nw loc">' + esc(file.path.split('/').pop()) +
+          (file.priority === 1 ? ' <span class="tag p1">우선</span>' : '') + '</td>' +
+        '<td class="nw"><span class="tag">' + esc(u.kind) + '</span></td>' +
+        '<td class="t">' + esc(u.summary) + '</td>' +
+        '<td class="nw hitn">' + badge + '</td></tr>';
+    });
+  });
+  D.simpleChanges.forEach(function(c){
+    var bad = c.issue && c.issue !== '없음';
+    html += '<tr data-jump="unit-' + esc(c.unitId) + '" class="ch-row">' +
+      '<td class="nw">' + esc(c.unitId) + '</td><td class="nw loc">—</td>' +
+      '<td class="nw"><span class="tag">단순</span></td>' +
+      '<td class="t">' + esc(c.content) + '</td>' +
+      '<td class="nw hitn">' + (bad ? '<span class="b">' + esc(c.issue) + '</span>' : '<span class="none">이상 없음</span>') +
+      '</td></tr>';
+  });
+  var t = document.getElementById('ch-table');
+  t.innerHTML = html;
+  t.querySelectorAll('tr[data-jump]').forEach(function(tr){
+    tr.addEventListener('click', function(){ jump(tr.dataset.jump); });
+  });
+})();
+
 /* ── 코드 렌더 ───────────────────────────────── */
-function codeTable(rows, hitLines){
+function codeTable(rows, hitLines, lang){
   if (!rows || !rows.length) return '';
   var hits = {}; (hitLines||[]).forEach(function(n){ hits[n]=1; });
+  var st = newState();
   var body = rows.map(function(r){
     var cls = r.type === 'add' ? 'add' : (r.type === 'del' ? 'del' : '');
     if (r.afterNo && hits[r.afterNo]) cls += ' hit';
-    var no = r.type === 'del'
-      ? '<span title="변경 전">-' + (r.beforeNo || '') + '</span>'
-      : (r.afterNo || '');
+    var no = r.type === 'del' ? '-' + (r.beforeNo || '') : (r.afterNo || '');
     var sign = r.type === 'add' ? '+' : (r.type === 'del' ? '-' : ' ');
     return '<tr class="' + cls + '"><td class="ln">' + no + '</td><td>' +
-           esc(sign + ' ' + r.text) + '</td></tr>';
+           esc(sign + ' ') + hlLine(r.text, st, lang) + '</td></tr>';
   }).join('');
   return '<div class="code"><table>' + body + '</table></div>';
+}
+function foldedCode(rows, hits, lang, label){
+  if (!rows || !rows.length) return null;
+  var add = rows.filter(function(r){ return r.type==='add'; }).length;
+  var del = rows.filter(function(r){ return r.type==='del'; }).length;
+  var d = el('<details class="fold"><summary>' + esc(label) + ' · ' + rows.length + '줄 ' +
+    (add ? '<span class="plus">+' + add + '</span> ' : '') +
+    (del ? '<span class="minus">−' + del + '</span>' : '') + '</summary></details>');
+  d.appendChild(el(codeTable(rows, hits, lang)));
+  return d;
 }
 
 /* ── 지적 카드 ───────────────────────────────── */
 function findingCard(f){
-  var d = store[f.id] || {};
+  var d = store[f.id] || {}, lang = f.lang || 'cs';
   var dl = '';
   function row(label, html){ dl += '<dt>' + label + '</dt><dd>' + html + '</dd>'; }
   row('문제', esc(f.problem));
   row('근거', '<b>' + esc(f.basis) + '</b>');
-  if (f.before) row('변경 전', '<pre class="was">' + esc(f.before) + '</pre>');
-  if (f.after)  row('변경 후', '<pre class="now">' + esc(f.after) + '</pre>');
-  if (f.suggestion) row('개선', '<pre>' + esc(f.suggestion) + '</pre>');
+  if (f.before) row('변경 전', '<pre class="was">' + hlBlock(f.before, lang) + '</pre>');
+  if (f.after)  row('변경 후', '<pre class="now">' + hlBlock(f.after, lang) + '</pre>');
+  if (f.suggestion) row('개선', '<pre>' + hlBlock(f.suggestion, lang) + '</pre>');
   if (f.checkpoints) row('점검', esc(f.checkpoints));
 
   var opts = [['agree','합의'],['hold','보류'],['deny','반려']].map(function(o){
@@ -342,52 +633,54 @@ function findingCard(f){
   }).join('');
 
   var card = el(
-    '<article class="finding ' + f.severity + (d.decision ? ' decided' : '') + '" id="f-' + esc(f.id) + '"' +
+    '<article class="finding ' + f.severity + '" id="f-' + esc(f.id) + '"' +
       ' data-p="' + esc(f.perspective) + '" data-s="' + esc(f.severity) + '" data-fid="' + esc(f.id) + '">' +
       '<h4><span class="sev ' + f.severity + '">' + f.severity + '</span>' +
         '<span class="persp">' + (PERSP[f.perspective] || f.perspective) + '</span>' +
         '<span class="fid">' + esc(f.id) + '</span>' +
         (f.verdict === 'NEEDS-INFO' ? '<span class="needsinfo">확인 필요</span>' : '') +
         '<span>' + esc(f.title) + '</span>' +
-        '<span class="loc">' + esc(f.file.split('/').pop()) + ':' + esc(f.line) + '</span></h4>' +
+        '<span class="loc">' + esc(f.file.split('/').pop()) + ':' + esc(f.line) + '</span>' +
+        '<button class="seecode">코드 보기</button></h4>' +
       '<dl>' + dl + '</dl>' +
       '<div class="decide"><div class="opts">' + opts + '</div>' +
         '<textarea placeholder="회의 메모">' + esc(d.memo || '') + '</textarea></div>' +
     '</article>');
 
+  card.querySelector('.seecode').addEventListener('click', function(){
+    var fold = card.closest('.unit') && card.closest('.unit').querySelector('details.fold');
+    if (!fold) return;
+    fold.open = true;
+    fold.scrollIntoView({behavior:'smooth', block:'center'});
+  });
   card.querySelectorAll('input[type=radio]').forEach(function(r){
     r.addEventListener('change', function(){
-      store[f.id] = store[f.id] || {};
-      store[f.id].decision = r.value;
-      card.classList.add('decided');
-      save(); refreshProgress(); applyFilters();
+      store[f.id] = store[f.id] || {}; store[f.id].decision = r.value;
+      save(); refreshProgress(); syncChecklist(); applyFilters();
     });
   });
   card.querySelector('textarea').addEventListener('input', function(e){
-    store[f.id] = store[f.id] || {};
-    store[f.id].memo = e.target.value;
-    save();
+    store[f.id] = store[f.id] || {}; store[f.id].memo = e.target.value; save();
   });
   return card;
 }
 
 /* ── 본문 ────────────────────────────────────── */
-var main = document.getElementById('main');
-var toc  = document.getElementById('toc');
+function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
+var main = document.getElementById('main'), toc = document.getElementById('toc');
 var fByUnit = {};
 D.findings.forEach(function(f){ (fByUnit[f.unitId] = fByUnit[f.unitId] || []).push(f); });
-SEVS.forEach(function(){});
 Object.keys(fByUnit).forEach(function(u){
-  fByUnit[u].sort(function(a,b){ return SEVS.indexOf(a.severity) - SEVS.indexOf(b.severity); });
+  fByUnit[u].sort(function(a,b){ return order[a.severity] - order[b.severity]; });
 });
-
-var files = D.files.slice().sort(function(a,b){
+var filesSorted = D.files.slice().sort(function(a,b){
   return (a.priority - b.priority) || a.path.localeCompare(b.path);
 });
 
 var tocHtml = '';
-files.forEach(function(file){
+filesSorted.forEach(function(file){
   var units = D.units.filter(function(u){ return u.file === file.path; });
+  var lang = file.lang || 'text';
   var sec = el('<section class="file" id="file-' + esc(cssId(file.path)) + '"></section>');
   sec.appendChild(el('<h2>' + esc(file.path) +
     '<span class="tag' + (file.priority === 1 ? ' p1' : '') + '">' + esc(file.changeType) + '</span>' +
@@ -408,8 +701,8 @@ files.forEach(function(file){
       '<span class="tag">' + esc(u.kind) + '</span>' +
       '<span class="sum">' + esc(u.summary) + '</span>' +
       '<span class="rng">' + esc(rng) + '</span></h3>'));
-    var hit = fs.map(function(f){ return f.line; });
-    if (u.rows && u.rows.length) box.appendChild(el(codeTable(u.rows, hit)));
+    var fold = foldedCode(u.rows, fs.map(function(f){ return f.line; }), u.lang || lang, '변경 코드 보기');
+    if (fold) box.appendChild(fold);
     fs.forEach(function(f){ box.appendChild(findingCard(f)); });
     if (!fs.length) box.appendChild(el('<div class="empty">이 변경단위에 대한 지적 없음</div>'));
     sec.appendChild(box);
@@ -419,43 +712,30 @@ files.forEach(function(file){
   });
 
   if (file.lines && file.lines.length) {
-    var src = el('<details class="src" style="margin:0 16px 14px"><summary>파일 원문 보기 (' +
-      file.lines.length + '줄) — ' + esc(file.path) + '</summary></details>');
-    src.appendChild(el(codeTable(file.lines, [])));
-    sec.appendChild(src);
+    var wrap = el('<div style="padding:0 16px 14px"></div>');
+    var srcFold = foldedCode(file.lines, [], lang, '파일 원문 보기 — ' + file.path);
+    if (srcFold) { wrap.appendChild(srcFold); sec.appendChild(wrap); }
   }
   main.appendChild(sec);
 });
 
-/* 단순 변경 */
-if (D.simpleChanges.length) {
-  var s = el('<section class="file"><h2>단순 변경 요약</h2></section>');
-  s.appendChild(el('<div class="unit"><table class="mini simple"><tr><th>변경단위</th><th>내용</th><th>이상점</th></tr>' +
-    D.simpleChanges.map(function(c){
-      var bad = c.issue && c.issue !== '없음';
-      return '<tr><td>' + esc(c.unitId) + '</td><td>' + esc(c.content) + '</td>' +
-             '<td class="issue">' + (bad ? '<b>' + esc(c.issue) + '</b>' : esc(c.issue || '없음')) + '</td></tr>';
-    }).join('') + '</table></div>'));
-  main.appendChild(s);
-}
-
 /* SQL */
 if (D.sql.length) {
   var q = el('<section class="file" id="sec-sql"><h2>SQL 본문과 튜닝포인트</h2></section>');
-  var body = el('<div class="unit"></div>');
+  var qb = el('<div class="unit"></div>');
   D.sql.forEach(function(s){
-    body.appendChild(el('<div class="sqlbox"><h4><span class="fid">' + esc(s.id) + '</span>' +
+    qb.appendChild(el('<div class="sqlbox"><h4><span class="fid">' + esc(s.id) + '</span>' +
       '<span class="tag">' + esc(s.callType) + '</span>' +
       '<span>' + esc(s.sqlId || '(인라인)') + '</span>' +
       (s.unitId ? '<span class="loc">' + esc(s.unitId) + '</span>' : '') + '</h4>' +
       (s.sourcePath ? '<div class="path">' + esc(s.sourcePath) + '</div>' : '') +
-      '<pre>' + esc(s.body) + '</pre>' +
+      '<pre>' + hlBlock(s.body, 'sql') + '</pre>' +
       (s.tuningPoints && s.tuningPoints.length
         ? '<b style="font-size:12px">튜닝포인트</b><ul>' +
           s.tuningPoints.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>'
         : '<div class="empty">튜닝포인트 없음</div>') + '</div>'));
   });
-  q.appendChild(body); main.appendChild(q);
+  q.appendChild(qb); main.appendChild(q);
   tocHtml += '<div class="f"><a href="#sec-sql" style="border:0;padding-left:0">SQL 본문</a></div>';
 }
 
@@ -475,8 +755,6 @@ if (D.unknowns.length) {
 }
 toc.innerHTML = tocHtml || '<div class="empty">변경 없음</div>';
 
-function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
-
 /* ── 필터 ────────────────────────────────────── */
 var F = { p:{refactor:1,feature:1,sql:1}, s:{BLOCKER:1,MAJOR:1,MINOR:1}, undecided:0, q:'' };
 document.querySelectorAll('.flt').forEach(function(b){
@@ -490,28 +768,40 @@ document.querySelectorAll('.flt').forEach(function(b){
 document.getElementById('q').addEventListener('input', function(e){
   F.q = e.target.value.trim().toLowerCase(); applyFilters();
 });
+function visible(f){
+  return F.p[f.perspective] && F.s[f.severity]
+      && (!F.undecided || !decOf(f.id))
+      && (!F.q || (f.id + ' ' + f.title + ' ' + f.problem + ' ' + f.basis + ' ' + f.file)
+            .toLowerCase().indexOf(F.q) >= 0);
+}
 function applyFilters(){
+  var shown = {};
+  D.findings.forEach(function(f){ shown[f.id] = visible(f); });
   document.querySelectorAll('.finding').forEach(function(c){
-    var id = c.dataset.fid, dec = (store[id] || {}).decision;
-    var ok = F.p[c.dataset.p] && F.s[c.dataset.s]
-          && (!F.undecided || !dec)
-          && (!F.q || c.textContent.toLowerCase().indexOf(F.q) >= 0);
-    c.style.display = ok ? '' : 'none';
+    c.style.display = shown[c.dataset.fid] ? '' : 'none';
+  });
+  document.querySelectorAll('tr.cl-row').forEach(function(tr){
+    tr.style.display = shown[tr.dataset.fid] ? '' : 'none';
+  });
+  document.querySelectorAll('tr.cl-grp').forEach(function(tr){
+    var any = D.findings.some(function(f){ return f.severity === tr.dataset.s && shown[f.id]; });
+    tr.style.display = any ? '' : 'none';
   });
   document.querySelectorAll('.unit').forEach(function(u){
     var all = u.querySelectorAll('.finding'), vis = 0;
     all.forEach(function(c){ if (c.style.display !== 'none') vis++; });
-    var dim = all.length > 0 && vis === 0;
-    u.style.opacity = dim ? .38 : 1;
+    u.style.opacity = (all.length > 0 && vis === 0) ? .38 : 1;
   });
+  var n = D.findings.filter(function(f){ return shown[f.id]; }).length;
+  document.getElementById('cl-note').textContent = (n === D.findings.length)
+    ? '심각도 순. 행을 누르면 상세로 이동합니다 — 코드는 필요할 때만 펼치세요'
+    : '필터 적용 중 — ' + n + ' / ' + D.findings.length + '건 표시';
 }
 
-/* ── 진행 표시 ───────────────────────────────── */
+/* ── 진행 표시 · 체크리스트 동기화 ───────────── */
 function refreshProgress(){
   var n = {agree:0, hold:0, deny:0};
-  D.findings.forEach(function(f){
-    var d = (store[f.id] || {}).decision; if (d && n[d] !== undefined) n[d]++;
-  });
+  D.findings.forEach(function(f){ var d = decOf(f.id); if (n[d] !== undefined) n[d]++; });
   var done = n.agree + n.hold + n.deny;
   document.getElementById('p-done').textContent  = done;
   document.getElementById('p-total').textContent = D.findings.length;
@@ -519,23 +809,28 @@ function refreshProgress(){
   document.getElementById('p-hold').textContent  = n.hold;
   document.getElementById('p-deny').textContent  = n.deny;
 }
-refreshProgress();
+function syncChecklist(){
+  document.querySelectorAll('tr.cl-row').forEach(function(tr){
+    var d = decOf(tr.dataset.fid), badge = tr.querySelector('.dec');
+    badge.className = 'dec ' + d; badge.textContent = LABEL[d] || '미결정';
+  });
+}
+refreshProgress(); syncChecklist();
 
 /* ── 내보내기 ────────────────────────────────── */
-var LABEL = {agree:'합의', hold:'보류', deny:'반려'};
 function decisionsMd(){
   var lines = ['# 코드리뷰 회의 결과 — ' + (m.prNumber ? '#' + m.prNumber + ' ' : '') + (m.title || ''), ''];
   lines.push('- 대상: ' + (m.baseRef || '') + ' ← ' + (m.headRef || ''));
   lines.push('- 리뷰 판정: ' + (m.verdict || '-'));
   lines.push('- 작성: ' + new Date().toLocaleString('ko-KR'));
   lines.push('', '| ID | 관점 | 심각도 | 위치 | 지적 | 결정 | 메모 |', '|---|---|---|---|---|---|---|');
-  D.findings.forEach(function(f){
+  sorted.forEach(function(f){
     var d = store[f.id] || {};
     lines.push('| ' + f.id + ' | ' + (PERSP[f.perspective] || f.perspective) + ' | ' + f.severity +
       ' | ' + f.file.split('/').pop() + ':' + f.line + ' | ' + String(f.title).replace(/\|/g, '\\|') +
       ' | ' + (LABEL[d.decision] || '미결정') + ' | ' + String(d.memo || '').replace(/\|/g, '\\|').replace(/\n/g, ' ') + ' |');
   });
-  var open = D.findings.filter(function(f){ return !(store[f.id] || {}).decision; });
+  var open = sorted.filter(function(f){ return !decOf(f.id); });
   if (open.length) {
     lines.push('', '## 미결정 ' + open.length + '건', '');
     open.forEach(function(f){ lines.push('- ' + f.id + ' · ' + f.severity + ' · ' + f.title); });
@@ -549,12 +844,12 @@ function download(name, text, mime){
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);
 }
 document.getElementById('b-md').addEventListener('click', function(){
-  var md = decisionsMd();
+  var btn = this, md = decisionsMd();
   var done = function(ok){
-    this.textContent = ok ? '복사했습니다' : '복사 실패 — 파일로 저장했습니다';
+    btn.textContent = ok ? '복사했습니다' : '복사 실패 — 파일로 저장했습니다';
     if (!ok) download('review-' + (m.prNumber || 'x') + '-decisions.md', md, 'text/markdown');
-    setTimeout(function(){ this.textContent = '회의 결과 마크다운 복사'; }.bind(this), 2000);
-  }.bind(this);
+    setTimeout(function(){ btn.textContent = '회의 결과 마크다운 복사'; }, 2000);
+  };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(md).then(function(){ done(true); }, function(){ done(false); });
   } else { done(false); }
@@ -566,7 +861,7 @@ document.getElementById('b-json').addEventListener('click', function(){
 document.getElementById('b-open').addEventListener('click', function(){
   var any = Array.prototype.some.call(document.querySelectorAll('details'), function(d){ return !d.open; });
   document.querySelectorAll('details').forEach(function(d){ d.open = any; });
-  this.textContent = any ? '원문 전부 접기' : '원문 전부 펼치기';
+  this.textContent = any ? '코드 전부 접기' : '코드 전부 펼치기';
 });
 document.getElementById('b-reset').addEventListener('click', function(){
   if (!confirm('이 PR 의 회의 결정과 메모를 모두 지웁니다. 계속할까요?')) return;

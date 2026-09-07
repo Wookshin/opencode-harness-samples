@@ -156,6 +156,12 @@ if (problems.length) {
   process.exit(1);
 }
 
+/* 지적 조각에도 파일 언어를 붙입니다 (HTML 이 files 를 되짚지 않도록) */
+{
+  const byPath = new Map(D.files.map(f => [f.path, langOf(f.path)]));
+  D.findings.forEach(f => { f.lang = byPath.get(f.file) || 'text'; });
+}
+
 /* ── 패치 파싱 ───────────────────────────────────────────────────────── */
 /**
  * 파일별로 두 가지를 뽑습니다.
@@ -227,6 +233,16 @@ function readSource(relPath) {
   return lines;
 }
 
+/**
+ * 파일 확장자로 하이라이트 언어를 정합니다.
+ * HTML 쪽 하이라이터는 'cs' 와 'sql' 만 알고, 그 외는 색을 입히지 않습니다.
+ */
+function langOf(path = '') {
+  if (/\.(cs|csx)$/i.test(path)) return 'cs';
+  if (/\.sql$/i.test(path)) return 'sql';
+  return 'text';
+}
+
 const sources = new Map();   // path → { after: string[]|null, before: string[]|null }
 D.files.forEach(f => {
   const after  = readSource(f.afterFile);
@@ -287,8 +303,11 @@ function rowsFromPatchOnly(path, from, to) {
   return rows;
 }
 
+const langByFile = new Map(D.files.map(f => [f.path, langOf(f.path)]));
+
 let unitsWithCode = 0;
 D.units.forEach(u => {
+  u.lang = langByFile.get(u.file) || 'text';
   let rows = [];
   if (u.afterLines)       rows = rowsFromAfter(u.file, u.afterLines[0], u.afterLines[1]);
   if (!rows.length && u.beforeLines) rows = rowsFromBefore(u.file, u.beforeLines[0], u.beforeLines[1]);
@@ -297,8 +316,9 @@ D.units.forEach(u => {
   if (rows.length) unitsWithCode++;
 });
 
-/* 파일 원문 임베드 (접이식) */
+/* 파일 원문 임베드 (접이식) + 하이라이트 언어 */
 D.files.forEach(f => {
+  f.lang = langOf(f.path);
   const src = (sources.get(f.path) || {}).after;
   if (!src) { f.lines = []; return; }
   const mk = markOf(f.path);
