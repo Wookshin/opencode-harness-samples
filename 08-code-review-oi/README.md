@@ -47,12 +47,24 @@ C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 여섯입니다.
 
 | Phase | 담당 | 패턴 | 하는 일 | 모델 |
 |---|---|---|---|---|
-| 1 | `diff-scoper` | 파이프라인 | 변경분·원문 수집, **변경단위(L1, L2 …) 확정** | 저렴 |
-| 2 | `review-refactor` | **팬아웃** | 명명 규칙 (`naming-rules.md`) | 저렴 |
+| 1 | `diff-scoper` | 파이프라인 | 변경분·원문 수집, **변경단위(L1, L2 …) 확정** | **고가** |
+| 2 | `review-refactor` | **팬아웃** | 명명 규칙 (`naming-rules.md`) | 무난 |
 | 2 | `review-feature` | **팬아웃** | 로직·예외·Manager 규범 (`manager-patterns.md`) | 무난 |
 | 2 | `review-sql` | **팬아웃** | DPICALL 본문 조회, 바인딩·인덱스 (`read-sql.md`) | **고가** |
 | 3 | `review-verifier` | **생성-검증** | 지적을 원문과 대조해 오탐 반려 | **고가** |
-| 4 | `report-builder` | 파이프라인 | findings.json → 스크립트 → HTML | 저렴 |
+| 4 | `report-builder` | 파이프라인 | findings.json → 스크립트 → HTML | 무난 |
+
+**이 하네스만 저렴 등급을 쓰지 않습니다.** 01~07 은 기계적인 자리에 저렴 모델을 배치해
+비용 계층을 보여주는 것이 목적이지만, 08 은 실제 PR 을 보고 팀 회의 자료를 만듭니다.
+**틀린 리포트의 비용이 모델 비용보다 훨씬 큽니다.**
+
+고가를 준 세 자리는 각각 이유가 있습니다.
+
+| 자리 | 틀리면 |
+|---|---|
+| `diff-scoper` | 변경 유형(신규/변경/이름변경)을 여기서 확정합니다. 틀리면 **뒤의 세 리뷰어가 전부 틀린 것을 봅니다** |
+| `review-sql` | 운영 DB 로 나가는 쿼리입니다. 잘못 통과시키는 비용이 가장 큽니다 |
+| `review-verifier` | 오탐을 놓치면 **회의 시간이 통째로 날아갑니다** |
 
 `sample/` 의 변경분에는 **세 관점에 각각 걸리는 결함**이 일부러 심어져 있습니다.
 그리고 검증 단계에서 반려되도록 만든 **틀린 지적 3건**도 `sample/expected-findings.json` 에 들어 있습니다.
@@ -255,16 +267,16 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 
 ```
 08-code-review-oi/
-├── opencode.jsonc                       전역 edit: deny — 아무도 소스를 못 고침
+├── opencode.jsonc                       전역 edit: deny · 저렴 등급 미사용 (무난/고가만)
 ├── .opencode/
 │   ├── agents/
 │   │   ├── review-lead.md               오케스트레이터 (primary) ← 게이트·동시 호출 지시
-│   │   ├── diff-scoper.md               Phase 1 · 변경단위 확정 (저렴)
-│   │   ├── review-refactor.md           Phase 2 · 명명 규칙 (저렴)
+│   │   ├── diff-scoper.md               Phase 1 · 변경단위 확정 (고가) ← 틀리면 뒤가 전부 틀어짐
+│   │   ├── review-refactor.md           Phase 2 · 명명 규칙 (무난)
 │   │   ├── review-feature.md            Phase 2 · 로직·Manager 규범 (무난)
 │   │   ├── review-sql.md                Phase 2 · SQL (고가) ← 유일하게 저장소 밖을 봄
 │   │   ├── review-verifier.md           Phase 3 · 지적 검증 (고가)
-│   │   └── report-builder.md            Phase 4 · findings.json (저렴)
+│   │   └── report-builder.md            Phase 4 · findings.json (무난)
 │   ├── commands/
 │   │   ├── review-pr.md                 /review-pr <번호>   전체 사이클
 │   │   ├── scope-only.md                /scope-only <번호>  Phase 1 만

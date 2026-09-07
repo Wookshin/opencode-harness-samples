@@ -1,7 +1,7 @@
 ---
 description: PR 번호를 받아 변경분과 파일 원문을 지정된 작업 폴더에 내려받고, 변경분을 논리적 변경단위(L1, L2 …)로 쪼개 표로 확정합니다. 리뷰는 하지 않습니다.
 mode: subagent
-model: codemate/CodeLLMImage
+model: codemate/CodeLLMMax
 temperature: 0
 permission:
   edit:

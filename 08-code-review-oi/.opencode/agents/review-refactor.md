@@ -1,7 +1,7 @@
 ---
 description: 리팩토링 관점 리뷰어. 함수명·VO명·변수명·상수·this 사용 등 팀 명명 규칙 위반을 봅니다. 로직과 SQL은 보지 않습니다.
 mode: subagent
-model: codemate/CodeLLMImage
+model: codemate/CodeLLMPro
 temperature: 0.1
 permission:
   edit:

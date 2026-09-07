@@ -1,7 +1,7 @@
 ---
 description: 리뷰 결과와 검증 판정을 findings.json 으로 정리하고 빌드 스크립트를 돌려 팀 오프라인 리뷰용 단일 HTML 을 만듭니다. HTML 을 직접 쓰지 않습니다.
 mode: subagent
-model: codemate/CodeLLMImage
+model: codemate/CodeLLMPro
 temperature: 0
 permission:
   edit:
