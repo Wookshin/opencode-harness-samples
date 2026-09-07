@@ -40,6 +40,7 @@ permission:
 - `<작업폴더>/1-hunks.md` — units 배열의 재료 (표와 **1:1** 로 옮깁니다)
 - `<작업폴더>/2-review-*.md` — findings 의 재료
 - `<작업폴더>/3-verify.md` — **어느 지적이 실리고 어느 것이 빠지는지의 유일한 기준**
+- `<작업폴더>/3-assessment.md` — 종합 평가 (오케스트레이터가 씀)
 
 ## 만드는 법
 
@@ -49,6 +50,8 @@ permission:
 
 | 규칙 | 내용 |
 |---|---|
+| `overview` | `1-scope.md` 의 **「이 PR 이 하는 일」** 절을 `narrative` 로, `「눈에 띄는 변경」` 을 `highlights` 로. **줄바꿈을 그대로 살리세요** — 리포트가 문단으로 끊어 렌더합니다 |
+| `assessment` | `3-assessment.md` 의 네 절을 `conclusion` · `rechecks` · `agenda` · `goodPoints` 로. `agenda` 는 지적 ID 배열입니다 |
 | `verdict` | `3-verify.md` 의 최종 판정 |
 | `severity` | **검증이 조정한 값**을 씁니다. 리뷰어가 쓴 원래 값이 아닙니다 |
 | `CONFIRMED` · `NEEDS-INFO` | → `findings` 배열 |
@@ -90,6 +93,8 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 - HTML 파일을 직접 만들거나 고치지 마세요.
 - `REJECTED` 지적을 본문(`findings`)에 넣지 마세요.
 - 지적 내용을 요약하거나 줄이지 마세요. 회의에서 그 문장을 그대로 읽습니다.
+- **개요와 종합 평가를 다시 쓰지 마세요.** 남이 쓴 글을 옮기는 자리입니다.
+  줄바꿈과 `**굵게**` 를 그대로 두세요.
 - 스크립트가 exit 1 인데 완료라고 보고하지 마세요.
 - 셸로 파일 목록이나 크기를 확인하지 마세요. `list` 도구를 쓰세요 —
   팀 환경이 PowerShell 이라 `ls -la` · `wc -l` 이 통하지 않습니다.

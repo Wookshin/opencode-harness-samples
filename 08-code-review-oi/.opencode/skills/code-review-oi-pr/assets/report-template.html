@@ -108,6 +108,48 @@ table.mini th{color:var(--muted);font-weight:600;font-size:12px}
 table.mini td.n{text-align:right;font-variant-numeric:tabular-nums}
 .zero{color:var(--muted)}
 
+/* ── 산문 타이포그래피 ──────────────────────────── */
+/* 한글은 단어 중간에서 끊으면 급격히 읽기 어려워집니다. keep-all 이 핵심. */
+.prose{max-width:66ch;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}
+.prose p{margin:0 0 .7em}
+.prose p:last-child{margin-bottom:0}
+.prose strong{font-weight:700}
+.prose ul{margin:.4em 0 0;padding-left:1.15em}
+.prose li{margin:.3em 0;line-height:1.75}
+
+/* ── 개요 · 종합 평가 ───────────────────────────── */
+.band{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;align-items:start}
+@media (max-width:1000px){.band{grid-template-columns:1fr}}
+.band>section{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.band>section>h2{margin:0;padding:11px 16px;font-size:14px;background:var(--code);
+  border-bottom:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.band .body{padding:14px 16px}
+.band .prose{max-width:none}
+.band h3{margin:14px 0 6px;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em}
+.band h3:first-child{margin-top:0}
+.stat{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;padding-top:11px;
+  border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+.stat b{color:var(--ink);font-size:14px;font-variant-numeric:tabular-nums}
+.agenda{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.agenda button{font-family:ui-monospace,monospace;font-size:12px;font-weight:700;padding:3px 9px;
+  border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--accent);cursor:pointer}
+.agenda button:hover{background:var(--accent-soft);border-color:var(--accent)}
+.agenda .ord{color:var(--muted);font-weight:400;margin-right:3px}
+
+/* ── 유형 범례 ──────────────────────────────────── */
+details.legend{border-top:1px solid var(--line);background:var(--code)}
+details.legend>summary{cursor:pointer;font-size:12.5px;color:var(--muted);padding:8px 16px;list-style:none}
+details.legend>summary::-webkit-details-marker{display:none}
+details.legend>summary::before{content:"▸ ";font-size:11px}
+details.legend[open]>summary::before{content:"▾ "}
+details.legend>summary:hover{color:var(--accent)}
+details.legend .inner{padding:0 16px 12px}
+details.legend table{width:100%;border-collapse:collapse;font-size:12.5px}
+details.legend td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+details.legend td:first-child{width:1%;white-space:nowrap}
+details.legend tr:last-child td{border-bottom:0}
+
 /* ── 요약 섹션 (체크리스트 · 변경 요약) ─────────── */
 section.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;
   margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
@@ -159,6 +201,8 @@ section.file{background:var(--panel);border:1px solid var(--line);border-radius:
 .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--accent-soft);
   color:var(--accent);white-space:nowrap;letter-spacing:.02em}
 .tag.p1{background:var(--major-bg);color:var(--major)}
+/* '단순' 은 변경 유형이 아니라 "판단이 필요 없다"는 표시 — 모양을 다르게 둡니다 */
+.tag.plain{background:transparent;color:var(--muted);border:1px dashed var(--line);font-weight:600}
 .unit{border-top:1px solid var(--line);padding:14px 16px}
 .unit:first-of-type{border-top:none}
 .unit>h3{margin:0 0 10px;font-size:14px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
@@ -217,8 +261,8 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .fid{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);font-weight:700}
 .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
 .needsinfo{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--major-bg);color:var(--major)}
-.finding dl{margin:0;display:grid;grid-template-columns:78px 1fr;gap:5px 12px;align-items:start}
-.finding dt{font-size:12px;color:var(--muted);font-weight:600;padding-top:2px}
+.finding dl{margin:0;display:grid;grid-template-columns:78px minmax(0,1fr);gap:10px 14px;align-items:start}
+.finding dt{font-size:12px;color:var(--muted);font-weight:600;padding-top:3px;word-break:keep-all}
 .finding dd{margin:0;min-width:0}
 .finding dd pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:6px;
   padding:8px 10px;overflow-x:auto;font-size:12.5px;line-height:1.5}
@@ -276,7 +320,10 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   .filters,.btns,nav.toc,.decide textarea,.seecode{display:none!important}
   .layout{display:block}
   header{border-bottom:2px solid #000}
+  .band{display:block}
+  .band>section{break-inside:avoid;page-break-inside:avoid;margin-bottom:12px}
   section.panel{break-inside:auto;page-break-inside:auto}
+  details.legend{display:none}
   section.file{break-inside:auto;page-break-inside:auto;border:1px solid #bbb;box-shadow:none}
   .unit{break-inside:avoid;page-break-inside:avoid}
   .finding{break-inside:avoid;page-break-inside:avoid}
@@ -337,6 +384,11 @@ h2.sec{font-size:16px;margin:26px 0 12px}
     <input type="search" id="q" placeholder="지적 내용 · 파일 · 근거 검색">
   </div>
 
+  <div class="band">
+    <section id="overview"><h2>전체 변경사항 요약</h2><div class="body" id="ov-body"></div></section>
+    <section id="assessment"><h2>종합 평가</h2><div class="body" id="as-body"></div></section>
+  </div>
+
   <div class="cards" id="dash"></div>
 
   <section class="panel" id="checklist">
@@ -346,6 +398,10 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 
   <section class="panel" id="changes">
     <h2>변경 요약 <span class="note">이 PR 이 무엇을 바꿨는지. 행을 누르면 해당 코드로 이동합니다</span></h2>
+    <details class="legend">
+      <summary>변경 유형이 뭘 뜻하나요?</summary>
+      <div class="inner"><table id="legend-table"></table></div>
+    </details>
     <div class="tblwrap"><table class="list" id="ch-table"></table></div>
   </section>
 
@@ -510,6 +566,71 @@ document.getElementById('h-sub').innerHTML = subs.join(' &nbsp;·&nbsp; ') +
 var vd = document.getElementById('h-verdict');
 vd.textContent = m.verdict || '—'; vd.className = 'verdict ' + (m.verdict || '');
 
+/* ── 산문 렌더 ───────────────────────────────── */
+/* 줄바꿈을 문단으로 끊고, **굵게** 만 최소로 살립니다. 한 덩어리 글은 읽히지 않습니다. */
+function prose(txt){
+  return String(txt == null ? '' : txt).split(/\n\s*\n|\n/).filter(function(l){ return l.trim(); })
+    .map(function(l){
+      return '<p>' + esc(l.trim()).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') + '</p>';
+    }).join('');
+}
+function bullets(list){
+  if (!list || !list.length) return '';
+  return '<ul>' + list.map(function(t){
+    return '<li>' + esc(t).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') + '</li>';
+  }).join('') + '</ul>';
+}
+
+/* ── 개요 · 종합 평가 (결론부터) ─────────────── */
+(function(){
+  var ov = D.overview || {}, as = D.assessment || {};
+
+  var oh = '<div class="prose">' + prose(ov.narrative) + '</div>';
+  if (ov.highlights && ov.highlights.length)
+    oh += '<h3>눈에 띄는 변경</h3><div class="prose">' + bullets(ov.highlights) + '</div>';
+  oh += '<div class="stat">' +
+        '<span>변경 파일 <b>' + D.files.length + '</b></span>' +
+        '<span>변경단위 <b>' + D.units.length + '</b></span>' +
+        '<span>지적 <b>' + D.findings.length + '</b></span>' +
+        '<span>BLOCKER <b>' + D.findings.filter(function(f){return f.severity==='BLOCKER';}).length + '</b></span>' +
+        '<span>SQL <b>' + D.sql.length + '</b></span></div>';
+  document.getElementById('ov-body').innerHTML = oh;
+
+  var ah = '<div class="prose">' + prose(as.conclusion) + '</div>';
+  if (as.rechecks && as.rechecks.length)
+    ah += '<h3>재확인 필요사항</h3><div class="prose">' + bullets(as.rechecks) + '</div>';
+  if (as.goodPoints && as.goodPoints.length)
+    ah += '<h3>잘된 점</h3><div class="prose">' + bullets(as.goodPoints) + '</div>';
+  if (as.agenda && as.agenda.length) {
+    ah += '<h3>회의 진행 순서</h3><div class="agenda">' + as.agenda.map(function(id, i){
+      return '<button data-go="f-' + esc(id) + '"><span class="ord">' + (i+1) + '.</span>' + esc(id) + '</button>';
+    }).join('') + '</div>';
+  }
+  document.getElementById('as-body').innerHTML = ah;
+
+  document.querySelector('#assessment h2').insertAdjacentHTML('beforeend',
+    '<span class="verdict ' + (m.verdict||'') + '" style="font-size:13px;padding:3px 10px">' +
+    (m.verdict || '—') + '</span>');
+
+  document.querySelectorAll('.agenda button').forEach(function(b){
+    b.addEventListener('click', function(){ jump(b.dataset.go); });
+  });
+})();
+
+/* ── 유형 범례 ───────────────────────────────── */
+document.getElementById('legend-table').innerHTML = [
+  ['신규',     'before 원문에 <b>없던</b> 코드', ''],
+  ['변경',     '있던 것이 고쳐짐', '<b>리네이밍·시그니처 변경도 여기</b>입니다'],
+  ['삭제',     'after 에 없어짐', ''],
+  ['이름변경', '이름만 바뀌고 내용은 같음', '내용도 바뀌었으면 <b>변경</b>'],
+  ['이동',     '위치만 바뀜 (다른 파일·다른 위치)', '내용도 바뀌었으면 <b>변경</b>'],
+  ['단순',     '<b>유형이 아닙니다.</b> 판단이 필요 없는 변경이라는 표시', '변수명 정리·미사용 코드 삭제 등']
+].map(function(r){
+  var cls = r[0] === '단순' ? 'tag plain' : 'tag';
+  return '<tr><td><span class="' + cls + '">' + r[0] + '</span></td><td>' + r[1] +
+         (r[2] ? ' <span style="color:var(--muted)">— ' + r[2] + '</span>' : '') + '</td></tr>';
+}).join('');
+
 /* ── 대시보드 ────────────────────────────────── */
 var counts = {}, tot = {BLOCKER:0,MAJOR:0,MINOR:0};
 Object.keys(PERSP).forEach(function(p){ counts[p] = {BLOCKER:0,MAJOR:0,MINOR:0}; });
@@ -528,7 +649,7 @@ D.findings.forEach(function(f){
   var frows = D.files.map(function(f){
     return '<tr><td style="word-break:break-all">' + esc(f.path.split('/').pop()) +
       (f.priority === 1 ? ' <span class="tag p1">우선</span>' : '') +
-      '</td><td>' + esc(f.changeType) + '</td><td class="n">' + (byFile[f.path]||0) + '</td></tr>';
+      '</td><td>' + esc(f.kindLabel || f.changeType) + '</td><td class="n">' + (byFile[f.path]||0) + '</td></tr>';
   }).join('');
   document.getElementById('dash').innerHTML =
     '<div class="card"><h3>관점 × 심각도</h3><table class="mini"><tr><th>관점</th>' +
@@ -624,7 +745,7 @@ var sorted = D.findings.slice().sort(function(a,b){
         '<td class="nw"><b style="color:var(--accent)">' + esc(u.id) + '</b></td>' +
         '<td class="nw loc">' + esc(file.path.split('/').pop()) +
           (file.priority === 1 ? ' <span class="tag p1">우선</span>' : '') + '</td>' +
-        '<td class="nw"><span class="tag">' + esc(u.kind) + '</span></td>' +
+        '<td class="nw"><span class="tag">' + esc(u.kindLabel || u.kind) + '</span></td>' +
         '<td class="t">' + esc(u.summary) + '</td>' +
         '<td class="nw hitn">' + badge + '</td></tr>';
     });
@@ -633,7 +754,7 @@ var sorted = D.findings.slice().sort(function(a,b){
     var bad = c.issue && c.issue !== '없음';
     html += '<tr data-jump="unit-' + esc(c.unitId) + '" class="ch-row">' +
       '<td class="nw">' + esc(c.unitId) + '</td><td class="nw loc">—</td>' +
-      '<td class="nw"><span class="tag">단순</span></td>' +
+      '<td class="nw"><span class="tag plain">단순</span></td>' +
       '<td class="t">' + esc(c.content) + '</td>' +
       '<td class="nw hitn">' + (bad ? '<span class="b">' + esc(c.issue) + '</span>' : '<span class="none">이상 없음</span>') +
       '</td></tr>';
@@ -676,12 +797,12 @@ function findingCard(f){
   var d = store[f.id] || {}, lang = f.lang || 'cs';
   var dl = '';
   function row(label, html){ dl += '<dt>' + label + '</dt><dd>' + html + '</dd>'; }
-  row('문제', esc(f.problem));
+  row('문제', '<div class="prose">' + prose(f.problem) + '</div>');
   row('근거', '<b>' + esc(f.basis) + '</b>');
   if (f.before) row('변경 전', '<pre class="was">' + hlBlock(f.before, lang) + '</pre>');
   if (f.after)  row('변경 후', '<pre class="now">' + hlBlock(f.after, lang) + '</pre>');
   if (f.suggestion) row('개선', '<pre>' + hlBlock(f.suggestion, lang) + '</pre>');
-  if (f.checkpoints) row('점검', esc(f.checkpoints));
+  if (f.checkpoints) row('점검', '<div class="prose">' + prose(f.checkpoints) + '</div>');
 
   var opts = [['agree','합의'],['hold','보류'],['deny','반려']].map(function(o){
     return '<label class="' + o[0] + '"><input type="radio" name="dec-' + esc(f.id) + '" value="' +
@@ -739,7 +860,7 @@ filesSorted.forEach(function(file){
   var lang = file.lang || 'text';
   var sec = el('<section class="file" id="file-' + esc(cssId(file.path)) + '"></section>');
   sec.appendChild(el('<h2>' + esc(file.path) +
-    '<span class="tag' + (file.priority === 1 ? ' p1' : '') + '">' + esc(file.changeType) + '</span>' +
+    '<span class="tag' + (file.priority === 1 ? ' p1' : '') + '">' + esc(file.kindLabel || file.changeType) + '</span>' +
     (file.renamedFrom ? '<span class="loc">← ' + esc(file.renamedFrom) + '</span>' : '') +
     (file.hasSql ? '<span class="tag">SQL</span>' : '') + '</h2>'));
 
@@ -754,7 +875,7 @@ filesSorted.forEach(function(file){
     var rng = u.afterLines ? ('after ' + u.afterLines[0] + '–' + u.afterLines[1])
             : (u.beforeLines ? ('before ' + u.beforeLines[0] + '–' + u.beforeLines[1]) : '');
     box.appendChild(el('<h3><span class="uid">' + esc(u.id) + '</span>' +
-      '<span class="tag">' + esc(u.kind) + '</span>' +
+      '<span class="tag">' + esc(u.kindLabel || u.kind) + '</span>' +
       '<span class="sum">' + esc(u.summary) + '</span>' +
       '<span class="rng">' + esc(rng) + '</span></h3>'));
     var fold = foldedCode(u.rows, fs.map(function(f){ return f.line; }), u.lang || lang, '변경 코드 보기');

@@ -49,10 +49,28 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
     "reviewers": { "refactor": "PASS", "feature": "FAIL", "sql": "FAIL" }
   },
 
+  "overview": {                       // 필수 — 리포트 맨 위에 실립니다
+    "narrative": "이 PR 은 EDS 반출 확정을 단건에서 다건으로 바꿉니다.\n확정 전에 …",
+    // ↑ 3~5줄. 줄바꿈(\n)을 그대로 두세요 — 리포트가 문단으로 끊어 렌더합니다.
+    //   `**굵게**` 를 쓸 수 있습니다. 출처: 1-scope.md 의 「이 PR 이 하는 일」
+    "highlights": [                   // 선택 — 2~4개
+      "Confirm() 이 선택 목록 반복 처리로 전면 재작성됨 (L5)"
+    ]
+  },
+
+  "assessment": {                     // 필수 — 판정 배지 옆, 개요 오른쪽에 실립니다
+    "conclusion": "**이대로 병합하면 안 됩니다.**\n가장 큰 문제는 …",  // 필수. 3~5줄
+    "rechecks":   ["lot.selectMcLotWithLine 등록 여부와 배포 순서 (S003)"],  // 없으면 []
+    "agenda":     ["R001", "F001", "S003"],   // 회의에서 볼 순서. findings[].id 여야 합니다
+    "goodPoints": ["선택 행 수집을 별도 함수로 분리한 것"]                  // 선택
+  },
+  // 출처: 3-assessment.md (오케스트레이터가 씁니다)
+
   "files": [                            // 필수. 변경된 파일. priority 오름차순으로 표시됩니다
     {
       "path":       "YOEDSMOV/YOEDSMOV.xaml.cs",   // 필수. 저장소 기준 경로
-      "changeType": "modified",         // 필수. added | modified | renamed | moved | deleted
+      "changeType": "변경",              // 필수. 신규 | 변경 | 삭제 | 이름변경 | 이동
+                                        //   (added/modified/deleted/renamed/moved 도 받아 한글로 바꿉니다)
       "priority":   1,                  // 필수. .xaml.cs = 1, 그 외 = 2
       "hasSql":     false,
       "renamedFrom": null,              // renamed / moved 일 때만
@@ -65,7 +83,7 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
     {
       "id":          "L1",              // 필수
       "file":        "YOEDSMOV/YOEDSMOV.xaml.cs",  // 필수. files[].path 중 하나
-      "kind":        "신규",             // 필수. 신규 | 변경 | 삭제 | 이름변경 | 이동
+      "kind":        "신규",             // 필수. 신규 | 변경 | 삭제 | 이름변경 | 이동 (영문도 허용)
       "afterLines":  [210, 248],        // after 원문 기준 [시작, 끝]. 삭제면 null
       "beforeLines": null,              // before 원문 기준. 신규면 null
       "summary":     "반출 확정 전 Lot 상태 검사 추가"   // 필수
@@ -127,16 +145,35 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 
 | 주의 | 이유 |
 |---|---|
+| `overview.narrative` · `assessment.conclusion` 은 **필수** | 없으면 exit 1. 회의 자료의 첫 화면이 비어 버립니다 |
+| 개요·평가의 **줄바꿈을 살린다** | 리포트가 `\n` 을 문단 경계로 씁니다. 한 줄로 합치면 벽처럼 보입니다 |
+| `assessment.agenda` 는 실재하는 지적 ID | 없는 ID 면 exit 1. 클릭 시 이동하는 링크가 됩니다 |
 | `REJECTED` 는 `findings` 에 넣지 않고 `rejected` 로 뺀다 | 본문에 실리면 회의에서 시간을 낭비합니다 |
 | `unitId` 는 `units[].id` 에 실재해야 한다 | 없으면 스크립트가 exit 1 |
 | `file` 은 `files[].path` 와 **글자 그대로** 같아야 한다 | 목차 연결이 끊어집니다 |
 | 코드 원문을 `problem` 에 길게 붙이지 않는다 | 원문은 스크립트가 임베드합니다 |
 | `severity` 는 검증 결과(강등 포함)를 반영한 **최종값** | 3-verify.md 가 강등한 것을 그대로 씁니다 |
 
+## 변경 유형 어휘
+
+표시는 **한글 다섯 가지**로 고정입니다. 영문(git 어휘)으로 넣어도 `build-report.py` 가 바꿔 줍니다.
+
+| 한글 | 영문 | 뜻 |
+|---|---|---|
+| `신규` | `added` | before 원문에 없던 코드 |
+| `변경` | `modified` | 있던 것이 고쳐짐 — **리네이밍·시그니처 변경도 여기** |
+| `삭제` | `deleted` | after 에 없어짐 |
+| `이름변경` | `renamed` | 이름만 바뀌고 내용은 같음 |
+| `이동` | `moved` | 위치만 바뀜 |
+
+`단순`(simpleChanges)은 **유형이 아닙니다.** "판단이 필요 없는 변경"이라는 표시라
+리포트에서 점선 칩으로 다르게 그려집니다. 리포트 안에 이 표와 같은 범례가 접이식으로 들어갑니다.
+
 ## HTML 이 제공하는 것 (회의에서 쓰는 기능)
 
 **요약이 먼저, 코드는 나중입니다.** 페이지를 열면 위에서부터 이 순서입니다.
 
+0. **전체 변경사항 요약 · 종합 평가** — 결론부터. 이 PR 이 뭘 하는지와, 그래서 어떤지
 1. **리뷰 체크리스트** — 지적 전체를 심각도 순으로 한 줄씩. BLOCKER 부터 묶여 나오고,
    각 행에 지적 한 줄 · 근거 · 위치 · 결정 상태가 있습니다. **행을 누르면 상세로 이동합니다.**
 2. **변경 요약** — 변경단위별로 "무엇이 바뀌었나"(`units[].summary`)와 지적 건수.

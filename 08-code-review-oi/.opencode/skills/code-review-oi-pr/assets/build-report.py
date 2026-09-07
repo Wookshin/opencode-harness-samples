@@ -85,7 +85,7 @@ except json.JSONDecodeError as e:
 # ── 스키마 검증 ─────────────────────────────────────────────────────────
 SEVERITIES = ["BLOCKER", "MAJOR", "MINOR"]
 PERSPECTIVES = ["refactor", "feature", "sql"]
-CHANGE_TYPES = ["added", "modified", "renamed", "moved", "deleted"]
+# 변경 유형은 KIND_KO 로 정규화합니다 (영문·한글 모두 허용)
 VERDICTS = ["CONFIRMED", "NEEDS-INFO"]
 
 
@@ -123,6 +123,47 @@ for key in ("files", "units", "findings", "simpleChanges", "sql", "rejected", "u
 if not D["files"]:
     bad("files 가 비어 있습니다 — 변경된 파일이 하나는 있어야 합니다")
 
+# ── 변경 유형 어휘 통일 ─────────────────────────────────────────────
+# collect.py 는 git 어휘(영문)로, diff-scoper 는 한글로 씁니다.
+# 리포트 표시는 한글 5종으로 고정하고, 정규화는 여기 한 곳에서만 합니다.
+KIND_KO = {
+    "added": "신규", "modified": "변경", "deleted": "삭제",
+    "renamed": "이름변경", "moved": "이동",
+    "신규": "신규", "변경": "변경", "삭제": "삭제", "이름변경": "이름변경", "이동": "이동",
+}
+
+
+def kind_label(v, where, field):
+    """영문·한글 어느 쪽으로 들어와도 한글 라벨로 돌려줍니다."""
+    if not v:
+        return ""
+    label = KIND_KO.get(str(v).strip())
+    if label is None:
+        bad(f'{where}: "{field}" 는 신규 | 변경 | 삭제 | 이름변경 | 이동 '
+            f"(또는 added/modified/deleted/renamed/moved) 중 하나여야 합니다 (받은 값: {v})")
+        return str(v)
+    return label
+
+
+# ── 개요 (전체 변경사항 요약) ───────────────────────────────────────
+ov = D.get("overview")
+if not isinstance(ov, dict):
+    bad("overview 가 없습니다 — 이 PR 이 무엇을 하는지 3~5줄로 적으세요 "
+        "(diff-scoper 의 1-scope.md 「이 PR 이 하는 일」 절)")
+    D["overview"] = ov = {}
+need(ov, "narrative", "overview")
+ov["highlights"] = arr(ov.get("highlights"), "overview.highlights")
+
+# ── 종합 평가 ───────────────────────────────────────────────────────
+asm = D.get("assessment")
+if not isinstance(asm, dict):
+    bad("assessment 가 없습니다 — 최종 의견과 재확인 필요사항을 적으세요 "
+        "(review-lead 의 3-assessment.md)")
+    D["assessment"] = asm = {}
+need(asm, "conclusion", "assessment")
+for k in ("rechecks", "agenda", "goodPoints"):
+    asm[k] = arr(asm.get(k), f"assessment.{k}")
+
 
 def lang_of(path=""):
     """파일 확장자로 하이라이트 언어를 정합니다.
@@ -140,7 +181,7 @@ for i, f in enumerate(D["files"]):
     w = f"files[{i}]"
     need(f, "path", w)
     need(f, "changeType", w)
-    one_of(f, "changeType", CHANGE_TYPES, w)
+    f["kindLabel"] = kind_label(f.get("changeType"), w, "changeType")
     if f.get("priority") is None:
         f["priority"] = 1 if (f.get("path") or "").lower().endswith(".xaml.cs") else 2
     if f.get("path"):
@@ -151,6 +192,7 @@ for i, u in enumerate(D["units"]):
     w = f"units[{i}]"
     for k in ("id", "file", "kind", "summary"):
         need(u, k, w)
+    u["kindLabel"] = kind_label(u.get("kind"), w, "kind")
     if u.get("id"):
         if u["id"] in unit_ids:
             bad(f'{w}: 변경단위 ID "{u["id"]}" 가 중복됩니다')
@@ -194,6 +236,10 @@ for i, f in enumerate(D["findings"]):
         bad(f'{w}: file "{f["file"]}" 이 files[].path 에 없습니다')
     if f.get("line") is not None and not (isinstance(f["line"], int) and not isinstance(f["line"], bool)):
         bad(f"{w}: line 은 정수여야 합니다")
+
+for i, a in enumerate(D["assessment"]["agenda"]):
+    if a not in seen_ids:
+        bad(f'assessment.agenda[{i}]: "{a}" 가 findings[].id 에 없습니다')
 
 for i, s in enumerate(D["sql"]):
     w = f"sql[{i}]"

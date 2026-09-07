@@ -18,6 +18,8 @@ _workspace/
 │   ├── src/after/<경로>  ·  src/before/<경로>
 │   ├── 2-review-refactor.md · 2-review-feature.md · 2-review-sql.md
 │   ├── 3-verify.md
+│   ├── 3-assessment.md          종합 평가 (오케스트레이터가 직접 씀)
+│   ├── 3-assessment.md
 │   ├── 4-findings.json
 │   └── review-1234.html         ★ 회의에서 여는 파일
 ├── pr-5678/                     ← 세션 B 가 쓰는 곳. A 와 절대 섞이지 않습니다
@@ -47,6 +49,7 @@ _workspace/
 | `2-review-feature.md` | review-feature | 기능 관점 지적 (`F###`) |
 | `2-review-sql.md` | review-sql | SQL 관점 지적 (`S###`) + SQL 본문 (`Q###`) |
 | `3-verify.md` | review-verifier | 지적별 CONFIRMED / NEEDS-INFO / REJECTED |
+| `3-assessment.md` | **오케스트레이터** | 종합 평가 — 최종 의견·재확인 필요사항·회의 진행 순서 |
 | `4-findings.json` | report-builder | HTML 입력 (스키마 고정) |
 | `review-<PR번호>.html` | 빌드 스크립트 | ★ **회의에서 여는 파일** |
 
