@@ -16,7 +16,8 @@
   --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
-  --ic-bg:#eef1f6; --ic-ink:#8250df; --ic-line:#dfe3ea;
+  --ic-bg:#eef1f6; --ic-ink:#39414d; --ic-line:#dce1e8;
+  --ic-call:#8250df; --ic-sql:#0a7c6b; --ic-ref:#1d4ed8;
   color-scheme:light;
 }
 
@@ -33,7 +34,8 @@
   --code:#12151a; --shadow:none;
   --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
   --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
-  --ic-bg:#22272e; --ic-ink:#e2b8ff; --ic-line:#333a43;
+  --ic-bg:#22272e; --ic-ink:#c6cdd6; --ic-line:#333a43;
+  --ic-call:#e2b8ff; --ic-sql:#5ed4bd; --ic-ref:#8ab4ff;
   color-scheme:dark;
   }
 }
@@ -50,7 +52,8 @@
   --code:#12151a; --shadow:none;
   --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
   --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
-  --ic-bg:#22272e; --ic-ink:#e2b8ff; --ic-line:#333a43;
+  --ic-bg:#22272e; --ic-ink:#c6cdd6; --ic-line:#333a43;
+  --ic-call:#e2b8ff; --ic-sql:#5ed4bd; --ic-ref:#8ab4ff;
   color-scheme:dark;
 }
 :root[data-theme="light"]{
@@ -64,7 +67,8 @@
   --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
-  --ic-bg:#eef1f6; --ic-ink:#8250df; --ic-line:#dfe3ea;
+  --ic-bg:#eef1f6; --ic-ink:#39414d; --ic-line:#dce1e8;
+  --ic-call:#8250df; --ic-sql:#0a7c6b; --ic-ref:#1d4ed8;
   color-scheme:light;
 }
 
@@ -120,6 +124,7 @@ table.mini td.n{text-align:right;font-variant-numeric:tabular-nums}
 /* ── 산문 타이포그래피 ──────────────────────────── */
 /* 한글은 단어 중간에서 끊으면 급격히 읽기 어려워집니다. keep-all 이 핵심. */
 .prose{max-width:66ch;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}
+.band .prose{max-width:none}   /* 폭은 바깥 칸이 정합니다 */
 .prose p{margin:0 0 .75em}
 .prose p:last-child{margin-bottom:0}
 .prose strong{font-weight:700;color:var(--ink)}
@@ -131,7 +136,15 @@ table.mini td.n{text-align:right;font-variant-numeric:tabular-nums}
 code{font-family:"D2Coding",ui-monospace,SFMono-Regular,Consolas,monospace;
   font-size:.9em;padding:1px 4px;border-radius:4px;background:var(--ic-bg);
   border:1px solid var(--ic-line);color:var(--ic-ink);white-space:nowrap}
+/* 전부 같은 색이면 눈이 미끄러집니다. 기본은 조용히 두고 세 가지에만 색을 줍니다.
+   c-call 호출·메서드 · c-sql SQL ID · c-ref 확인사항/변경단위 참조(클릭하면 이동) */
+code.c-call{color:var(--ic-call)}
+code.c-sql{color:var(--ic-sql)}
+code.c-ref{color:var(--ic-ref);font-weight:700;cursor:pointer;
+  border-color:var(--ic-ref);border-style:dashed;background:transparent}
+code.c-ref:hover{background:var(--accent-soft)}
 nav.toc code{background:transparent;border:0;padding:0;color:var(--ink);font-weight:600}
+nav.toc code.c-ref{cursor:inherit;border:0;font-weight:600;color:var(--ink)}
 table.list code,.unit>h3 code{font-size:.88em;padding:0 4px}
 
 /* ── 개요 · 종합 평가 (각각 한 줄 전체 폭) ──────── */
@@ -140,7 +153,14 @@ section.band{background:var(--panel);border:1px solid var(--line);border-radius:
 section.band>h2{margin:0;padding:12px 16px;font-size:15px;font-weight:700;background:var(--code);
   border-bottom:1px solid var(--line)}
 .band .body{padding:16px 18px}
-.band .prose{max-width:78ch}
+/* 밴드는 화면 전체 폭입니다. 글을 66ch 로 묶어 두면 오른쪽이 통째로 비어 보입니다.
+   서술은 왼쪽, 목록은 오른쪽에 놓아 폭을 실제로 쓰되, 각 칸이 알아서 적당한
+   길이가 되게 합니다. 오른쪽에 놓을 게 없으면 한 칸으로 두고 measure 를 지킵니다. */
+.band .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 38px;align-items:start}
+.band .cols>*{min-width:0}
+.band .cols.one{grid-template-columns:minmax(0,1fr)}
+.band .cols.one .prose{max-width:78ch}
+@media (max-width:900px){.band .cols{grid-template-columns:minmax(0,1fr);gap:0}}
 .band h3{margin:22px 0 9px;font-size:13.5px;color:var(--ink);font-weight:700;
   display:flex;align-items:center;gap:8px}
 .band h3::before{content:"";width:3px;height:15px;background:var(--accent);border-radius:2px;flex:none}
@@ -330,7 +350,8 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   --code:#f7f7f7; --shadow:none;
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
-  --ic-bg:#eef1f6; --ic-ink:#8250df; --ic-line:#dfe3ea;
+  --ic-bg:#eef1f6; --ic-ink:#39414d; --ic-line:#dce1e8;
+  --ic-call:#8250df; --ic-sql:#0a7c6b; --ic-ref:#1d4ed8;
   color-scheme:light;
   }
   body{font-size:10.5pt}
@@ -422,9 +443,36 @@ function el(html){ var t=document.createElement('template'); t.innerHTML=html.tr
 
 /* 사람이 쓴 문장에 최소한의 마크업만 살립니다.
    `식별자` → <code> · **강조** → <strong>. 코드 이름이 본문에 섞이면 눈이 미끄러집니다. */
+/* 백틱 안에 오는 것은 성격이 제각각입니다 — 호출, SQL ID, 확인사항 번호, 타입, 값.
+   전부 한 색으로 칠하면 문장이 얼룩덜룩해지기만 하고 아무것도 구분되지 않습니다.
+   기본은 조용한 먹색으로 두고, 성격이 분명한 셋에만 색을 줍니다. */
+function chipClass(c){
+  if (/^(?:[RFS]\d{2,}|L\d+)$/.test(c))            return 'c-ref';   // R001 · F003 · L2
+  if (/\w\(/.test(c))                              return 'c-call';  // CheckLot() · _sql.Init()
+  if (/^[a-z]\w*\.[A-Za-z]\w*$/.test(c))           return 'c-sql';   // lot.selectMcLot
+  return '';
+}
+/* 참조 칩이 가리킬 곳이 실제로 있을 때만 클릭 대상으로 만듭니다. 죽은 링크는 안 만듭니다. */
+var REFS = null;
+function refTarget(c){
+  if (!REFS) {
+    REFS = {};
+    (D.findings || []).forEach(function(f){ REFS[f.id] = 'f-' + f.id; });
+    (D.units    || []).forEach(function(u){ REFS[u.id] = 'unit-' + u.id; });
+  }
+  return REFS[c] || null;
+}
 function inline(t){
   return esc(t)
-    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/`([^`\n]+)`/g, function(_, c){
+      var k = chipClass(c);
+      if (k === 'c-ref') {
+        var to = refTarget(c);
+        return to ? '<code class="c-ref" data-to="' + to + '" title="' + c + ' 로 이동">' + c + '</code>'
+                  : '<code>' + c + '</code>';
+      }
+      return '<code' + (k ? ' class="' + k + '"' : '') + '>' + c + '</code>';
+    })
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
 }
 
@@ -579,9 +627,15 @@ function bullets(list){
 (function(){
   var ov = D.overview || {}, as = D.assessment || {};
 
-  var oh = '<div class="prose">' + prose(ov.narrative) + '</div>';
-  if (ov.highlights && ov.highlights.length)
-    oh += '<h3>눈에 띄는 변경</h3><div class="prose">' + bullets(ov.highlights) + '</div>';
+  /* 서술은 왼쪽, 목록은 오른쪽. 오른쪽이 비면 한 칸으로 둡니다. */
+  function cols(left, right){
+    return '<div class="cols' + (right ? '' : ' one') + '">' +
+           '<div>' + left + '</div>' + (right ? '<div>' + right + '</div>' : '') + '</div>';
+  }
+
+  var oR = (ov.highlights && ov.highlights.length)
+    ? '<h3>눈에 띄는 변경</h3><div class="prose">' + bullets(ov.highlights) + '</div>' : '';
+  var oh = cols('<div class="prose">' + prose(ov.narrative) + '</div>', oR);
   oh += '<div class="stat">' +
         '<span>변경 파일 <b>' + D.files.length + '</b></span>' +
         '<span>변경단위 <b>' + D.units.length + '</b></span>' +
@@ -590,12 +644,13 @@ function bullets(list){
         '<span>SQL <b>' + D.sql.length + '</b></span></div>';
   document.getElementById('ov-body').innerHTML = oh;
 
-  var ah = '<div class="prose">' + prose(as.conclusion) + '</div>';
+  var aR = '';
   if (as.rechecks && as.rechecks.length)
-    ah += '<h3>재확인 필요사항</h3><div class="prose">' + bullets(as.rechecks) + '</div>';
+    aR += '<h3>재확인 필요사항</h3><div class="prose">' + bullets(as.rechecks) + '</div>';
   if (as.goodPoints && as.goodPoints.length)
-    ah += '<h3>잘된 점</h3><div class="prose">' + bullets(as.goodPoints) + '</div>';
-  document.getElementById('as-body').innerHTML = ah;
+    aR += '<h3>잘된 점</h3><div class="prose">' + bullets(as.goodPoints) + '</div>';
+  document.getElementById('as-body').innerHTML =
+    cols('<div class="prose">' + prose(as.conclusion) + '</div>', aR);
 
 })();
 
@@ -615,6 +670,10 @@ document.getElementById('legend-table').innerHTML = [
 
 
 /* ── 이동 ────────────────────────────────────── */
+document.addEventListener('click', function(e){
+  var c = e.target.closest && e.target.closest('code.c-ref[data-to]');
+  if (c) { e.preventDefault(); jump(c.getAttribute('data-to')); }
+});
 function jump(id){
   var t = document.getElementById(id);
   if (!t) return;

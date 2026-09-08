@@ -104,6 +104,7 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
       "after":       "private bool CheckLot(string lotId)",
       "suggestion":  "private bool IsValidLotStatus(string lotId)",  // 필수. 코드 조각 또는 문장
       "checkpoints": "호출부 3곳(96,142,208) 조건이 모두 뒤집혀야 합니다"
+                                        //   삭제 확인사항이면 남아 있는 사용처를 여기 적습니다
     }
   ],
 
@@ -150,6 +151,8 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 | `unitId` 는 `units[].id` 에 실재해야 한다 | 없으면 스크립트가 exit 1 |
 | `file` 은 `files[].path` 와 **글자 그대로** 같아야 한다 | 목차 연결이 끊어집니다 |
 | 코드 원문을 `problem` 에 길게 붙이지 않는다 | 원문은 스크립트가 임베드합니다 |
+| **삭제**를 지적할 땐 `after` 를 비우고 `before` 만 채운다 | 지워진 줄은 after 원문에 없습니다. `line` 도 before 기준으로 적습니다 |
+| 삭제 확인사항의 `checkpoints` 에 **남아 있는 사용처를 세어** 적는다 | 이게 없으면 "영향이 있을 수 있다"는 말이 되어 검증에서 `확인 권장` 으로 내려갑니다 |
 | `suggestion` 에 **코드든 문장이든** 자연스럽게 쓴다 | 리포트가 구분해서 코드는 코드 블록으로, 문장은 본문 글씨로 그립니다. 문장을 코드처럼 쓰면 줄바꿈이 안 돼 한 줄로 늘어납니다 |
 | `severity` 는 검증 결과(강등 포함)를 반영한 **최종값** | 3-verify.md 가 강등한 것을 그대로 씁니다 |
 

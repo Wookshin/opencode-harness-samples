@@ -339,6 +339,22 @@
       "checkpoints": "Search() 결과 DataTable 에 LOT_QTY 와 LOT_STATUS 가 이미 들어 있습니다(L2·L8). 재조회 없이 그 값을 쓸 수 있는지 확인하세요."
     },
     {
+      "id": "F006",
+      "perspective": "feature",
+      "severity": "확인 권장",
+      "verdict": "CONFIRMED",
+      "unitId": "L5",
+      "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
+      "line": 122,
+      "title": "재작성하면서 성공 메시지가 확정 건수와 무관해졌다",
+      "problem": "재작성 전에는 `Confirm()` 이 Lot 하나만 다뤘기 때문에, 122 라인에 도착했다는 것 자체가 **그 한 건이 확정됐다는 뜻**이었습니다. 반복문으로 바뀌면서 그 의미가 없어졌습니다.\n지금은 `CheckLot()` 이 전 건을 `continue` 로 걸러도 반복문을 그냥 빠져나와 \"반출 확정되었습니다.\" 를 띄웁니다. **한 건도 확정되지 않았는데 사용자는 전부 됐다고 읽습니다.**\n확정 건수를 세는 곳이 없어서, 뒤따르는 `Search()` 로 그리드를 새로 고쳐도 0건 확정과 전건 확정이 화면상 구분되지 않습니다.",
+      "basis": "C-4 (구조 변경으로 원래 성립하던 전제가 깨짐)",
+      "before": "MessageBox.Show(\"반출 확정되었습니다.\");\nSearch();",
+      "after": "MessageBox.Show(\"반출 확정되었습니다.\");\nShowLoading(false);\nSearch();",
+      "suggestion": "확정한 건수를 세어 두고, 0건이면 다른 말을 하도록 나누는 것이 좋겠습니다. 건너뛴 Lot 이 있으면 몇 건인지도 같이 알려 주면 회의에서 나올 질문이 줄어듭니다.",
+      "checkpoints": "`CheckLot()` 의 판정 방향이 뒤집혀 있다는 `R001` 과 겹치면 **전 건이 걸러지면서 성공 메시지만 뜹니다.** 둘을 같이 보세요. 건너뛴 Lot 을 세는 곳은 `src/after/` 어디에도 없습니다 — `continue` 는 118 라인 한 곳뿐이고 카운터가 붙어 있지 않습니다."
+    },
+    {
       "id": "S001",
       "perspective": "sql",
       "severity": "꼭 확인",
