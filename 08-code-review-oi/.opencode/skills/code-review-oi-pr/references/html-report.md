@@ -43,10 +43,8 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
     "url":         "https://github.com/…/pull/1234",
     "baseRef":     "develop",           // 필수
     "headRef":     "feature/YOEDSMOV-lot-validate",
-    "headSha":     "a1b2c3d",
+    "headSha":     "a1b2c3d"
     "generatedAt": "2026-09-07T14:03:00+09:00",  // 필수
-    "verdict":     "FAIL",              // 필수. PASS | FAIL
-    "reviewers": { "refactor": "PASS", "feature": "FAIL", "sql": "FAIL" }
   },
 
   "overview": {                       // 필수 — 리포트 맨 위에 실립니다
@@ -61,7 +59,6 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
   "assessment": {                     // 필수 — 판정 배지 옆, 개요 오른쪽에 실립니다
     "conclusion": "**이대로 병합하면 안 됩니다.**\n가장 큰 문제는 …",  // 필수. 3~5줄
     "rechecks":   ["lot.selectMcLotWithLine 등록 여부와 배포 순서 (S003)"],  // 없으면 []
-    "agenda":     ["R001", "F001", "S003"],   // 회의에서 볼 순서. findings[].id 여야 합니다
     "goodPoints": ["선택 행 수집을 별도 함수로 분리한 것"]                  // 선택
   },
   // 출처: 3-assessment.md (오케스트레이터가 씁니다)
@@ -94,13 +91,14 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
     {
       "id":          "R001",            // 필수. R### | F### | S###
       "perspective": "refactor",        // 필수. refactor | feature | sql
-      "severity":    "BLOCKER",         // 필수. BLOCKER | MAJOR | MINOR
+      "severity":    "꼭 확인",           // 필수. 꼭 확인 | 확인 권장 | 참고
+                                        //   (꼭 확인/확인 권장/참고 도 받아 한글로 바꿉니다)
       "verdict":     "CONFIRMED",       // 필수. CONFIRMED | NEEDS-INFO
       "unitId":      "L2",              // 필수. units[].id 중 하나
       "file":        "YOEDSMOV/YOEDSMOV.xaml.cs",  // 필수
-      "line":        96,                // 필수. after 기준 라인 (삭제 지적이면 before 기준)
+      "line":        96,                // 필수. after 기준 라인 (삭제 확인사항이면 before 기준)
       "title":       "bool 반환 함수가 Is 로 시작하지 않는다",   // 필수
-      "problem":     "…",               // 필수. BLOCKER 면 결과 시나리오 포함
+      "problem":     "…",               // 필수. `꼭 확인` 이면 결과 시나리오 포함
       "basis":       "규칙 1-4",         // 필수. 규칙/체크리스트 번호
       "before":      "private bool CheckLot(string lotId)",
       "after":       "private bool CheckLot(string lotId)",
@@ -127,7 +125,7 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
     }
   ],
 
-  "rejected": [                         // 검증에서 반려된 지적. 감사 흔적으로 남깁니다
+  "rejected": [                         // 검증에서 반려된 확인사항. 감사 흔적으로 남깁니다
     {
       "id": "F009", "perspective": "feature",
       "title": "…",
@@ -148,7 +146,6 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 | `overview.narrative` · `assessment.conclusion` 은 **필수** | 없으면 exit 1. 회의 자료의 첫 화면이 비어 버립니다 |
 | 개요·평가의 **줄바꿈을 살린다** | 리포트가 `\n` 을 문단 경계로 씁니다. 한 줄로 합치면 벽처럼 보입니다 |
 | **백틱과 `**굵게**` 를 그대로 둔다** | 리포트가 `` `식별자` `` 를 코드 칩으로, `**…**` 를 굵게 렌더합니다. 지우지 마세요 |
-| `assessment.agenda` 는 실재하는 지적 ID | 없는 ID 면 exit 1. 클릭 시 이동하는 링크가 됩니다 |
 | `REJECTED` 는 `findings` 에 넣지 않고 `rejected` 로 뺀다 | 본문에 실리면 회의에서 시간을 낭비합니다 |
 | `unitId` 는 `units[].id` 에 실재해야 한다 | 없으면 스크립트가 exit 1 |
 | `file` 은 `files[].path` 와 **글자 그대로** 같아야 한다 | 목차 연결이 끊어집니다 |
@@ -174,12 +171,10 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 
 **요약이 먼저, 코드는 나중입니다.** 페이지를 열면 위에서부터 이 순서입니다.
 
-0. **전체 변경사항 요약 · 종합 평가** — 결론부터. 이 PR 이 뭘 하는지와, 그래서 어떤지
-1. **리뷰 체크리스트** — 지적 전체를 심각도 순으로 한 줄씩. BLOCKER 부터 묶여 나오고,
-   각 행에 지적 한 줄 · 근거 · 위치 · 결정 상태가 있습니다. **행을 누르면 상세로 이동합니다.**
-2. **변경 요약** — 변경단위별로 "무엇이 바뀌었나"(`units[].summary`)와 지적 건수.
-   코드를 안 읽어도 이 PR 이 뭘 했는지 파악됩니다.
-3. 그 아래에 파일 → 변경단위 → 지적 카드. **코드 블록은 기본으로 접혀 있습니다.**
+1. **전체 변경사항 요약** — 이 PR 이 무엇을 하는지 (한 줄 전체 폭)
+2. **종합 평가** — 그래서 어디를 같이 봐야 하는지 (한 줄 전체 폭)
+3. **변경 요약** — 변경단위별 "무엇이 바뀌었나"(`units[].summary`)와 확인사항 건수
+4. 파일 → 변경단위 → 확인사항 카드. **코드 블록은 기본으로 접혀 있습니다.**
 
 그래서 `units[].summary` 와 `findings[].title` 이 이 리포트의 얼굴입니다.
 **한 줄로 읽히게 쓰세요.** 요약이 부실하면 팀원이 결국 코드를 다 읽어야 합니다.
@@ -188,14 +183,14 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 
 - **C# · SQL 문법 하이라이트** — 외부 라이브러리 없이 내장. `$@"…"` 축자 문자열 안의
   여러 줄 SQL 도 SQL 키워드로 물듭니다 (SqlManager 의 인라인 쿼리가 그대로 읽힙니다)
-- 검색 — 지적 내용·파일·근거. 체크리스트와 본문에 **동시에** 걸립니다
+- 검색 — 확인사항 내용·파일·근거. 체크리스트와 본문에 **동시에** 걸립니다
 - **보기 전환** — 코드 변경을 `위아래`(통합) 로 볼지 `좌우`(나란히) 로 볼지. 선택은 브라우저에 남습니다
-- 지적마다 **[합의] [보류] [반려]** 선택과 메모 → 브라우저에 저장
+- 확인사항마다 **[합의] [보류] [반려]** 선택과 메모 → 브라우저에 저장
   (`localStorage`, 키 = `oi-review-<PR번호>`. **PR 별로 갈리므로 두 리포트를 같이 열어도 안 섞입니다**)
 - 상단에 "결정 12 / 27" 진행 표시, 체크리스트에도 결정 상태가 실시간 반영
-- 상단 `리뷰 범위` 한 줄에 변경 파일·변경단위·지적·심각도별 건수
+- 상단 `리뷰 범위` 한 줄에 변경 파일·변경단위·확인사항·주의 등급별 건수
 - 회의 결과를 마크다운 / JSON 으로 복사·저장
-- 지적 카드의 **[코드 보기]** 로 해당 변경단위 코드만 펼치기, 상단 버튼으로 전부 펼치기/접기
+- 확인사항 카드의 **[코드 보기]** 로 해당 변경단위 코드만 펼치기, 상단 버튼으로 전부 펼치기/접기
 - **테마 전환** — `테마: 시스템 → 라이트 → 다크` 버튼. 고른 값은 브라우저에 남고
   (`oi-review-theme`, 결정 저장소와 분리) 시스템 설정을 이깁니다
 - 인쇄(`Ctrl+P`) 시 필터·버튼이 사라지고 전부 펼쳐진 상태로 출력.

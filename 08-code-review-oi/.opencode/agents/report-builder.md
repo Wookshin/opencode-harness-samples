@@ -39,7 +39,7 @@ permission:
 - `<작업폴더>/1-scope.md` — files 배열의 재료
 - `<작업폴더>/1-hunks.md` — units 배열의 재료 (표와 **1:1** 로 옮깁니다)
 - `<작업폴더>/2-review-*.md` — findings 의 재료
-- `<작업폴더>/3-verify.md` — **어느 지적이 실리고 어느 것이 빠지는지의 유일한 기준**
+- `<작업폴더>/3-verify.md` — **어느 확인사항이 실리고 어느 것이 빠지는지의 유일한 기준**
 - `<작업폴더>/3-assessment.md` — 종합 평가 (오케스트레이터가 씀)
 
 ## 만드는 법
@@ -51,9 +51,9 @@ permission:
 | 규칙 | 내용 |
 |---|---|
 | `overview` | `1-scope.md` 의 **「이 PR 이 하는 일」** 절을 `narrative` 로, `「눈에 띄는 변경」` 을 `highlights` 로. **줄바꿈을 그대로 살리세요** — 리포트가 문단으로 끊어 렌더합니다 |
-| `assessment` | `3-assessment.md` 의 네 절을 `conclusion` · `rechecks` · `agenda` · `goodPoints` 로. `agenda` 는 지적 ID 배열입니다 |
-| `verdict` | `3-verify.md` 의 최종 판정 |
-| `severity` | **검증이 조정한 값**을 씁니다. 리뷰어가 쓴 원래 값이 아닙니다 |
+| `assessment` | `3-assessment.md` 의 세 절을 `conclusion` · `rechecks` · `goodPoints` 로 |
+
+| `severity` | **검증이 조정한 값**을 씁니다 (`꼭 확인`·`확인 권장`·`참고`). 리뷰어가 쓴 원래 값이 아닙니다 |
 | `CONFIRMED` · `NEEDS-INFO` | → `findings` 배열 |
 | `REJECTED` | → `rejected` 배열 (사유 포함). **findings 에 넣지 마세요** |
 | `beforeFile` · `afterFile` | **findings.json 이 있는 폴더 기준** 상대 경로 (`src/after/<경로>`). 원문이 없으면 생략 |
@@ -91,8 +91,8 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 ## 금지
 
 - HTML 파일을 직접 만들거나 고치지 마세요.
-- `REJECTED` 지적을 본문(`findings`)에 넣지 마세요.
-- 지적 내용을 요약하거나 줄이지 마세요. 회의에서 그 문장을 그대로 읽습니다.
+- `REJECTED` 확인사항을 본문(`findings`)에 넣지 마세요.
+- 확인사항 내용을 요약하거나 줄이지 마세요. 회의에서 그 문장을 그대로 읽습니다.
 - **개요와 종합 평가를 다시 쓰지 마세요.** 남이 쓴 글을 옮기는 자리입니다.
   줄바꿈과 `**굵게**` 를 그대로 두세요.
 - 스크립트가 exit 1 인데 완료라고 보고하지 마세요.
@@ -107,6 +107,6 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 - 산출물: _workspace/pr-1234/review-1234.html
 - 입력: _workspace/pr-1234/4-findings.json
 - 스크립트 종료 코드: 0
-- 지적 N건 (BLOCKER n · MAJOR n · MINOR n) · SQL n · 반려 n
+- 확인사항 N건 (꼭 확인 n · 확인 권장 n · 참고 n) · SQL n · 반려 n
 - 크기: N KB
 ```

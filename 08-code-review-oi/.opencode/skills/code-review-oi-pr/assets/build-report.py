@@ -83,7 +83,13 @@ except json.JSONDecodeError as e:
     die(f"findings.json 이 올바른 JSON 이 아닙니다: {e}")
 
 # ── 스키마 검증 ─────────────────────────────────────────────────────────
-SEVERITIES = ["BLOCKER", "MAJOR", "MINOR"]
+# 이 리포트는 합격/불합격을 판정하지 않습니다. "같이 봐야 할 것"을 알려 줄 뿐이라
+# 심각도가 아니라 **주의 등급**으로 부릅니다. 옛 영문 값도 계속 받습니다.
+SEV_KO = {
+    "BLOCKER": "꼭 확인", "MAJOR": "확인 권장", "MINOR": "참고",
+    "꼭 확인": "꼭 확인", "확인 권장": "확인 권장", "참고": "참고",
+}
+SEVERITIES = ["꼭 확인", "확인 권장", "참고"]
 PERSPECTIVES = ["refactor", "feature", "sql"]
 # 변경 유형은 KIND_KO 로 정규화합니다 (영문·한글 모두 허용)
 VERDICTS = ["CONFIRMED", "NEEDS-INFO"]
@@ -113,9 +119,11 @@ def one_of(obj, key, options, where):
 if not isinstance(D.get("meta"), dict):
     bad("meta 가 없습니다")
     D["meta"] = {}
-for k in ("prNumber", "title", "baseRef", "generatedAt", "verdict"):
+for k in ("prNumber", "title", "baseRef", "generatedAt"):
     need(D["meta"], k, "meta")
-one_of(D["meta"], "verdict", ["PASS", "FAIL"], "meta")
+# verdict·reviewers 는 더 이상 쓰지 않습니다. 들어와도 조용히 버립니다.
+D["meta"].pop("verdict", None)
+D["meta"].pop("reviewers", None)
 
 for key in ("files", "units", "findings", "simpleChanges", "sql", "rejected", "unknowns"):
     D[key] = arr(D.get(key), key)
@@ -161,8 +169,9 @@ if not isinstance(asm, dict):
         "(review-lead 의 3-assessment.md)")
     D["assessment"] = asm = {}
 need(asm, "conclusion", "assessment")
-for k in ("rechecks", "agenda", "goodPoints"):
+for k in ("rechecks", "goodPoints"):
     asm[k] = arr(asm.get(k), f"assessment.{k}")
+asm.pop("agenda", None)   # 회의 진행 순서는 쓰지 않습니다
 
 
 def lang_of(path=""):
@@ -220,7 +229,12 @@ for i, f in enumerate(D["findings"]):
               "title", "problem", "basis", "suggestion"):
         need(f, k, w)
     one_of(f, "perspective", PERSPECTIVES, w)
-    one_of(f, "severity", SEVERITIES, w)
+    sev = SEV_KO.get(str(f.get("severity", "")).strip())
+    if sev is None:
+        bad(f'{w}: "severity" 는 꼭 확인 | 확인 권장 | 참고 '
+            f"(또는 BLOCKER/MAJOR/MINOR) 중 하나여야 합니다 (받은 값: {f.get('severity')})")
+    else:
+        f["severity"] = sev
     if f.get("verdict") is None:
         f["verdict"] = "CONFIRMED"
     one_of(f, "verdict", VERDICTS, w)
@@ -236,10 +250,6 @@ for i, f in enumerate(D["findings"]):
         bad(f'{w}: file "{f["file"]}" 이 files[].path 에 없습니다')
     if f.get("line") is not None and not (isinstance(f["line"], int) and not isinstance(f["line"], bool)):
         bad(f"{w}: line 은 정수여야 합니다")
-
-for i, a in enumerate(D["assessment"]["agenda"]):
-    if a not in seen_ids:
-        bad(f'assessment.agenda[{i}]: "{a}" 가 findings[].id 에 없습니다')
 
 for i, s in enumerate(D["sql"]):
     w = f"sql[{i}]"
@@ -486,7 +496,7 @@ out_path.write_text(html, encoding="utf-8", newline="")
 by_sev = " · ".join(f'{s} {sum(1 for f in D["findings"] if f["severity"] == s)}' for s in SEVERITIES)
 kb = round(len(html.encode("utf-8")) / 1024)
 print(f"✓ {out_path}")
-print(f'  판정 {D["meta"]["verdict"]} · 지적 {len(D["findings"])}건 ({by_sev})')
+print(f'  확인사항 {len(D["findings"])}건 ({by_sev})')
 print(f'  파일 {len(D["files"])} · 변경단위 {len(D["units"])} (코드 표시 {units_with_code}) · '
       f'SQL {len(D["sql"])} · 반려 {len(D["rejected"])}')
 print(f"  {kb} KB · 외부 요청 없음")

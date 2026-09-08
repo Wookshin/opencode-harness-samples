@@ -56,7 +56,7 @@ permission:
 
 SQL ID 나 param 이 바뀌었으면 **본문을 반드시 찾아 읽습니다.** `read-sql.md` 절차를 그대로 따르세요.
 
-- 바뀐 SQL ID 가 DPImgr 에 **실제로 존재하는가** (없으면 런타임에서만 터집니다 → BLOCKER)
+- 바뀐 SQL ID 가 DPImgr 에 **실제로 존재하는가** (없으면 런타임에서만 터집니다 → 꼭 확인)
 - param key·개수가 본문의 바인드 변수와 맞는가
 - param 을 추가했는데 본문 WHERE 절에 반영되지 않았는가 (조용히 무시됩니다)
 - 화면이 읽는 컬럼이 SELECT 절에 있는가
@@ -84,7 +84,7 @@ SQL ID 나 param 이 바뀌었으면 **본문을 반드시 찾아 읽습니다.*
 ## 산출물 — `<작업폴더>/2-review-sql.md`
 
 `references/review-format.md` 형식에 더해, **`## SQL 본문` 절을 반드시** 넣습니다.
-지적 ID 접두사는 **`S`**, SQL 본문 항목 ID 는 **`Q`** 입니다.
+확인사항 ID 접두사는 **`S`**, SQL 본문 항목 ID 는 **`Q`** 입니다.
 
 ````markdown
 ## SQL 본문
