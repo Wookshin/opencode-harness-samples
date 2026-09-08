@@ -39,8 +39,9 @@ opencode run "/review-pr 1234"      opencode run "/review-pr 5678"
 **LLM 없이 렌더링만 먼저 보고 싶다면** 빌드 스크립트를 단독으로 돌릴 수 있습니다.
 
 ```bash
-python .opencode/skills/code-review-oi-pr/assets/build-report.py \
-     sample/expected-findings.json /tmp/out.html sample/pr-sample.patch
+S=.opencode/skills/code-review-oi-pr
+python $S/assets/build-report.py \
+     $S/sample/expected-findings.json /tmp/out.html $S/sample/pr-sample.patch
 # → /tmp/out.html 을 브라우저로 열어 보세요
 ```
 
@@ -69,8 +70,8 @@ C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 여섯입니다.
 | `review-sql` | 운영 DB 로 나가는 쿼리입니다. 잘못 통과시키는 비용이 가장 큽니다 |
 | `review-verifier` | 오탐을 놓치면 **회의 시간이 통째로 날아갑니다** |
 
-`sample/` 의 변경분에는 **세 관점에 각각 걸리는 결함**이 일부러 심어져 있습니다.
-그리고 검증 단계에서 반려되도록 만든 **틀린 확인사항 3건**도 `sample/expected-findings.json` 에 들어 있습니다.
+`.opencode/skills/code-review-oi-pr/sample/` 의 변경분에는 **세 관점에 각각 걸리는 결함**이 일부러 심어져 있습니다.
+그리고 검증 단계에서 반려되도록 만든 **틀린 확인사항 3건**도 `sample/expected-findings.json` 에 들어 있습니다 (경로는 위 스킬 폴더 기준).
 
 ## 패턴이 보이는 지점
 
@@ -248,7 +249,7 @@ _workspace/
 ### ⑪ 아무도 소스를 못 고친다
 
 `opencode.jsonc` 의 전역 기본값부터 `"edit": "deny"` 입니다. 04 와 같은 입장입니다.
-각 에이전트는 `*_workspace/*` 만 열려 있어 **자기 보고서만** 씁니다.
+각 에이전트는 `_workspace/` 아래만 열려 있어 **자기 보고서만** 씁니다.
 
 ## HTML 리포트가 회의에서 하는 일
 
@@ -290,7 +291,7 @@ _workspace/
   **여기가 틀리면 뒤가 전부 틀어지므로** 실 적용은 이것부터 하는 게 안전합니다.
 - **리뷰어를 하나 빼 보세요.** `review-sql.md` 를 `.bak` 으로 바꾸면 SQL 결함이 리포트에서 통째로 사라집니다.
 - **검증관을 빼 보세요.** `review-verifier` 없이 돌리면 오탐이 그대로 회의 자료에 실립니다.
-  `sample/expected-findings.json` 의 `rejected` 3건이 본문에 섞이는 것과 같은 상태입니다.
+  샘플 `expected-findings.json` 의 `rejected` 3건이 본문에 섞이는 것과 같은 상태입니다.
 - **`4-findings.json` 을 일부러 망가뜨려 보세요.** `unitId` 를 없는 값으로 바꾸고 스크립트를 돌리면
   검증에서 걸립니다. LLM 이 스키마를 어겼을 때 무엇이 막아 주는지 볼 수 있습니다.
 - **네 번째 관점을 추가해 보세요.** 예: `review-ui`(XAML 바인딩·리소스). 에이전트 파일 하나와
@@ -367,21 +368,49 @@ PowerShell 이든 bash 든 **결과가 바이트까지 같습니다.**
 
 ## 실제 저장소에 적용하려면
 
-이 폴더는 샘플이라 `sample/` 로 시연하지만, 실무 저장소에서는 **`.opencode/` 만 복사**하면 됩니다.
+**저장소 루트에 두 가지를 놓으면 끝입니다.**
+
+| 옮길 것 | 어디에 | 왜 |
+|---|---|---|
+| `.opencode/` | 저장소 루트 | 에이전트·커맨드·스킬·스크립트·데모 재료가 전부 이 안에 있습니다 |
+| `opencode.jsonc` | 저장소 루트 | **`.opencode/` 안에 두면 안 읽힙니다** — 아래 참고 |
 
 ```powershell
 # PowerShell
-Copy-Item -Recurse 08-code-review-oi\.opencode  D:\Git\OY_SWP\
-Copy-Item -Recurse 08-code-review-oi\_workspace D:\Git\OY_SWP\
+Copy-Item -Recurse 08-code-review-oi\.opencode      D:\Git\OY_SWP\
+Copy-Item          08-code-review-oi\opencode.jsonc D:\Git\OY_SWP\
 ```
 
 ```bash
 # bash / zsh
-cp -r 08-code-review-oi/.opencode  /path/to/OY_SWP/
-cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
+cp -r 08-code-review-oi/.opencode      /path/to/OY_SWP/
+cp    08-code-review-oi/opencode.jsonc /path/to/OY_SWP/
 ```
 
-그다음 고칠 곳은 세 군데입니다.
+`_workspace/` 는 복사하지 않아도 됩니다. 폴더는 `collect.py` 가 만들고,
+`_workspace/README.md` 는 규약 설명용이라 읽을거리로만 가져가면 됩니다.
+
+### `opencode.jsonc` 를 빠뜨리면
+
+OpenCode 는 설정을 **현재 폴더에서 git 루트까지 거슬러 올라가며** 찾습니다.
+그래서 이 파일은 `.opencode/` 안이 아니라 **저장소 루트**에 있어야 합니다.
+
+빠뜨려도 겉으로는 잘 도는 것처럼 보입니다 — 에이전트마다 `model:` 과 `permission:` 을
+자기 frontmatter 에 다 갖고 있기 때문입니다. 하지만 **`subagent_depth: 1` 이 사라져
+Phase 2 의 3인 동시 호출(팬아웃)이 막힙니다.** 이 하네스의 핵심 장치입니다.
+
+**대상 저장소에 이미 `opencode.jsonc` 가 있으면 덮어쓰지 말고 병합하세요.**
+가져가야 할 키는 두 개입니다.
+
+```jsonc
+"subagent_depth": 1,                                  // 필수 — 팬아웃
+"permission": { "edit": "deny", "bash": "ask" }       // 권장 — 전역 안전망
+```
+
+`model` 은 선택입니다. 에이전트가 각자 `model:` 을 갖고 있어서, 기본 모델은
+그 저장소 것을 그대로 써도 됩니다.
+
+### 그다음 고칠 곳 세 군데
 
 | 파일 | 고칠 것 |
 |---|---|
@@ -392,12 +421,23 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 기본 브랜치가 `develop` 이 아니면 `diff-scoper` 가 그 사실을 `1-scope.md` 에 적고 알려 줍니다.
 임의로 바꾸지 않습니다.
 
+### 잘 옮겨졌는지 확인
+
+실 PR 을 걸기 전에 **오프라인 데모부터** 돌리세요. 데모 재료가 `.opencode/` 안에 있어서
+복사해 간 저장소에서도 그대로 돕니다. `gh` 도 네트워크도 쓰지 않습니다.
+
+```bash
+opencode run "/review-sample"
+```
+
+`_workspace/pr-sample/review-sample.html` 이 나오면 하네스가 살아 있는 것입니다.
+
 ## 파일 구조
 
 ```
 08-code-review-oi/
-├── opencode.jsonc                       전역 edit: deny · 저렴 등급 미사용 (무난/고가만)
-├── .opencode/
+├── opencode.jsonc                     ← 복사 대상. 전역 edit: deny · subagent_depth: 1
+├── .opencode/                         ← 복사 대상 (아래 전부)
 │   ├── agents/
 │   │   ├── review-lead.md               오케스트레이터 (primary) ← 게이트·동시 호출 지시
 │   │   ├── diff-scoper.md               Phase 1 · 변경단위 확정 (고가) ← 틀리면 뒤가 전부 틀어짐
@@ -421,18 +461,21 @@ cp -r 08-code-review-oi/_workspace /path/to/OY_SWP/
 │       │   ├── read-sql.md              DPICALL 본문 조회 절차
 │       │   ├── review-format.md         3인 공통 출력 형식 · 주의 등급 기준
 │       │   └── html-report.md           findings.json 스키마
-│       └── assets/
-│           ├── collect.py              gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
-│           ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
-│           └── build-report.py         스키마 검증 + diff 계산 + 렌더 (표준 라이브러리만)
+│       ├── assets/
+│       │   ├── collect.py               gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
+│       │   ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
+│       │   └── build-report.py          스키마 검증 + diff 계산 + 렌더 (표준 라이브러리만)
+│       └── sample/                      /review-sample 재료 — 복사해 가도 데모가 돕니다
+│           ├── pr-sample.patch          세 관점에 각각 걸리는 결함을 심은 C# 변경분
+│           ├── before/ · after/         그 패치가 가리키는 파일 원문
+│           ├── dpimgr/lot/lot.xml       가짜 DPImgr 트리 (본문 조회 시연용)
+│           └── expected-findings.json   스크립트 단독 테스트용 고정 입력 (반려 3건 포함)
 ├── docs/
 │   └── how-it-works.md                  ★ 동작 원리 · 발표용 · 입문용
-├── _workspace/
-│   ├── README.md                        단계 사이 우편함 규약 (PR 별 폴더 구조 설명)
-│   └── pr-<번호>/                        실행할 때 생김 — PR 하나에 폴더 하나 (.gitignore)
-└── sample/
-    ├── pr-sample.patch                  세 관점에 각각 걸리는 결함을 심은 C# 변경분
-    ├── before/ · after/                 그 패치가 가리키는 파일 원문
-    ├── dpimgr/lot/lot.xml               가짜 DPImgr 트리 (본문 조회 시연용)
-    └── expected-findings.json           스크립트 단독 테스트용 고정 입력 (반려 3건 포함)
+└── _workspace/
+    ├── README.md                        단계 사이 우편함 규약 (PR 별 폴더 구조 설명)
+    └── pr-<번호>/                        실행할 때 생김 — PR 하나에 폴더 하나 (.gitignore)
 ```
+
+**실무 저장소로 옮기는 단위는 위 트리의 `.opencode/` 와 `opencode.jsonc` 두 개뿐입니다.**
+`docs/` · `README.md` 는 읽을거리고, `_workspace/` 는 실행하면 생깁니다.

@@ -6,7 +6,8 @@ temperature: 0.1
 permission:
   edit:
     "*": deny
-    "*_workspace/*": allow
+    "_workspace/*": allow    # 저장소 루트에 바로 있을 때 (실무 저장소에 복사한 경우)
+    "*_workspace/*": allow   # 하위 폴더에 있을 때 (<하네스폴더>/_workspace/…)
   read: allow
   grep: allow
   glob: allow

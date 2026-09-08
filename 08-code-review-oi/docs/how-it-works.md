@@ -252,7 +252,9 @@ src/after/…     ─┼→ build-report.py → 라인별 add/del 계산 → HTM
 "permission": { "edit": "deny", "bash": "ask" }
 ```
 
-각 에이전트는 `*_workspace/*` 만 열려 있어 **자기 보고서만** 씁니다.
+각 에이전트는 `_workspace/` 아래만 열려 있어 **자기 보고서만** 씁니다.
+패턴을 `_workspace/*` 와 `*_workspace/*` 두 줄로 적어 둔 이유는 `_workspace/README.md` 에 있습니다
+— `.opencode/` 를 복사해 간 저장소에서는 `_workspace/` 가 루트에 바로 놓이기 때문입니다.
 **이 하네스에서는 아무도 소스를 못 고칩니다.** 리뷰 전용이기 때문입니다.
 
 bash 도 역할별로 최소한만 엽니다.
@@ -355,10 +357,15 @@ git --version
 
 ### ① 먼저 데모부터 — gh 없이 돕니다
 
+`.opencode/` 가 놓인 **저장소 루트에서** 실행합니다. 이 샘플이라면 `08-code-review-oi/`,
+복사해 간 실무 저장소라면 그 저장소 루트입니다.
+
 ```bash
-cd 08-code-review-oi
 opencode run "/review-sample"
 ```
+
+데모 재료가 `.opencode/skills/code-review-oi-pr/sample/` 안에 있어서, **복사해 간 저장소에서도 그대로 돕니다.**
+실 PR 을 걸기 전에 하네스가 살아 있는지 점검하는 용도로 쓰세요.
 
 `_workspace/pr-sample/` 에 파일이 순서대로 쌓이는 것을 보세요.
 마지막에 나오는 `review-sample.html` 을 브라우저로 열면 실제 회의 자료와 같은 모습입니다.
@@ -391,6 +398,23 @@ opencode run "/review-pr 1234"
 | `/review-sample` | gh 없이 도는 오프라인 데모 |
 | `/status` | 진행 중인 모든 PR 리뷰 상태 |
 
+### ④ 우리 저장소로 옮기기
+
+옮기는 단위는 **두 개뿐**입니다. 둘 다 저장소 루트에 놓습니다.
+
+```
+.opencode/        에이전트·커맨드·스킬·스크립트·데모 재료 전부
+opencode.jsonc    subagent_depth 와 전역 권한
+```
+
+`opencode.jsonc` 를 빠뜨리면 겉으로는 도는 것처럼 보이지만 **팬아웃이 막힙니다**
+(에이전트마다 `model:`·`permission:` 을 자기 frontmatter 에 갖고 있어서 그 둘은 살아남지만,
+`subagent_depth: 1` 이 사라지기 때문입니다). 대상 저장소에 이미 있으면 덮어쓰지 말고 병합하세요.
+
+옮긴 뒤 `dpimgr-dir.txt` 의 매핑과 `agents/*.md` 의 `model:` 을 팀 환경에 맞추고,
+`/review-sample` 로 살아 있는지 확인하면 됩니다. 자세한 절차는
+[README 의 「실제 저장소에 적용하려면」](../README.md#실제-저장소에-적용하려면) 에 있습니다.
+
 ---
 
 ## 9. 막히면
@@ -419,7 +443,7 @@ opencode run "/review-pr 1234"
 등급     꼭 확인 · 확인 권장 · 참고 (PASS/FAIL 판정 없음)
 되돌림   반려율 1/3 초과 → 그 리뷰어 세션으로. 최대 2회
 모델     Pro 4 (lead·refactor·feature·builder) · Max 3 (scoper·sql·verifier)
-권한     전역 edit deny. 각자 *_workspace/* 만. 아무도 소스를 못 고침
+권한     전역 edit deny. 각자 _workspace/ 아래만. 아무도 소스를 못 고침
 스크립트 collect.py (수집) · build-report.py (렌더). Python 3.8+, pip 불필요
 결과물   _workspace/pr-<번호>/review-<번호>.html — 외부 요청 0
 ```

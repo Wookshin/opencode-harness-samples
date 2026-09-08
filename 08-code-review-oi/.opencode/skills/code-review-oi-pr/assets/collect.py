@@ -3,7 +3,10 @@
 
     python collect.py --pr 1234 --ws _workspace/pr-1234
     python collect.py --pr sample --ws _workspace/pr-sample \
-                      --patch sample/pr-sample.patch --after sample/after --before sample/before
+                      --patch <스킬>/sample/pr-sample.patch \
+                      --after  <스킬>/sample/after \
+                      --before <스킬>/sample/before
+      (<스킬> = .opencode/skills/code-review-oi-pr)
 
 왜 스크립트인가:
     셸마다 문법이 다릅니다. `mkdir -p`, `$(dirname …)`, `$(date …)` 는 PowerShell 에 없고,

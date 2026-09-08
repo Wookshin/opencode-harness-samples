@@ -6,7 +6,8 @@ temperature: 0
 permission:
   edit:
     "*": deny
-    "*_workspace/*": allow
+    "_workspace/*": allow    # 저장소 루트에 바로 있을 때 (실무 저장소에 복사한 경우)
+    "*_workspace/*": allow   # 하위 폴더에 있을 때 (<하네스폴더>/_workspace/…)
   read: allow
   grep: allow
   glob: allow
@@ -60,8 +61,10 @@ python .opencode/skills/code-review-oi-pr/assets/collect.py --pr 1234 --ws _work
 
 ```bash
 python .opencode/skills/code-review-oi-pr/assets/collect.py --pr sample --ws _workspace/pr-sample \
-     --patch sample/pr-sample.patch --after sample/after --before sample/before
+     --patch .opencode/skills/code-review-oi-pr/sample/pr-sample.patch --after .opencode/skills/code-review-oi-pr/sample/after --before .opencode/skills/code-review-oi-pr/sample/before
 ```
+
+재료는 스킬 폴더 안에 있습니다. `.opencode/` 를 복사해 간 저장소에서도 그대로 돕니다.
 
 이전 실행이 남아 있으면 **지우지 않고** `<작업폴더>.prev-<시각>` 으로 밀어낸 뒤 새로 만듭니다.
 이어서 하려면 `--resume` 을 붙이세요.

@@ -18,11 +18,10 @@ PR 하나를 **세 관점이 동시에** 리뷰하고, 지적을 **검증으로 
 
 ## 어떻게 실행하나
 
-이 스킬은 혼자 동작하지 않습니다. **`08-code-review-oi` 하네스의 커맨드로 실행**합니다.
+이 스킬은 혼자 동작하지 않습니다. **`.opencode/commands/` 의 커맨드로 실행**합니다.
+`.opencode/` 가 놓인 **저장소 루트에서** 실행하세요 — 모든 경로가 그 기준입니다.
 
 ```bash
-cd 08-code-review-oi
-
 opencode run "/review-pr 1234"     # 전체 사이클 → _workspace/pr-1234/review-1234.html
 opencode run "/scope-only 1234"    # Phase 1 만 — 변경단위 분류가 맞는지 먼저 확인
 opencode run "/report-only 1234"   # 리뷰는 그대로 두고 HTML 만 다시 생성

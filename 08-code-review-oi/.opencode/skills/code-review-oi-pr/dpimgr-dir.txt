@@ -11,4 +11,5 @@ CA_SWP: D:\Git\DPImgr\COMP\DPImgr\src\main\common\dao\
 XA_SWP: D:\Git\DPImgr\COMP\DPImgr\src\main\common\dao\
 
 # /review-sample (오프라인 데모) 전용 — 실제 DPImgr 없이 절차를 시연하기 위한 가짜 트리
-SAMPLE: ./sample/dpimgr/
+# 이 스킬 폴더 안에 들어 있어서, 이 파일을 복사해 간 저장소에서도 그대로 유효합니다.
+SAMPLE: .opencode/skills/code-review-oi-pr/sample/dpimgr/
