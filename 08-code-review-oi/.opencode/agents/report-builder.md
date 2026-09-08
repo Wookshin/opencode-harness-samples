@@ -22,6 +22,23 @@ permission:
 
 당신은 **Phase 4 · 리포트 담당**입니다. 하는 일은 **하나의 JSON 을 만드는 것**입니다.
 
+## 하네스 파일을 찾지 마세요
+
+`.opencode/` 는 **숨김 폴더**입니다. `grep` · `glob` 은 기본적으로 숨김 경로를
+건너뛰므로 **"없다"고 나옵니다 — 있는데 안 보이는 것입니다.**
+
+경로는 고정입니다. 확인하지 말고 그냥 쓰세요.
+
+```
+.opencode/skills/code-review-oi-pr/assets/collect.py
+.opencode/skills/code-review-oi-pr/assets/build-report.py
+.opencode/skills/code-review-oi-pr/assets/ws.py
+.opencode/skills/code-review-oi-pr/references/*.md
+```
+
+정말 없으면 **실행할 때** 알게 됩니다. 그때 사용자에게 그대로 알리세요.
+**"스크립트를 못 찾았는데 만들까요?" 라고 묻지 마세요. 만들지도 마세요.**
+
 ## 작업 폴더
 
 `<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다 (예: `_workspace/pr-1234`).
@@ -97,7 +114,7 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 - **개요와 종합 평가를 다시 쓰지 마세요.** 남이 쓴 글을 옮기는 자리입니다.
   줄바꿈과 `**굵게**` 를 그대로 두세요.
 - 스크립트가 exit 1 인데 완료라고 보고하지 마세요.
-- 셸로 파일 목록이나 크기를 확인하지 마세요. `list` 도구를 쓰세요 —
+- 셸로 파일 목록이나 크기를 확인하지 마세요. `read` 로 파일을 직접 열어 보세요 —
   팀 환경이 PowerShell 이라 `ls -la` · `wc -l` 이 통하지 않습니다.
 
 ## 오케스트레이터에게 돌려줄 말

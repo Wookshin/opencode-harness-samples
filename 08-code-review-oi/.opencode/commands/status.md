@@ -5,10 +5,17 @@ agent: review-lead
 
 `_workspace/` 아래의 **모든 작업 폴더**를 읽고 진행 상황을 정리해 주세요.
 
-1. **`list` 도구로** `_workspace/` 의 작업 폴더 목록을 구합니다 (`pr-*`).
-   `README.md` 는 규약 문서이니 제외합니다. 셸 명령(`ls`)을 쓰지 마세요 —
-   팀 환경이 PowerShell 이라 통하지 않습니다.
-2. 각 폴더의 `STATUS.md` 와 실제 파일 목록을 읽습니다.
+1. **목록은 스크립트가 만듭니다.** 이 한 줄이면 끝입니다.
+
+   ```bash
+   python .opencode/skills/code-review-oi-pr/assets/ws.py --list
+   ```
+
+   폴더를 직접 뒤지지 마세요. `ls` 는 PowerShell 에서 통하지 않고, `list` 도구는
+   없는 환경이 있으며, `glob` 은 숨김 경로를 건너뜁니다. 스크립트는 셋 다 안 탑니다.
+   `python` 이 안 먹히면 `py`(Windows) 또는 `python3` 입니다.
+2. 더 자세히 볼 폴더가 있으면 그 폴더의 `STATUS.md` 를 `read` 로 읽습니다.
+   **`STATUS.md` 가 없어도 정상입니다** — 위 표는 파일 존재로 판정한 것이라 그게 사실입니다.
 3. 아래 표로 정리합니다.
 
 ```

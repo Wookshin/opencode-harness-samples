@@ -62,6 +62,38 @@ WS = Path(args.ws).resolve()
 OFFLINE = bool(args.patch)
 
 
+# ── 프리플라이트 — 안 되는 이유와 조치를 먼저 말합니다 ──────────────────
+# 여기서 막지 않으면 에이전트가 "스크립트가 없나?" 하며 엉뚱한 곳을 뒤집니다.
+def preflight():
+    if not OFFLINE and not PR.isdigit():
+        die(f"--pr 는 PR 번호(숫자)여야 합니다. 받은 값: {PR!r}\n"
+            "  → 실 PR: --pr 1234\n"
+            "  → 오프라인 데모라면 --patch/--after/--before 를 함께 주세요 (/review-sample)")
+
+    if OFFLINE:
+        return                                                 # gh 를 쓰지 않습니다
+
+    if shutil.which("gh") is None:
+        die("gh 를 찾을 수 없습니다.\n"
+            "  → gh 를 설치하고 `gh auth login` 을 하세요.\n"
+            "  → gh 없이 지금 확인만 하려면: /review-sample (오프라인 데모)")
+
+    r = subprocess.run(["gh", "auth", "status"], capture_output=True)
+    if r.returncode != 0:
+        die("gh 인증이 안 돼 있습니다.\n  → `gh auth login` 을 실행한 뒤 다시 돌리세요.")
+
+    r = subprocess.run(["gh", "pr", "view", PR, "--json", "number"], capture_output=True)
+    if r.returncode != 0:
+        err = r.stderr.decode("utf-8", "replace").strip().splitlines()
+        die(f"PR #{PR} 을 열 수 없습니다.\n"
+            + (f"  {err[0]}\n" if err else "")
+            + "  → 번호가 맞는지, 이 저장소의 PR 인지 확인하세요.\n"
+            + "  → 다른 저장소라면 그 폴더에서 실행해야 합니다.")
+
+
+preflight()
+
+
 # ── 실행 도우미 — 출력은 바이트로 받습니다 ──────────────────────────────
 def run(cmd, allow_fail=False):
     try:

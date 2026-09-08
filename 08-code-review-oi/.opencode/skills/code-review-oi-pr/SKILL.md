@@ -27,7 +27,11 @@ opencode run "/scope-only 1234"    # Phase 1 만 — 변경단위 분류가 맞�
 opencode run "/report-only 1234"   # 리뷰는 그대로 두고 HTML 만 다시 생성
 opencode run "/review-sample"      # gh 없이 도는 오프라인 데모
 opencode run "/status"             # 진행 중인 모든 PR 리뷰의 상태
+opencode run "/doctor"             # 돌 준비가 됐는지 점검 (막히면 여기부터)
 ```
+
+**하네스 파일을 찾지 마세요.** `.opencode/` 는 숨김 폴더라 `grep`·`glob` 에 안 잡힙니다.
+경로는 고정이니 확인하지 말고 그대로 쓰세요. 정말 없으면 `/doctor` 가 알려 줍니다.
 
 실 PR 에 처음 적용할 때는 **`/scope-only` 부터** 돌리세요.
 변경단위 분류가 틀리면 뒤의 세 명이 전부 틀린 것을 봅니다.

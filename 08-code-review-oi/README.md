@@ -7,7 +7,7 @@ PR 하나를 세 관점이 동시에 리뷰하고, 확인사항을 검증으로 
 팀원들이 **모여 앉아 같이 보는 단일 HTML 파일**을 만듭니다.
 
 > 📖 **동작 원리를 알고 싶거나 남에게 설명해야 한다면 → [docs/how-it-works.md](docs/how-it-works.md)**
-> 흐름도, Phase 별 상세, 설계 결정 여섯 가지, 처음 쓰는 사람 가이드, 치트시트가 있습니다.
+> 흐름도, Phase 별 상세, 설계 결정 일곱 가지, 처음 쓰는 사람 가이드, 치트시트가 있습니다.
 
 ## 바로 실행하기
 
@@ -26,6 +26,9 @@ opencode run "/scope-only 1234"
 # HTML 만 다시 생성 / 진행 중인 모든 리뷰 상태
 opencode run "/report-only 1234"
 opencode run "/status"
+
+# 돌 준비가 됐는지 점검 — 처음 설치했거나 리뷰가 시작부터 막힐 때
+opencode run "/doctor"
 ```
 
 **PR 두 개를 동시에 리뷰할 수 있습니다.** 터미널 두 개에서 각각 돌리면 됩니다.
@@ -423,7 +426,13 @@ Phase 2 의 3인 동시 호출(팬아웃)이 막힙니다.** 이 하네스의 �
 
 ### 잘 옮겨졌는지 확인
 
-실 PR 을 걸기 전에 **오프라인 데모부터** 돌리세요. 데모 재료가 `.opencode/` 안에 있어서
+먼저 **점검**부터 하세요. 빠진 게 있으면 무엇을 하라는지까지 알려 줍니다.
+
+```bash
+opencode run "/doctor"
+```
+
+그다음 **오프라인 데모**를 돌립니다. 데모 재료가 `.opencode/` 안에 있어서
 복사해 간 저장소에서도 그대로 돕니다. `gh` 도 네트워크도 쓰지 않습니다.
 
 ```bash
@@ -451,7 +460,8 @@ opencode run "/review-sample"
 │   │   ├── scope-only.md                /scope-only <번호>  Phase 1 만
 │   │   ├── report-only.md               /report-only <번호> HTML 만 재생성
 │   │   ├── review-sample.md             /review-sample      gh 없는 오프라인 데모
-│   │   └── status.md                    /status             진행 중인 모든 PR 리뷰
+│   │   ├── status.md                    /status             진행 중인 모든 PR 리뷰
+│   │   └── doctor.md                    /doctor             설치·환경 점검
 │   └── skills/code-review-oi-pr/
 │       ├── SKILL.md                     진입점 (얇게 유지)
 │       ├── dpimgr-dir.txt               ★ 팀 환경에 맞게 고치는 파일
@@ -463,6 +473,7 @@ opencode run "/review-sample"
 │       │   └── html-report.md           findings.json 스키마
 │       ├── assets/
 │       │   ├── collect.py               gh·git 호출 + 원문 수집 (셸 비의존, UTF-8 고정)
+│       │   ├── ws.py                    작업 폴더 목록 · 환경 점검 (/status · /doctor)
 │       │   ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
 │       │   └── build-report.py          스키마 검증 + diff 계산 + 렌더 (표준 라이브러리만)
 │       └── sample/                      /review-sample 재료 — 복사해 가도 데모가 돕니다

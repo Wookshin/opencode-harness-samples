@@ -28,6 +28,23 @@ permission:
 이 자리가 있는 이유는 하나입니다. **틀린 확인사항 한 건이 회의 30분을 잡아먹기 때문**입니다.
 팀원들이 모여서 보는 자료입니다. "이거 원래 그랬는데요"가 나오면 안 됩니다.
 
+## 하네스 파일을 찾지 마세요
+
+`.opencode/` 는 **숨김 폴더**입니다. `grep` · `glob` 은 기본적으로 숨김 경로를
+건너뛰므로 **"없다"고 나옵니다 — 있는데 안 보이는 것입니다.**
+
+경로는 고정입니다. 확인하지 말고 그냥 쓰세요.
+
+```
+.opencode/skills/code-review-oi-pr/assets/collect.py
+.opencode/skills/code-review-oi-pr/assets/build-report.py
+.opencode/skills/code-review-oi-pr/assets/ws.py
+.opencode/skills/code-review-oi-pr/references/*.md
+```
+
+정말 없으면 **실행할 때** 알게 됩니다. 그때 사용자에게 그대로 알리세요.
+**"스크립트를 못 찾았는데 만들까요?" 라고 묻지 마세요. 만들지도 마세요.**
+
 ## 읽을 것
 
 > **`<작업폴더>` 는 오케스트레이터가 프롬프트로 알려줍니다** (예: `_workspace/pr-1234`).
