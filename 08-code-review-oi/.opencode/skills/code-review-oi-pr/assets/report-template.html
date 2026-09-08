@@ -89,19 +89,22 @@ button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--line)
 button:hover{border-color:var(--accent);color:var(--accent)}
 button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 
-/* ── 필터 ───────────────────────────────────────── */
+/* ── 검색 ───────────────────────────────────────── */
 .filters{position:sticky;top:0;z-index:20;background:var(--panel);border:1px solid var(--line);
-  border-radius:10px;padding:10px 12px;margin-bottom:18px;display:flex;gap:14px;align-items:center;
+  border-radius:10px;padding:8px 12px;margin-bottom:18px;display:flex;gap:12px;align-items:center;
   flex-wrap:wrap;box-shadow:var(--shadow)}
-.fgroup{display:flex;gap:6px;align-items:center}
-.fgroup>span{font-size:12px;color:var(--muted);margin-right:2px}
-.filters input[type=search]{flex:1 1 200px;min-width:160px;font:inherit;font-size:13px;padding:6px 10px;
+.filters input[type=search]{flex:1 1 220px;min-width:160px;font:inherit;font-size:13px;padding:6px 10px;
   border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink)}
+.filters .note{font-size:12px;color:var(--muted)}
+
+/* ── 리뷰 범위 (한 줄 스트립) ───────────────────── */
+.scope{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;
+  margin-bottom:22px;box-shadow:var(--shadow);display:flex;gap:20px;align-items:baseline;flex-wrap:wrap}
+.scope>.t{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.scope span{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.scope b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums;margin-left:4px}
 
 /* ── 대시보드 ───────────────────────────────────── */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:22px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
-.card h3{margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.02em}
 table.mini{width:100%;border-collapse:collapse;font-size:13px}
 table.mini th,table.mini td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
 table.mini th{color:var(--muted);font-weight:600;font-size:12px}
@@ -234,6 +237,18 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .code tr.del{background:var(--del-bg)}
 .code tr.del td.ln{color:var(--del-mark)}
 .code tr.hit{box-shadow:inset 3px 0 0 var(--accent)}
+
+/* 나란히 보기 — 폭이 반이므로 가로 스크롤 대신 줄바꿈합니다 */
+.code table.split{table-layout:fixed}
+.code table.split td.c{width:50%;white-space:pre-wrap;overflow-wrap:anywhere;
+  border-right:1px solid var(--line)}
+.code table.split td.c:last-child{border-right:0}
+.code table.split td.ln{width:46px}
+.code table.split td.del{background:var(--del-bg)}
+.code table.split td.add{background:var(--add-bg)}
+.code table.split td.gap{background:repeating-linear-gradient(45deg,
+  transparent,transparent 5px,var(--line) 5px,var(--line) 6px);opacity:.35}
+.code table.split tr.hit td.ln:nth-child(3){color:var(--accent);font-weight:700}
 .code tr.hit td.ln{color:var(--accent);font-weight:700}
 
 /* 문법 토큰 */
@@ -357,6 +372,7 @@ h2.sec{font-size:16px;margin:26px 0 12px}
         <button id="b-md">회의 결과 마크다운 복사</button>
         <button id="b-json">결정 JSON 저장</button>
         <button id="b-open">코드 전부 펼치기</button>
+        <button id="b-diff" title="코드 변경을 위아래로 볼지, 좌우로 볼지">보기: 위아래</button>
         <button id="b-theme" title="시스템 → 라이트 → 다크 순으로 바뀝니다">테마: 시스템</button>
         <button id="b-reset">결정 초기화</button>
         <button onclick="window.print()">인쇄</button>
@@ -368,20 +384,8 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 
 <div class="wrap">
   <div class="filters">
-    <div class="fgroup"><span>관점</span>
-      <button class="on flt" data-k="p" data-v="refactor">리팩토링</button>
-      <button class="on flt" data-k="p" data-v="feature">기능</button>
-      <button class="on flt" data-k="p" data-v="sql">SQL</button>
-    </div>
-    <div class="fgroup"><span>심각도</span>
-      <button class="on flt" data-k="s" data-v="BLOCKER">BLOCKER</button>
-      <button class="on flt" data-k="s" data-v="MAJOR">MAJOR</button>
-      <button class="on flt" data-k="s" data-v="MINOR">MINOR</button>
-    </div>
-    <div class="fgroup"><span>결정</span>
-      <button class="flt" data-k="d" data-v="undecided">미결정만</button>
-    </div>
     <input type="search" id="q" placeholder="지적 내용 · 파일 · 근거 검색">
+    <span class="note" id="cl-note"></span>
   </div>
 
   <div class="band">
@@ -389,10 +393,10 @@ h2.sec{font-size:16px;margin:26px 0 12px}
     <section id="assessment"><h2>종합 평가</h2><div class="body" id="as-body"></div></section>
   </div>
 
-  <div class="cards" id="dash"></div>
+  <div class="scope" id="dash"></div>
 
   <section class="panel" id="checklist">
-    <h2>리뷰 체크리스트 <span class="note" id="cl-note"></span></h2>
+    <h2>리뷰 체크리스트 <span class="note">심각도 순 · 행을 누르면 상세로 이동합니다</span></h2>
     <div class="tblwrap"><table class="list" id="cl-table"></table></div>
   </section>
 
@@ -631,42 +635,23 @@ document.getElementById('legend-table').innerHTML = [
          (r[2] ? ' <span style="color:var(--muted)">— ' + r[2] + '</span>' : '') + '</td></tr>';
 }).join('');
 
-/* ── 대시보드 ────────────────────────────────── */
-var counts = {}, tot = {BLOCKER:0,MAJOR:0,MINOR:0};
-Object.keys(PERSP).forEach(function(p){ counts[p] = {BLOCKER:0,MAJOR:0,MINOR:0}; });
-D.findings.forEach(function(f){
-  if (!counts[f.perspective]) counts[f.perspective] = {BLOCKER:0,MAJOR:0,MINOR:0};
-  counts[f.perspective][f.severity]++; tot[f.severity]++;
-});
+/* ── 리뷰 범위 (한 줄) ───────────────────────── */
 (function(){
-  var rows = Object.keys(counts).map(function(p){
-    return '<tr><td>' + (PERSP[p]||p) + '</td>' + SEVS.map(function(s){
-      var n = counts[p][s]; return '<td class="n' + (n?'':' zero') + '">' + n + '</td>';
-    }).join('') + '<td class="n"><b>' + SEVS.reduce(function(a,s){return a+counts[p][s];},0) + '</b></td></tr>';
-  }).join('');
-  var byFile = {};
-  D.findings.forEach(function(f){ byFile[f.file] = (byFile[f.file]||0) + 1; });
-  var frows = D.files.map(function(f){
-    return '<tr><td style="word-break:break-all">' + esc(f.path.split('/').pop()) +
-      (f.priority === 1 ? ' <span class="tag p1">우선</span>' : '') +
-      '</td><td>' + esc(f.kindLabel || f.changeType) + '</td><td class="n">' + (byFile[f.path]||0) + '</td></tr>';
-  }).join('');
+  var b = D.findings.filter(function(f){ return f.severity === 'BLOCKER'; }).length;
+  var m = D.findings.filter(function(f){ return f.severity === 'MAJOR'; }).length;
+  var n = D.findings.filter(function(f){ return f.severity === 'MINOR'; }).length;
   document.getElementById('dash').innerHTML =
-    '<div class="card"><h3>관점 × 심각도</h3><table class="mini"><tr><th>관점</th>' +
-      SEVS.map(function(s){return '<th class="n">'+s+'</th>';}).join('') + '<th class="n">계</th></tr>' +
-      rows + '<tr><td><b>계</b></td>' + SEVS.map(function(s){
-        return '<td class="n"><b>'+tot[s]+'</b></td>'; }).join('') +
-      '<td class="n"><b>' + D.findings.length + '</b></td></tr></table></div>' +
-    '<div class="card"><h3>파일별 지적</h3><table class="mini">' +
-      '<tr><th>파일</th><th>변경</th><th class="n">지적</th></tr>' + frows + '</table></div>' +
-    '<div class="card"><h3>리뷰 범위</h3><table class="mini">' +
-      '<tr><td>변경 파일</td><td class="n">' + D.files.length + '</td></tr>' +
-      '<tr><td>변경단위</td><td class="n">' + D.units.length + '</td></tr>' +
-      '<tr><td>단순 변경</td><td class="n">' + D.simpleChanges.length + '</td></tr>' +
-      '<tr><td>SQL 검토</td><td class="n">' + D.sql.length + '</td></tr>' +
-      '<tr><td>검증 반려</td><td class="n">' + D.rejected.length + '</td></tr>' +
-      '<tr><td>확인 못 한 것</td><td class="n">' + D.unknowns.length + '</td></tr>' +
-    '</table></div>';
+    '<span class="t">리뷰 범위</span>' +
+    '<span>변경 파일<b>' + D.files.length + '</b></span>' +
+    '<span>변경단위<b>' + D.units.length + '</b></span>' +
+    '<span>단순 변경<b>' + D.simpleChanges.length + '</b></span>' +
+    '<span>지적<b>' + D.findings.length + '</b></span>' +
+    '<span style="color:var(--blocker)">BLOCKER<b style="color:var(--blocker)">' + b + '</b></span>' +
+    '<span style="color:var(--major)">MAJOR<b style="color:var(--major)">' + m + '</b></span>' +
+    '<span>MINOR<b>' + n + '</b></span>' +
+    '<span>SQL 검토<b>' + D.sql.length + '</b></span>' +
+    '<span>검증 반려<b>' + D.rejected.length + '</b></span>' +
+    '<span>확인 못 한 것<b>' + D.unknowns.length + '</b></span>';
 })();
 
 /* ── 이동 ────────────────────────────────────── */
@@ -720,8 +705,6 @@ var sorted = D.findings.slice().sort(function(a,b){
       jump(tr.dataset.jump);
     });
   });
-  document.getElementById('cl-note').textContent =
-    '심각도 순. 행을 누르면 상세로 이동합니다 — 코드는 필요할 때만 펼치세요';
 })();
 
 /* ── 변경 요약 ───────────────────────────────── */
@@ -767,28 +750,88 @@ var sorted = D.findings.slice().sort(function(a,b){
 })();
 
 /* ── 코드 렌더 ───────────────────────────────── */
-function codeTable(rows, hitLines, lang){
-  if (!rows || !rows.length) return '';
-  var hits = {}; (hitLines||[]).forEach(function(n){ hits[n]=1; });
+/* 보기 방식 — 통합(위아래) / 나란히(좌우). 사람마다 취향이 갈려 토글로 둡니다. */
+var DIFF_KEY = 'oi-review-diffmode';
+var diffMode = 'unified';
+try { if (localStorage.getItem(DIFF_KEY) === 'split') diffMode = 'split'; } catch(e){}
+
+function codeUnified(rows, hits, lang){
   var st = newState();
-  var body = rows.map(function(r){
+  return '<table>' + rows.map(function(r){
     var cls = r.type === 'add' ? 'add' : (r.type === 'del' ? 'del' : '');
     if (r.afterNo && hits[r.afterNo]) cls += ' hit';
     var no = r.type === 'del' ? '-' + (r.beforeNo || '') : (r.afterNo || '');
     var sign = r.type === 'add' ? '+' : (r.type === 'del' ? '-' : ' ');
     return '<tr class="' + cls + '"><td class="ln">' + no + '</td><td>' +
            esc(sign + ' ') + hlLine(r.text, st, lang) + '</td></tr>';
-  }).join('');
-  return '<div class="code"><table>' + body + '</table></div>';
+  }).join('') + '</table>';
 }
-function foldedCode(rows, hits, lang, label){
+
+/** 삭제 묶음과 추가 묶음을 짝지어 좌우로 세웁니다. */
+function pairRows(rows){
+  var out = [], i = 0;
+  while (i < rows.length) {
+    if (rows[i].type === 'ctx') { out.push({l: rows[i], r: rows[i]}); i++; continue; }
+    var dels = [], adds = [];
+    while (i < rows.length && rows[i].type === 'del') dels.push(rows[i++]);
+    while (i < rows.length && rows[i].type === 'add') adds.push(rows[i++]);
+    if (!dels.length && !adds.length) { i++; continue; }   // 방어
+    for (var k = 0; k < Math.max(dels.length, adds.length); k++)
+      out.push({l: dels[k] || null, r: adds[k] || null});
+  }
+  return out;
+}
+
+function codeSplit(rows, hits, lang){
+  var ls = newState(), rs = newState();
+  return '<table class="split">' + pairRows(rows).map(function(pr){
+    var l = pr.l, r = pr.r;
+    var cls = (r && hits[r.afterNo]) ? ' class="hit"' : '';
+    var lCls = !l ? 'c gap' : (l.type === 'del' ? 'c del' : 'c');
+    var rCls = !r ? 'c gap' : (r.type === 'add' ? 'c add' : 'c');
+    return '<tr' + cls + '>' +
+      '<td class="ln">' + (l ? (l.beforeNo || '') : '') + '</td>' +
+      '<td class="' + lCls + '">' + (l ? hlLine(l.text, ls, lang) : '') + '</td>' +
+      '<td class="ln">' + (r ? (r.afterNo || '') : '') + '</td>' +
+      '<td class="' + rCls + '">' + (r ? hlLine(r.text, rs, lang) : '') + '</td></tr>';
+  }).join('') + '</table>';
+}
+
+var codeBlocks = [];   // 토글 시 다시 그리기 위한 등록부
+
+function codeTable(rows, hitLines, lang, alwaysUnified){
+  if (!rows || !rows.length) return '';
+  var hits = {}; (hitLines||[]).forEach(function(n){ hits[n]=1; });
+  var mode = alwaysUnified ? 'unified' : diffMode;
+  var html = mode === 'split' ? codeSplit(rows, hits, lang) : codeUnified(rows, hits, lang);
+  return '<div class="code" data-cb="' + (alwaysUnified ? 'fixed' : codeBlocks.length) + '">' + html + '</div>';
+}
+
+function renderCode(rows, hits, lang){
+  var idx = codeBlocks.length;
+  var html = codeTable(rows, hits, lang);
+  codeBlocks.push({rows: rows, hits: hits, lang: lang, idx: idx});
+  return html;
+}
+
+function redrawCode(){
+  codeBlocks.forEach(function(b){
+    var el = document.querySelector('.code[data-cb="' + b.idx + '"]');
+    if (!el) return;
+    var hits = {}; (b.hits||[]).forEach(function(n){ hits[n]=1; });
+    el.innerHTML = diffMode === 'split'
+      ? codeSplit(b.rows, hits, b.lang)
+      : codeUnified(b.rows, hits, b.lang);
+  });
+}
+function foldedCode(rows, hits, lang, label, isSource){
   if (!rows || !rows.length) return null;
   var add = rows.filter(function(r){ return r.type==='add'; }).length;
   var del = rows.filter(function(r){ return r.type==='del'; }).length;
   var d = el('<details class="fold"><summary>' + esc(label) + ' · ' + rows.length + '줄 ' +
     (add ? '<span class="plus">+' + add + '</span> ' : '') +
     (del ? '<span class="minus">−' + del + '</span>' : '') + '</summary></details>');
-  d.appendChild(el(codeTable(rows, hits, lang)));
+  d.appendChild(el(isSource ? codeTable(rows, hits, lang, true) : renderCode(rows, hits, lang)));
   return d;
 }
 
@@ -890,7 +933,7 @@ filesSorted.forEach(function(file){
 
   if (file.lines && file.lines.length) {
     var wrap = el('<div style="padding:0 16px 14px"></div>');
-    var srcFold = foldedCode(file.lines, [], lang, '파일 원문 보기 — ' + file.path);
+    var srcFold = foldedCode(file.lines, [], lang, '파일 원문 보기 — ' + file.path, true);
     if (srcFold) { wrap.appendChild(srcFold); sec.appendChild(wrap); }
   }
   main.appendChild(sec);
@@ -932,24 +975,14 @@ if (D.unknowns.length) {
 }
 toc.innerHTML = tocHtml || '<div class="empty">변경 없음</div>';
 
-/* ── 필터 ────────────────────────────────────── */
-var F = { p:{refactor:1,feature:1,sql:1}, s:{BLOCKER:1,MAJOR:1,MINOR:1}, undecided:0, q:'' };
-document.querySelectorAll('.flt').forEach(function(b){
-  b.addEventListener('click', function(){
-    if (b.dataset.k === 'd') { F.undecided = F.undecided ? 0 : 1; b.classList.toggle('on', !!F.undecided); }
-    else { F[b.dataset.k][b.dataset.v] = F[b.dataset.k][b.dataset.v] ? 0 : 1;
-           b.classList.toggle('on', !!F[b.dataset.k][b.dataset.v]); }
-    applyFilters();
-  });
-});
+/* ── 검색 ────────────────────────────────────── */
+var Q = '';
 document.getElementById('q').addEventListener('input', function(e){
-  F.q = e.target.value.trim().toLowerCase(); applyFilters();
+  Q = e.target.value.trim().toLowerCase(); applyFilters();
 });
 function visible(f){
-  return F.p[f.perspective] && F.s[f.severity]
-      && (!F.undecided || !decOf(f.id))
-      && (!F.q || (f.id + ' ' + f.title + ' ' + f.problem + ' ' + f.basis + ' ' + f.file)
-            .toLowerCase().indexOf(F.q) >= 0);
+  return !Q || (f.id + ' ' + f.title + ' ' + f.problem + ' ' + f.basis + ' ' + f.file)
+    .toLowerCase().indexOf(Q) >= 0;
 }
 function applyFilters(){
   var shown = {};
@@ -970,9 +1003,8 @@ function applyFilters(){
     u.style.opacity = (all.length > 0 && vis === 0) ? .38 : 1;
   });
   var n = D.findings.filter(function(f){ return shown[f.id]; }).length;
-  document.getElementById('cl-note').textContent = (n === D.findings.length)
-    ? '심각도 순. 행을 누르면 상세로 이동합니다 — 코드는 필요할 때만 펼치세요'
-    : '필터 적용 중 — ' + n + ' / ' + D.findings.length + '건 표시';
+  document.getElementById('cl-note').textContent =
+    Q ? ('검색 «' + Q + '» — ' + n + ' / ' + D.findings.length + '건 표시') : '';
 }
 
 /* ── 진행 표시 · 체크리스트 동기화 ───────────── */
@@ -1040,6 +1072,20 @@ document.getElementById('b-open').addEventListener('click', function(){
   document.querySelectorAll('details').forEach(function(d){ d.open = any; });
   this.textContent = any ? '코드 전부 접기' : '코드 전부 펼치기';
 });
+/* ── diff 보기 전환 (위아래 ↔ 좌우) ──────────── */
+(function(){
+  var btn = document.getElementById('b-diff');
+  function paint(){
+    btn.textContent = '보기: ' + (diffMode === 'split' ? '좌우' : '위아래');
+    try { localStorage.setItem(DIFF_KEY, diffMode); } catch(e){}
+  }
+  btn.addEventListener('click', function(){
+    diffMode = diffMode === 'split' ? 'unified' : 'split';
+    paint(); redrawCode();
+  });
+  paint();
+})();
+
 /* ── 테마 전환 (시스템 → 라이트 → 다크) ──────── */
 (function(){
   var btn = document.getElementById('b-theme');

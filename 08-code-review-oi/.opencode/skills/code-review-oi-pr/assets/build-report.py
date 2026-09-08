@@ -363,6 +363,30 @@ def mark_of(path):
     return patch.get(path, {"added": set(), "deletions": {}})
 
 
+_before_of_cache = {}
+
+
+def before_of(path, src_len):
+    """after 라인번호 → before 라인번호 지도.
+
+    '나란히 보기'에서 왼쪽(변경 전) 열의 줄 번호를 채우려면 컨텍스트 줄도 자기
+    before 번호를 알아야 합니다. 추가된 줄은 before 가 없으므로 None 입니다.
+    """
+    if path in _before_of_cache:
+        return _before_of_cache[path]
+    mk = mark_of(path)
+    m, a = {}, 1
+    for n in range(1, src_len + 1):
+        a += len(mk["deletions"].get(n, []))      # 이 줄 앞에서 지워진 만큼 before 가 먼저 소모됨
+        if n in mk["added"]:
+            m[n] = None
+        else:
+            m[n] = a
+            a += 1
+    _before_of_cache[path] = m
+    return m
+
+
 def rows_from_after(path, frm, to):
     """after 원문 [frm, to] 구간을 diff 가 얹힌 행 배열로"""
     src = (sources.get(path) or {}).get("after")
@@ -370,12 +394,13 @@ def rows_from_after(path, frm, to):
     rows = []
     if not src:
         return rows
+    bmap = before_of(path, len(src))
     end = min(to, len(src))
     for n in range(frm, end + 1):
         for d in mk["deletions"].get(n, []):
             rows.append({"type": "del", "beforeNo": d["beforeNo"], "afterNo": None, "text": d["text"]})
         rows.append({"type": "add" if n in mk["added"] else "ctx",
-                     "afterNo": n, "beforeNo": None, "text": src[n - 1]})
+                     "afterNo": n, "beforeNo": bmap.get(n), "text": src[n - 1]})
     # 파일 끝에서 지워진 코드는 앵커가 마지막 줄 다음이라 위 반복에 안 잡힙니다.
     # 파일 끝일 때만 붙입니다 — 중간이면 다음 변경단위가 자기 시작 줄에서 보여 줍니다.
     if end == len(src):
