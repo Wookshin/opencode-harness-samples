@@ -16,6 +16,7 @@
   --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
+  --ic-bg:#eef1f6; --ic-ink:#8250df; --ic-line:#dfe3ea;
   color-scheme:light;
 }
 
@@ -32,6 +33,7 @@
   --code:#12151a; --shadow:none;
   --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
   --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
+  --ic-bg:#22272e; --ic-ink:#e2b8ff; --ic-line:#333a43;
   color-scheme:dark;
   }
 }
@@ -48,6 +50,7 @@
   --code:#12151a; --shadow:none;
   --t-com:#8b949e; --t-kw:#ff7b72; --t-type:#d2a8ff; --t-str:#a5d6ff;
   --t-num:#79c0ff; --t-sql:#e2b8ff; --t-op:#a5aab1; --t-fn:#d2a8ff;
+  --ic-bg:#22272e; --ic-ink:#e2b8ff; --ic-line:#333a43;
   color-scheme:dark;
 }
 :root[data-theme="light"]{
@@ -61,6 +64,7 @@
   --code:#f3f4f6; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
+  --ic-bg:#eef1f6; --ic-ink:#8250df; --ic-line:#dfe3ea;
   color-scheme:light;
 }
 
@@ -114,22 +118,33 @@ table.mini td.n{text-align:right;font-variant-numeric:tabular-nums}
 /* ── 산문 타이포그래피 ──────────────────────────── */
 /* 한글은 단어 중간에서 끊으면 급격히 읽기 어려워집니다. keep-all 이 핵심. */
 .prose{max-width:66ch;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}
-.prose p{margin:0 0 .7em}
+.prose p{margin:0 0 .75em}
 .prose p:last-child{margin-bottom:0}
-.prose strong{font-weight:700}
-.prose ul{margin:.4em 0 0;padding-left:1.15em}
-.prose li{margin:.3em 0;line-height:1.75}
+.prose strong{font-weight:700;color:var(--ink)}
+.prose ul{margin:.5em 0 0;padding-left:1.1em}
+.prose li{margin:.45em 0;line-height:1.75;padding-left:.15em}
+.prose li::marker{color:var(--accent)}
+
+/* 본문에 섞인 식별자 — `SqlManager`, `_sql.Init()` 처럼 코드로 보이게 */
+code{font-family:"D2Coding",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:.9em;padding:1px 4px;border-radius:4px;background:var(--ic-bg);
+  border:1px solid var(--ic-line);color:var(--ic-ink);white-space:nowrap}
+nav.toc code{background:transparent;border:0;padding:0;color:var(--ink);font-weight:600}
+table.list code,.unit>h3 code{font-size:.88em;padding:0 4px}
 
 /* ── 개요 · 종합 평가 ───────────────────────────── */
 .band{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;align-items:start}
 @media (max-width:1000px){.band{grid-template-columns:1fr}}
 .band>section{background:var(--panel);border:1px solid var(--line);border-radius:10px;
   box-shadow:var(--shadow);overflow:hidden;min-width:0}
-.band>section>h2{margin:0;padding:11px 16px;font-size:14px;background:var(--code);
+.band>section>h2{margin:0;padding:12px 16px;font-size:15px;font-weight:700;background:var(--code);
   border-bottom:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .band .body{padding:14px 16px}
 .band .prose{max-width:none}
-.band h3{margin:14px 0 6px;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em}
+.band h3{margin:22px 0 9px;font-size:13.5px;color:var(--ink);font-weight:700;
+  display:flex;align-items:center;gap:8px}
+.band h3::before{content:"";width:3px;height:15px;background:var(--accent);border-radius:2px;flex:none}
+.band h3::after{content:"";flex:1;height:1px;background:var(--line)}
 .band h3:first-child{margin-top:0}
 .stat{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;padding-top:11px;
   border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
@@ -169,6 +184,8 @@ table.list tr[data-jump]:hover td{background:var(--accent-soft)}
 table.list td.t{width:100%}
 table.list td.nw{white-space:nowrap}
 table.list .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
+table.list .basis{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.55}
+table.list td.t{line-height:1.55}
 .dec{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;
   background:var(--code);color:var(--muted)}
 .dec.agree{background:var(--minor-bg);color:var(--minor)}
@@ -193,7 +210,10 @@ nav.toc .f:first-child{margin-top:0}
 nav.toc a{display:block;padding:2px 0 2px 10px;color:var(--muted);text-decoration:none;
   border-left:2px solid var(--line);line-height:1.45}
 nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
-nav.toc a .uid{color:var(--ink);font-weight:600}
+nav.toc a .uid{color:var(--ink);font-weight:700}
+nav.toc a .cnt{display:inline-block;min-width:16px;text-align:center;font-size:11px;font-weight:700;
+  padding:0 4px;border-radius:8px;background:var(--accent-soft);color:var(--accent)}
+nav.toc a{padding:4px 0 4px 10px}
 
 /* ── 파일 / 변경단위 ────────────────────────────── */
 section.file{background:var(--panel);border:1px solid var(--line);border-radius:10px;
@@ -277,7 +297,8 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
 .needsinfo{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--major-bg);color:var(--major)}
 .finding dl{margin:0;display:grid;grid-template-columns:78px minmax(0,1fr);gap:10px 14px;align-items:start}
-.finding dt{font-size:12px;color:var(--muted);font-weight:600;padding-top:3px;word-break:keep-all}
+.finding dt{font-size:12px;color:var(--ink);opacity:.62;font-weight:700;padding-top:4px;
+  word-break:keep-all;letter-spacing:.01em}
 .finding dd{margin:0;min-width:0}
 .finding dd pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:6px;
   padding:8px 10px;overflow-x:auto;font-size:12.5px;line-height:1.5}
@@ -329,6 +350,7 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   --code:#f7f7f7; --shadow:none;
   --t-com:#6a737d; --t-kw:#cf222e; --t-type:#6f42c1; --t-str:#0a3069;
   --t-num:#0550ae; --t-sql:#8250df; --t-op:#57606a; --t-fn:#6639ba;
+  --ic-bg:#eef1f6; --ic-ink:#8250df; --ic-line:#dfe3ea;
   color-scheme:light;
   }
   body{font-size:10.5pt}
@@ -428,6 +450,14 @@ var KEY = 'oi-review-' + (D.meta.prNumber || 'x');
 function esc(s){ return String(s==null?'':s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function el(html){ var t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+
+/* 사람이 쓴 문장에 최소한의 마크업만 살립니다.
+   `식별자` → <code> · **강조** → <strong>. 코드 이름이 본문에 섞이면 눈이 미끄러집니다. */
+function inline(t){
+  return esc(t)
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+}
 
 /* ══ 문법 하이라이트 ═══════════════════════════════════════════════
    외부 라이브러리를 못 쓰므로(폐쇄망·외부 요청 0) 작은 토크나이저를 직접 둡니다.
@@ -575,13 +605,13 @@ vd.textContent = m.verdict || '—'; vd.className = 'verdict ' + (m.verdict || '
 function prose(txt){
   return String(txt == null ? '' : txt).split(/\n\s*\n|\n/).filter(function(l){ return l.trim(); })
     .map(function(l){
-      return '<p>' + esc(l.trim()).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') + '</p>';
+      return '<p>' + inline(l.trim()) + '</p>';
     }).join('');
 }
 function bullets(list){
   if (!list || !list.length) return '';
   return '<ul>' + list.map(function(t){
-    return '<li>' + esc(t).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') + '</li>';
+    return '<li>' + inline(t) + '</li>';
   }).join('') + '</ul>';
 }
 
@@ -692,9 +722,9 @@ var sorted = D.findings.slice().sort(function(a,b){
       '<td class="nw"><span class="sev ' + f.severity + '">' + f.severity + '</span></td>' +
       '<td class="nw"><span class="persp">' + (PERSP[f.perspective]||f.perspective) + '</span></td>' +
       '<td class="nw"><span class="fid">' + esc(f.id) + '</span></td>' +
-      '<td class="t">' + esc(f.title) +
+      '<td class="t">' + inline(f.title) +
         (f.verdict === 'NEEDS-INFO' ? ' <span class="needsinfo">확인 필요</span>' : '') +
-        '<div class="loc" style="margin-top:2px">근거 ' + esc(f.basis) + '</div></td>' +
+        '<div class="basis">근거 ' + inline(f.basis) + '</div></td>' +
       '<td class="nw loc">' + esc(f.file.split('/').pop()) + ':' + esc(f.line) + '</td>' +
       '<td class="nw"><a href="#unit-' + esc(f.unitId) + '">' + esc(f.unitId) + '</a></td></tr>';
   });
@@ -729,7 +759,7 @@ var sorted = D.findings.slice().sort(function(a,b){
         '<td class="nw loc">' + esc(file.path.split('/').pop()) +
           (file.priority === 1 ? ' <span class="tag p1">우선</span>' : '') + '</td>' +
         '<td class="nw"><span class="tag">' + esc(u.kindLabel || u.kind) + '</span></td>' +
-        '<td class="t">' + esc(u.summary) + '</td>' +
+        '<td class="t">' + inline(u.summary) + '</td>' +
         '<td class="nw hitn">' + badge + '</td></tr>';
     });
   });
@@ -738,8 +768,8 @@ var sorted = D.findings.slice().sort(function(a,b){
     html += '<tr data-jump="unit-' + esc(c.unitId) + '" class="ch-row">' +
       '<td class="nw">' + esc(c.unitId) + '</td><td class="nw loc">—</td>' +
       '<td class="nw"><span class="tag plain">단순</span></td>' +
-      '<td class="t">' + esc(c.content) + '</td>' +
-      '<td class="nw hitn">' + (bad ? '<span class="b">' + esc(c.issue) + '</span>' : '<span class="none">이상 없음</span>') +
+      '<td class="t">' + inline(c.content) + '</td>' +
+      '<td class="nw hitn">' + (bad ? '<span class="b">' + inline(c.issue) + '</span>' : '<span class="none">이상 없음</span>') +
       '</td></tr>';
   });
   var t = document.getElementById('ch-table');
@@ -841,7 +871,7 @@ function findingCard(f){
   var dl = '';
   function row(label, html){ dl += '<dt>' + label + '</dt><dd>' + html + '</dd>'; }
   row('문제', '<div class="prose">' + prose(f.problem) + '</div>');
-  row('근거', '<b>' + esc(f.basis) + '</b>');
+  row('근거', '<b>' + inline(f.basis) + '</b>');
   if (f.before) row('변경 전', '<pre class="was">' + hlBlock(f.before, lang) + '</pre>');
   if (f.after)  row('변경 후', '<pre class="now">' + hlBlock(f.after, lang) + '</pre>');
   if (f.suggestion) row('개선', '<pre>' + hlBlock(f.suggestion, lang) + '</pre>');
@@ -859,7 +889,7 @@ function findingCard(f){
         '<span class="persp">' + (PERSP[f.perspective] || f.perspective) + '</span>' +
         '<span class="fid">' + esc(f.id) + '</span>' +
         (f.verdict === 'NEEDS-INFO' ? '<span class="needsinfo">확인 필요</span>' : '') +
-        '<span>' + esc(f.title) + '</span>' +
+        '<span>' + inline(f.title) + '</span>' +
         '<span class="loc">' + esc(f.file.split('/').pop()) + ':' + esc(f.line) + '</span>' +
         '<button class="seecode">코드 보기</button></h4>' +
       '<dl>' + dl + '</dl>' +
@@ -919,7 +949,7 @@ filesSorted.forEach(function(file){
             : (u.beforeLines ? ('before ' + u.beforeLines[0] + '–' + u.beforeLines[1]) : '');
     box.appendChild(el('<h3><span class="uid">' + esc(u.id) + '</span>' +
       '<span class="tag">' + esc(u.kindLabel || u.kind) + '</span>' +
-      '<span class="sum">' + esc(u.summary) + '</span>' +
+      '<span class="sum">' + inline(u.summary) + '</span>' +
       '<span class="rng">' + esc(rng) + '</span></h3>'));
     var fold = foldedCode(u.rows, fs.map(function(f){ return f.line; }), u.lang || lang, '변경 코드 보기');
     if (fold) box.appendChild(fold);
@@ -928,7 +958,7 @@ filesSorted.forEach(function(file){
     sec.appendChild(box);
 
     tocHtml += '<a href="#unit-' + esc(u.id) + '"><span class="uid">' + esc(u.id) + '</span> ' +
-               esc(u.summary) + (fs.length ? ' (' + fs.length + ')' : '') + '</a>';
+               inline(u.summary) + (fs.length ? ' <span class="cnt">' + fs.length + '</span>' : '') + '</a>';
   });
 
   if (file.lines && file.lines.length) {
@@ -952,7 +982,7 @@ if (D.sql.length) {
       '<pre>' + hlBlock(s.body, 'sql') + '</pre>' +
       (s.tuningPoints && s.tuningPoints.length
         ? '<b style="font-size:12px">튜닝포인트</b><ul>' +
-          s.tuningPoints.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>'
+          s.tuningPoints.map(function(t){ return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>'
         : '<div class="empty">튜닝포인트 없음</div>') + '</div>'));
   });
   q.appendChild(qb); main.appendChild(q);
@@ -965,12 +995,12 @@ if (D.rejected.length) {
     '건 (본문에 싣지 않음)</summary><table class="mini"><tr><th>ID</th><th>관점</th><th>지적</th><th>반려 사유</th></tr>' +
     D.rejected.map(function(r){
       return '<tr><td>' + esc(r.id) + '</td><td>' + esc(PERSP[r.perspective] || r.perspective) +
-             '</td><td>' + esc(r.title) + '</td><td>' + esc(r.reason) + '</td></tr>';
+             '</td><td>' + inline(r.title) + '</td><td>' + inline(r.reason) + '</td></tr>';
     }).join('') + '</table></details>'));
 }
 if (D.unknowns.length) {
   main.appendChild(el('<details class="audit" open><summary>확인 못 한 것 ' + D.unknowns.length +
-    '건</summary><ul>' + D.unknowns.map(function(u){ return '<li>' + esc(u) + '</li>'; }).join('') +
+    '건</summary><ul>' + D.unknowns.map(function(u){ return '<li>' + inline(u) + '</li>'; }).join('') +
     '</ul></details>'));
 }
 toc.innerHTML = tocHtml || '<div class="empty">변경 없음</div>';

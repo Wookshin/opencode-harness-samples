@@ -147,6 +147,7 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 |---|---|
 | `overview.narrative` · `assessment.conclusion` 은 **필수** | 없으면 exit 1. 회의 자료의 첫 화면이 비어 버립니다 |
 | 개요·평가의 **줄바꿈을 살린다** | 리포트가 `\n` 을 문단 경계로 씁니다. 한 줄로 합치면 벽처럼 보입니다 |
+| **백틱과 `**굵게**` 를 그대로 둔다** | 리포트가 `` `식별자` `` 를 코드 칩으로, `**…**` 를 굵게 렌더합니다. 지우지 마세요 |
 | `assessment.agenda` 는 실재하는 지적 ID | 없는 ID 면 exit 1. 클릭 시 이동하는 링크가 됩니다 |
 | `REJECTED` 는 `findings` 에 넣지 않고 `rejected` 로 뺀다 | 본문에 실리면 회의에서 시간을 낭비합니다 |
 | `unitId` 는 `units[].id` 에 실재해야 한다 | 없으면 스크립트가 exit 1 |
