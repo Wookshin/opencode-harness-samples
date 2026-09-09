@@ -125,7 +125,7 @@ SQL 변경 여부, 우선순위까지 뽑아 `1-files.json` 으로 냅니다.
 헝크 하나가 곧 변경단위는 아닙니다. 한 함수가 통째로 바뀌었으면 헝크가 여럿이어도 **하나**입니다.
 
 > **여기가 이 하네스에서 가장 파급이 큰 자리입니다.** 이 표가 틀리면 뒤의 세 명이
-> 전부 틀린 것을 봅니다. 그래서 `diff-scoper` 에만 예외적으로 고가 모델을 씁니다.
+> 전부 틀린 것을 봅니다. 그래서 `diff-scoper` 는 고가 모델입니다.
 > 실 PR 에 처음 적용할 때 `/scope-only 1234` 로 이 단계만 먼저 확인하길 권하는 이유이기도 합니다.
 
 ### Phase 2 — 3인 동시 리뷰 (팬아웃)
@@ -463,7 +463,7 @@ opencode.jsonc    subagent_depth 와 전역 권한
 반려     V-1 범위 밖 / V-2 원문 불일치 / V-3 없는 규칙 / V-4 근거 부족 → 등급 내림
 등급     꼭 확인 · 확인 권장 · 참고 (PASS/FAIL 판정 없음)
 되돌림   반려율 1/3 초과 → 그 리뷰어 세션으로. 최대 2회
-모델     Pro 4 (lead·refactor·feature·builder) · Max 3 (scoper·sql·verifier)
+모델     Max 5 (lead·scoper·feature·sql·verifier) · Pro 2 (refactor·builder)
 권한     전역 edit deny. 각자 _workspace/ 아래만. 아무도 소스를 못 고침
 스크립트 collect.py (수집) · build-report.py (렌더). Python 3.8+, pip 불필요
 결과물   _workspace/pr-<번호>/review-<번호>.html — 외부 요청 0

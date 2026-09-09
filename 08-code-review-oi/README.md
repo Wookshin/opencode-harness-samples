@@ -50,13 +50,14 @@ python $S/assets/build-report.py \
 
 ## 무엇을 보여주는 샘플인가
 
-C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 여섯입니다.
+C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 일곱입니다.
 
 | Phase | 담당 | 패턴 | 하는 일 | 모델 |
 |---|---|---|---|---|
+| 0~4 | `review-lead` | 오케스트레이션 | 게이트 판단 · 동시 호출 · **종합 평가 서술** | **고가** |
 | 1 | `diff-scoper` | 파이프라인 | `collect.py` 로 수집 → **변경단위(L1, L2 …) 확정** | **고가** |
 | 2 | `review-refactor` | **팬아웃** | 명명 규칙 (`naming-rules.md`) | 무난 |
-| 2 | `review-feature` | **팬아웃** | 로직·예외·Manager 규범 (`manager-patterns.md`) | 무난 |
+| 2 | `review-feature` | **팬아웃** | 로직·예외·Manager 규범 (`manager-patterns.md`) | **고가** |
 | 2 | `review-sql` | **팬아웃** | DPICALL 본문 조회, 바인딩·인덱스 (`read-sql.md`) | **고가** |
 | 3 | `review-verifier` | **생성-검증** | 확인사항을 원문과 대조해 오탐 반려 | **고가** |
 | 4 | `report-builder` | 파이프라인 | findings.json → 스크립트 → HTML | 무난 |
@@ -65,13 +66,18 @@ C# WPF(MES 화면) PR 을 리뷰합니다. 등장인물은 여섯입니다.
 비용 계층을 보여주는 것이 목적이지만, 08 은 실제 PR 을 보고 팀 회의 자료를 만듭니다.
 **틀린 리포트의 비용이 모델 비용보다 훨씬 큽니다.**
 
-고가를 준 세 자리는 각각 이유가 있습니다.
+고가를 준 다섯 자리는 각각 이유가 있습니다.
 
 | 자리 | 틀리면 |
 |---|---|
 | `diff-scoper` | 변경 유형(신규/변경/이름변경)을 여기서 확정합니다. 틀리면 **뒤의 세 리뷰어가 전부 틀린 것을 봅니다** |
 | `review-sql` | 운영 DB 로 나가는 쿼리입니다. 잘못 통과시키는 비용이 가장 큽니다 |
 | `review-verifier` | 오탐을 놓치면 **회의 시간이 통째로 날아갑니다** |
+| `review-feature` | **없어진 코드의 영향**(`C-1`~`C-4`)을 추적하는 자리입니다. 삭제된 로직이 무엇을 막고 있었는지, 아직 그걸 기대하는 곳이 어디인지 — 이 하네스에서 추론이 가장 깊습니다 |
+| `review-lead` | 게이트를 여기서 엽니다(범위가 넓은지, 반려율이 1/3 을 넘어 되돌릴지). 그리고 **리포트 첫 화면의 종합 평가를 직접 씁니다** |
+
+`review-lead` 는 `mode: primary` 라 대화 턴마다 도는 자리입니다.
+한 번의 호출이 아니라 **세션 전체 비용**이 올라갑니다.
 
 `.opencode/skills/code-review-oi-pr/sample/` 의 변경분에는 **세 관점에 각각 걸리는 결함**이 일부러 심어져 있습니다.
 그리고 검증 단계에서 반려되도록 만든 **틀린 확인사항 3건**도 `sample/expected-findings.json` 에 들어 있습니다 (경로는 위 스킬 폴더 기준).
@@ -448,10 +454,10 @@ opencode run "/review-sample"
 ├── opencode.jsonc                     ← 복사 대상. 전역 edit: deny · subagent_depth: 1
 ├── .opencode/                         ← 복사 대상 (아래 전부)
 │   ├── agents/
-│   │   ├── review-lead.md               오케스트레이터 (primary) ← 게이트·동시 호출 지시
+│   │   ├── review-lead.md               오케스트레이터 (primary, 고가) ← 게이트·동시 호출 지시
 │   │   ├── diff-scoper.md               Phase 1 · 변경단위 확정 (고가) ← 틀리면 뒤가 전부 틀어짐
 │   │   ├── review-refactor.md           Phase 2 · 명명 규칙 (무난)
-│   │   ├── review-feature.md            Phase 2 · 로직·Manager 규범 (무난)
+│   │   ├── review-feature.md            Phase 2 · 로직·Manager 규범 (고가) ← 삭제 영향 추적
 │   │   ├── review-sql.md                Phase 2 · SQL (고가) ← 유일하게 저장소 밖을 봄
 │   │   ├── review-verifier.md           Phase 3 · 확인사항 검증 (고가)
 │   │   └── report-builder.md            Phase 4 · findings.json (무난)

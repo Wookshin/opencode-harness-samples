@@ -1,7 +1,7 @@
 ---
 description: 코드리뷰 오케스트레이터. PR 별 작업 폴더를 잡고 변경분 수집 → 3인 동시 리뷰 → 지적 검증 → HTML 리포트를 게이트로 묶어 진행합니다. 직접 리뷰하지 않습니다.
 mode: primary
-model: codemate/CodeLLMPro
+model: codemate/CodeLLMMax
 temperature: 0.1
 permission:
   edit:

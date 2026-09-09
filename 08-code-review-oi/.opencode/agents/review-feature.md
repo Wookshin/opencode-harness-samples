@@ -1,7 +1,7 @@
 ---
 description: 기능 관점 리뷰어. 로직·경계 조건·예외 경로와 SqlManager/RuleManager 사용 규범을 봅니다. 이름과 SQL 본문은 보지 않습니다.
 mode: subagent
-model: codemate/CodeLLMPro
+model: codemate/CodeLLMMax
 temperature: 0.1
 permission:
   edit:
