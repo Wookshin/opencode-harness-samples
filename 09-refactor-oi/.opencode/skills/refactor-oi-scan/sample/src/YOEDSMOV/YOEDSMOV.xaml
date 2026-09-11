@@ -1,0 +1,62 @@
+<UserControl x:Class="YOEDSMOV.YOEDSMOV"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dpi="clr-namespace:DPImgr.Controls;assembly=DPImgr.Controls"
+             xmlns:local="clr-namespace:YOEDSMOV.Common"
+             Loaded="OnLoaded">
+
+    <UserControl.Resources>
+        <!-- 조회 조건 줄의 공통 여백 -->
+        <Thickness x:Key="FieldMargin">0,0,8,0</Thickness>
+
+        <!-- 상태 코드를 사람이 읽는 말로 바꿉니다. XAML 에서만 쓰입니다. -->
+        <local:LotStatusConverter x:Key="LotStatusConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 조회 조건 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8">
+            <TextBlock Text="Lot ID" VerticalAlignment="Center"
+                       Margin="{StaticResource FieldMargin}" />
+            <TextBox x:Name="txtLotId" Width="160"
+                     Margin="{StaticResource FieldMargin}" />
+            <TextBlock Text="Line" VerticalAlignment="Center"
+                       Margin="{StaticResource FieldMargin}" />
+            <ComboBox x:Name="cboLine" Width="120"
+                      Margin="{StaticResource FieldMargin}" />
+            <Button x:Name="btnSearch" Content="조회" Width="80"
+                    Margin="{StaticResource FieldMargin}"
+                    Click="btnSearch_Click" />
+            <Button x:Name="btnConfirm" Content="반출 확정" Width="100"
+                    Click="btnConfirm_Click" />
+        </StackPanel>
+
+        <dpi:DpiDataGrid x:Name="grdLot" Grid.Row="1" Margin="8,0"
+                         AutoGenerateColumns="False"
+                         RowHeight="{Binding RowHeight}"
+                         SelectionMode="Extended">
+            <dpi:DpiDataGrid.Columns>
+                <DataGridTextColumn Header="Lot ID"   Width="140"
+                                    Binding="{Binding LOT_ID}" />
+                <DataGridTextColumn Header="Material" Width="140"
+                                    Binding="{Binding MAT_ID}" />
+                <DataGridTextColumn Header="수량"     Width="80"
+                                    Binding="{Binding LOT_QTY}" />
+                <DataGridTextColumn Header="상태"     Width="90"
+                                    Binding="{Binding LotStatus,
+                                                      Converter={StaticResource LotStatusConverter},
+                                                      Mode=OneWay}" />
+            </dpi:DpiDataGrid.Columns>
+        </dpi:DpiDataGrid>
+
+        <StatusBar Grid.Row="2">
+            <TextBlock x:Name="txtStatus" Text="{Binding StatusMessage}" />
+        </StatusBar>
+    </Grid>
+</UserControl>

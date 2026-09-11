@@ -1,0 +1,35 @@
+{
+  "_comment": "ws.py --selftest 가 쓰는 기대값입니다. 모델을 부르지 않고 index.py 의 판정을 확인합니다. mustNotBeUnreferenced 가 이 하네스의 핵심 시험입니다 — 전부 WPF 가 참조를 숨겨 두는 경로라, 인덱서가 그 경로를 놓치면 멀쩡한 코드가 죽은 코드로 회의 자료에 실립니다.",
+
+  "mustBeUnreferenced": [
+    { "name": "MaxRowCount",     "confidence": "높음", "why": "선언만 있고 읽는 곳이 없는 private 필드" },
+    { "name": "FormatLotId",     "confidence": "높음", "why": "아무도 부르지 않는 private 메서드" },
+    { "name": "SearchLotByLine", "confidence": "높음", "why": "SearchLot 을 복사해 만들었지만 호출부가 없음" },
+    { "name": "SelectLotSummary","confidence": "중간", "why": "public 이라 단정할 수 없지만 이 경로 안에서는 호출이 없음" },
+    { "name": "BuildWhere",      "confidence": "중간", "why": "위와 같음" },
+    { "name": "Bind",            "confidence": "중간", "why": "위와 같음" },
+    { "name": "PlantId",         "confidence": "중간", "why": "위와 같음" }
+  ],
+
+  "mustNotBeUnreferenced": [
+    "btnSearch_Click",
+    "btnConfirm_Click",
+    "OnLoaded",
+    "LotStatusConverter",
+    "LotStatus",
+    "StatusMessage",
+    "RowHeight",
+    "RowHeightProperty",
+    "Convert",
+    "ConvertBack"
+  ],
+
+  "mustBeDuplicatePair": [
+    ["SearchLot", "SearchLotByLine"]
+  ],
+
+  "sql": {
+    "unusedIds":  ["lot.selectMcLotList", "lot.selectMcMatList"],
+    "missingIds": ["lot.selectMcLotWithLine"]
+  }
+}

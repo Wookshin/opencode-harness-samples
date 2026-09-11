@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  /refactor-sample 전용 가짜 mapper 트리입니다.
+  실제 환경에서는 mapper-dir.txt 가 가리키는 D:\Git\DPImgr\...\dao\lot\ 아래에 있습니다.
+-->
+<sqlMap namespace="lot">
+
+  <select id="selectMcLot" resultType="map">
+    SELECT /*QR200114-011-03*//*DPI_lot.selectMcLot_2020-1-14_hj.park*/
+           l.lot_id
+         , l.lot_qty
+         , l.lot_sub_status_seg AS lot_status
+         , l.line_id
+      FROM mc_lot l
+     WHERE 1=1
+       AND TRIM(l.lot_id) = #{lotId}
+  </select>
+
+  <select id="selectMcLotList" resultType="map">
+    SELECT /*QR200114-011-04*//*DPI_lot.selectMcLotList_2020-1-14_hj.park*/
+           l.lot_id
+         , l.lot_qty
+         , l.lot_sub_status_seg AS lot_status
+         , l.line_id
+      FROM mc_lot l
+     WHERE 1=1
+       AND TRIM(l.lot_id) = #{lotId}
+  </select>
+
+  <select id="selectMcMatList" resultType="map">
+    SELECT /*QR200114-011-07*/
+           m.mat_id
+         , m.mat_name
+      FROM mc_mat m
+     WHERE m.use_yn = 'Y'
+  </select>
+
+  <update id="updateLotAttr">
+    UPDATE /*QR210330-002-01*//*DPI_lot.updateLotAttr_2021-3-30_hj.park*/
+           mc_lot
+       SET lot_attr  = #{attr}
+         , upd_tmstp = SYSDATE
+         , upd_user  = #{operId}
+     WHERE lot_id = #{lotId}
+  </update>
+
+</sqlMap>
