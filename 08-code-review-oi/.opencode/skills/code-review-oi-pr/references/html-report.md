@@ -68,7 +68,7 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
       "path":       "YOEDSMOV/YOEDSMOV.xaml.cs",   // 필수. 저장소 기준 경로
       "changeType": "변경",              // 필수. 신규 | 변경 | 삭제 | 이름변경 | 이동
                                         //   (added/modified/deleted/renamed/moved 도 받아 한글로 바꿉니다)
-      "priority":   1,                  // 필수. .xaml.cs = 1, 그 외 = 2
+      "priority":   1,                  // 필수. .xaml · .xaml.cs = 1, 그 외 = 2
       "hasSql":     false,
       "renamedFrom": null,              // renamed / moved 일 때만
       "beforeFile": "src/before/YOEDSMOV/YOEDSMOV.xaml.cs",  // findings.json 이 있는 폴더 기준
@@ -185,8 +185,11 @@ python .opencode/skills/code-review-oi-pr/assets/build-report.py \
 
 그 밖에:
 
-- **C# · SQL 문법 하이라이트** — 외부 라이브러리 없이 내장. `$@"…"` 축자 문자열 안의
-  여러 줄 SQL 도 SQL 키워드로 물듭니다 (SqlManager 의 인라인 쿼리가 그대로 읽힙니다)
+- **C# · XAML · SQL 문법 하이라이트** — 외부 라이브러리 없이 내장. `$@"…"` 축자 문자열 안의
+  여러 줄 SQL 도 SQL 키워드로 물듭니다 (SqlManager 의 인라인 쿼리가 그대로 읽힙니다).
+  XAML 은 `.xaml` · `.axaml` · `.xml` · `.config` · `.csproj` 확장자에 붙고,
+  요소·속성·`{Binding …}` 마크업 확장·주석·CDATA 를 나눠 봅니다.
+  **`.xaml.cs` 는 `.cs` 로 잡히므로** 코드비하인드는 그대로 C# 입니다
 - 검색 — 확인사항 내용·파일·근거. 체크리스트와 본문에 **동시에** 걸립니다
 - **보기 전환** — 코드 변경을 `위아래`(통합) 로 볼지 `좌우`(나란히) 로 볼지. 선택은 브라우저에 남습니다
 - 확인사항마다 **[합의] [보류] [반려]** 선택과 메모 → 브라우저에 저장
