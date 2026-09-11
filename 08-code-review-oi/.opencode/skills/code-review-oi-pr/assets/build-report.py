@@ -174,14 +174,21 @@ for k in ("rechecks", "goodPoints"):
 asm.pop("agenda", None)   # 회의 진행 순서는 쓰지 않습니다
 
 
+# XAML 토크나이저가 함께 받는 확장자. 마크업 구조가 같아 한 벌로 충분합니다.
+XAML_EXT = (".xaml", ".axaml", ".xml", ".config", ".csproj", ".props", ".targets", ".resx")
+
+
 def lang_of(path=""):
     """파일 확장자로 하이라이트 언어를 정합니다.
-    HTML 쪽 하이라이터는 'cs' 와 'sql' 만 알고, 그 외는 색을 입히지 않습니다."""
+    HTML 쪽 하이라이터는 'cs' · 'sql' · 'xaml' 만 알고, 그 외는 색을 입히지 않습니다.
+    .cs 검사가 먼저 와야 YOEDSMOV.xaml.cs 가 cs 로 남습니다 — 순서를 바꾸지 마세요."""
     low = (path or "").lower()
     if low.endswith(".cs") or low.endswith(".csx"):
         return "cs"
     if low.endswith(".sql"):
         return "sql"
+    if low.endswith(XAML_EXT):
+        return "xaml"
     return "text"
 
 
@@ -192,7 +199,8 @@ for i, f in enumerate(D["files"]):
     need(f, "changeType", w)
     f["kindLabel"] = kind_label(f.get("changeType"), w, "changeType")
     if f.get("priority") is None:
-        f["priority"] = 1 if (f.get("path") or "").lower().endswith(".xaml.cs") else 2
+        # 화면 파일(.xaml)과 그 코드비하인드(.xaml.cs)는 같은 급으로 먼저 봅니다
+        f["priority"] = 1 if (f.get("path") or "").lower().endswith((".xaml", ".xaml.cs")) else 2
     if f.get("path"):
         file_paths.add(f["path"])
 

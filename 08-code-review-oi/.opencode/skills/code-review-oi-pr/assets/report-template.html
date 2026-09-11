@@ -550,7 +550,7 @@ function hlCsLine(src, st){
     if (m[1]) { out += span('com', m[1]); continue; }
     if (m[2]) {                                    // 블록 주석 시작
       var end = src.indexOf('*/', m.index + 2);
-      if (end < 0) { out += span('com', src.slice(m.index)); return out; }
+      if (end < 0) { st.block = true; out += span('com', src.slice(m.index)); return out; }
       out += span('com', src.slice(m.index, end + 2)); re.lastIndex = last = end + 2; continue;
     }
     if (m[3]) {                                    // 축자/보간 문자열 시작
@@ -581,18 +581,89 @@ function hlCsLine(src, st){
   return out + esc(src.slice(last));
 }
 
-function newState(){ return {block:false, verb:false, sql:false}; }
+/** XAML 속성값 한 개(따옴표 포함).
+    "{Binding Path=LotId, Mode=TwoWay}" 처럼 마크업 확장이면 안쪽까지 나눕니다 */
+function hlXamlValue(raw){
+  if (raw.indexOf('{') < 0) return span('str', raw);
+  var out = '', last = 0, m, head = false;
+  var re = /([{}])|([A-Za-z_][\w.\-]*(?::[\w.\-]+)?)(\s*=)?/g;
+  while ((m = re.exec(raw))) {
+    out += span('str', raw.slice(last, m.index));
+    last = re.lastIndex;
+    if (m[1]) { out += span('op', m[1]); head = (m[1] === '{'); continue; }
+    if (head)      { out += span('type', m[2]); head = false; }  // 확장 이름 — Binding
+    else if (m[3]) { out += span('fn', m[2]); }                  // Path= · Mode=
+    else           { out += span('str', m[2]); }
+    if (m[3]) out += span('op', m[3]);
+  }
+  return out + span('str', raw.slice(last));
+}
+
+/** XAML/XML 한 줄. st 는 줄 사이로 이어지는 상태 {xcom, xcd, xtag}
+    XAML 은 속성이 여러 줄에 걸치는 일이 잦아서(<Button Grid.Row="0"\n  Content="…"/>)
+    주석·CDATA 뿐 아니라 **태그가 열린 채로 줄이 넘어가는 것**까지 들고 갑니다. */
+function hlXamlLine(src, st){
+  var out = '';
+
+  // 이어지는 주석
+  if (st.xcom) {
+    var e = src.indexOf('-->');
+    if (e < 0) return span('com', src);
+    out += span('com', src.slice(0, e + 3)); st.xcom = false; src = src.slice(e + 3);
+  }
+  // 이어지는 CDATA — 안쪽은 그대로 두고 구분자만 표시합니다
+  if (st.xcd) {
+    var c = src.indexOf(']]>');
+    if (c < 0) return esc(src);
+    out += esc(src.slice(0, c)) + span('op', ']]>'); st.xcd = false; src = src.slice(c + 3);
+  }
+
+  var re = /(<!--)|(<!\[CDATA\[)|(<\/|<\?|<)|(\/>|\?>|>)|("[^"]*"|'[^']*')|([A-Za-z_][\w.\-]*(?::[\w.\-]+)?)|(=)/g;
+  var last = 0, m, head = false;   // head — '<' 직후의 첫 이름이 요소 이름
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    last = re.lastIndex;
+
+    if (m[1]) {                                    // 주석 시작
+      var end = src.indexOf('-->', m.index + 4);
+      if (end < 0) { st.xcom = true; out += span('com', src.slice(m.index)); return out; }
+      out += span('com', src.slice(m.index, end + 3)); re.lastIndex = last = end + 3; continue;
+    }
+    if (m[2]) {                                    // CDATA 시작
+      var cd = src.indexOf(']]>', m.index + 9);
+      out += span('op', m[2]);
+      if (cd < 0) { st.xcd = true; out += esc(src.slice(m.index + 9)); return out; }
+      out += esc(src.slice(m.index + 9, cd)) + span('op', ']]>');
+      re.lastIndex = last = cd + 3; continue;
+    }
+    if (m[3]) { out += span('op', m[3]); st.xtag = true;  head = true;  continue; }
+    if (m[4]) { out += span('op', m[4]); st.xtag = false; head = false; continue; }
+    if (m[5]) { out += st.xtag ? hlXamlValue(m[5]) : esc(m[5]); continue; }
+    if (m[6]) {
+      if (!st.xtag)   out += esc(m[6]);                        // 태그 밖 본문 텍스트
+      else if (head){ out += span('kw', m[6]); head = false; } // 요소 이름
+      else            out += span('fn', m[6]);                 // 속성 이름
+      continue;
+    }
+    if (m[7]) { out += span('op', m[7]); continue; }
+  }
+  return out + esc(src.slice(last));
+}
+
+function newState(){ return {block:false, verb:false, sql:false,
+                             xcom:false, xcd:false, xtag:false}; }
 function hlLine(src, st, lang){
-  if (lang === 'cs')  return hlCsLine(src, st);
-  if (lang === 'sql') return hlSqlText(src);
+  if (lang === 'cs')   return hlCsLine(src, st);
+  if (lang === 'xaml') return hlXamlLine(src, st);
+  if (lang === 'sql')  return hlSqlText(src);
   return esc(src);
 }
 /** 여러 줄 덩어리 (지적 카드의 코드 조각, SQL 본문) */
 function hlBlock(src, lang){
   if (lang === 'sql') return hlSqlText(String(src));
-  if (lang !== 'cs')  return esc(src);
+  if (lang !== 'cs' && lang !== 'xaml') return esc(src);
   var st = newState();
-  return String(src).split('\n').map(function(l){ return hlCsLine(l, st); }).join('\n');
+  return String(src).split('\n').map(function(l){ return hlLine(l, st, lang); }).join('\n');
 }
 
 

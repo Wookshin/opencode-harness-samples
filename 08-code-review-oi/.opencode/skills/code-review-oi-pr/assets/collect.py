@@ -186,7 +186,8 @@ def parse_files(patch):
 
     for f in out:
         f["oldPath"] = None if f["oldPath"] == f["path"] else f["oldPath"]
-        f["priority"] = 1 if f["path"].lower().endswith(".xaml.cs") else 2
+        # 화면 파일(.xaml)과 그 코드비하인드(.xaml.cs)는 같은 급으로 먼저 봅니다
+        f["priority"] = 1 if f["path"].lower().endswith((".xaml", ".xaml.cs")) else 2
     return out
 
 
