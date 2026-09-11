@@ -176,3 +176,34 @@ index 28e0e62..5759106 100644
          }
  
          private void ShowLoading(bool isVisible)
+diff --git a/YOEDSMOV/YOEDSMOV.xaml b/YOEDSMOV/YOEDSMOV.xaml
+index 2c40c39..6db209e 100644
+--- a/YOEDSMOV/YOEDSMOV.xaml
++++ b/YOEDSMOV/YOEDSMOV.xaml
+@@ -28,10 +28,25 @@
+ 
+         <dpi:DpiDataGrid x:Name="grdLot" Grid.Row="1" Margin="8,0"
+                          AutoGenerateColumns="False"
+-                         SelectionMode="Extended" />
++                         SelectionMode="Extended">
++            <!-- 컬럼이 코드에만 있어 화면에서 안 보인다는 말이 있어 XAML 로도 적었습니다 -->
++            <dpi:DpiDataGrid.Columns>
++                <DataGridTextColumn Header="Lot ID"   Width="140"
++                                    Binding="{Binding LOT_ID}" />
++                <DataGridTextColumn Header="Material" Width="140"
++                                    Binding="{Binding MAT_ID}" />
++                <DataGridTextColumn Header="수량"     Width="80"
++                                    Binding="{Binding LOT_QTY}" />
++                <DataGridTextColumn Header="상태"     Width="90"
++                                    Binding="{Binding LOT_STATUS, Mode=OneWay}" />
++            </dpi:DpiDataGrid.Columns>
++        </dpi:DpiDataGrid>
+ 
+         <StackPanel Grid.Row="2" Orientation="Horizontal"
+                     HorizontalAlignment="Right" Margin="8">
++            <TextBlock VerticalAlignment="Center"
++                       Margin="{StaticResource FieldMargin}"
++                       Text="{Binding SelectedItems.Count, ElementName=grdLot, StringFormat=선택 {0}건}" />
+             <Button x:Name="btnConfirm" Content="반출 확정" Width="100"
+                     Click="btnConfirm_Click" />
+         </StackPanel>

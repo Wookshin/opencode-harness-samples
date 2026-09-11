@@ -36,6 +36,14 @@
   },
   "files": [
     {
+      "path": "YOEDSMOV/YOEDSMOV.xaml",
+      "changeType": "modified",
+      "priority": 1,
+      "hasSql": false,
+      "beforeFile": "before/YOEDSMOV/YOEDSMOV.xaml",
+      "afterFile": "after/YOEDSMOV/YOEDSMOV.xaml"
+    },
+    {
       "path": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "changeType": "modified",
       "priority": 1,
@@ -183,6 +191,31 @@
       ],
       "beforeLines": null,
       "summary": "수량 조회용 `GetLotInfoList()` 신규 추가 — SQLEXEC 인라인 쿼리"
+    },
+    {
+      "id": "L11",
+      "file": "YOEDSMOV/YOEDSMOV.xaml",
+      "kind": "변경",
+      "afterLines": [
+        31,
+        43
+      ],
+      "beforeLines": [
+        30,
+        30
+      ],
+      "summary": "`grdLot` 컬럼 4개를 XAML 에 선언 — 코드비하인드에도 같은 정의가 그대로 있음"
+    },
+    {
+      "id": "L12",
+      "file": "YOEDSMOV/YOEDSMOV.xaml",
+      "kind": "신규",
+      "afterLines": [
+        47,
+        49
+      ],
+      "beforeLines": null,
+      "summary": "선택 건수 표시 `TextBlock` 추가 — `ElementName=grdLot` 으로 직접 바인딩"
     }
   ],
   "findings": [
@@ -262,6 +295,21 @@
       "after": "this._lineId = UserInfo.LineId;",
       "suggestion": "_lineId = UserInfo.LineId;",
       "checkpoints": "46 라인도 같습니다."
+    },
+    {
+      "id": "R006",
+      "perspective": "refactor",
+      "severity": "꼭 확인",
+      "verdict": "CONFIRMED",
+      "unitId": "L11",
+      "file": "YOEDSMOV/YOEDSMOV.xaml",
+      "line": 33,
+      "title": "XAML 에 선언한 컬럼이 생성자에서 곧바로 지워진다",
+      "problem": "`YOEDSMOV.xaml.cs` 생성자가 `InitGridColumns()` 를 부르고, 그 첫 줄이 `grdLot.Columns.Clear()` 입니다. 그래서 이번에 XAML 로 옮긴 컬럼 4개는 화면에 한 번도 뜨지 않고 버려집니다. 헤더와 폭이 두 군데에 따로 적혀 있으니 한쪽만 고치면 조용히 어긋납니다.",
+      "basis": "같은 정의를 두 곳에 두지 않는다 — 컬럼 정의의 단일 출처",
+      "after": "<dpi:DpiDataGrid.Columns>\n    <DataGridTextColumn Header=\"Lot ID\"   Width=\"140\"\n                        Binding=\"{Binding LOT_ID}\" />\n</dpi:DpiDataGrid.Columns>",
+      "suggestion": "XAML 선언을 살릴 거면 `InitGridColumns()` 와 생성자의 호출을 지우고, 코드 쪽을 남길 거면 이번 XAML 블록을 되돌리세요. 둘 중 하나만 남겨야 합니다.",
+      "checkpoints": "`AddTextColumn()` 이 폭 말고 정렬·포맷도 같이 넣고 있는지 확인하세요. 그렇다면 XAML 로 옮길 때 그 설정이 빠집니다."
     },
     {
       "id": "F001",
