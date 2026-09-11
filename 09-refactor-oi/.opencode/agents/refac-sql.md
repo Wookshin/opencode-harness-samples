@@ -55,10 +55,23 @@ permission:
 | **iBATIS mapper** (별도 저장소) | `DPICALL("lot.selectMcLot")` — 화면에는 ID 만 | `<작업폴더>/src-sql/` |
 | **인라인** (화면 코드 안) | `AddSql(...)` 로 조립해 `SQLEXEC()` | `<작업폴더>/src/` |
 
-**mapper 는 `collect.py` 가 이미 가져왔습니다.** `read`·`grep` 도구로 그냥 읽으세요.
-저장소 밖을 뒤질 필요가 없습니다.
+**필요한 mapper 만 `collect.py` 가 이미 가져왔습니다.** `read`·`grep` 으로 그냥 읽으세요.
 
-수집이 안 됐으면 `1-meta.json` 의 `mapperNote` 에 이유가 있습니다.
+트리를 통째로 가져오지 않습니다 — DPI mapper 저장소는 전사 공용이라 수백 개입니다.
+**코드에 나온 SQL ID 의 네임스페이스에 해당하는 파일만** 골라 옵니다.
+
+그래서 `1-meta.json` 의 `sources` 를 먼저 보세요.
+
+| 항목 | 뜻 |
+|---|---|
+| `sqlIdsCalled` · `namespacesNeeded` | 코드가 부르는 것 |
+| **`namespacesNotFound`** | **mapper 를 못 찾은 네임스페이스 — 본문을 못 읽었습니다** |
+| `mapperFiles` · `mapperMode` | 가져온 파일 수와 방식 |
+
+`namespacesNotFound` 에 있는 것은 **`missingIds` 로 단정하지 마세요.**
+"정의가 없다"가 아니라 "확인하지 못했다" 입니다. `확인 못 한 것` 에 적습니다.
+
+수집이 아예 안 됐으면 `mapperNote` 에 이유가 있습니다.
 그때만 검색기로 저장소 밖을 보되, **못 읽었으면 지어내지 말고 `확인 못 한 것` 에 적으세요.**
 
 ## 시작하기 전에 — 반드시 읽을 것
@@ -75,8 +88,11 @@ permission:
 
 ## mapper 는 여러 화면이 씁니다 — 이 선을 넘지 마세요
 
-`1-index.json` 의 `sql.unusedIds` 는 **대상 경로 안에 호출이 없다**는 뜻일 뿐입니다.
-다른 화면이 부르고 있을 수 있습니다.
+`1-index.json` 의 `sql.unusedIds` 는 이런 뜻입니다.
+
+> **이 코드가 부르는 SQL 과 같은 파일에 들어 있으면서, 이 코드는 부르지 않는 SQL**
+
+수집하지 않은 mapper 파일은 애초에 세지 않았고, 다른 화면이 부르고 있을 수 있습니다.
 
 지우자고 할 때 반드시 그 한계를 `영향` 과 `확인 못 한 것` 양쪽에 적으세요.
 빠뜨리면 팀이 지우고 다른 화면이 멈춥니다.

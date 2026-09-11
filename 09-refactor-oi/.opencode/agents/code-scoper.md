@@ -63,7 +63,7 @@ python .opencode/skills/refactor-oi-scan/assets/index.py --ws <작업폴더>
 | 파일 | 무엇 |
 |---|---|
 | `src/**` | 대상 소스 원문 (바이트 그대로) |
-| `src-sql/**` | mapper XML (매핑이 있을 때만) |
+| `src-sql/**` | **이 코드가 부르는 mapper 만** (선별 수집) |
 | `1-meta.json` | 대상·규모·mapper 수집 결과 |
 | `1-files.json` | 파일별 종류·줄 수·최종 수정일 |
 | `1-index.json` | **심볼·참조·미참조·중복·SQL 대조** |
@@ -106,7 +106,20 @@ python .opencode/skills/refactor-oi-scan/assets/index.py --ws <작업폴더>
 | 미참조 후보 | 9건 (확신 높음 3) |
 | 중복 후보 | 1쌍 |
 | 미사용 SQL | 2건 |
+
+## mapper 수집
+
+(1-meta.json 의 sources 를 그대로 옮깁니다. 해석하지 마세요.)
+
+| | |
+|---|---|
+| 부르는 SQL ID | `lot.selectMcLot` · `lot.updateLotAttr` · `lot.selectMcLotWithLine` |
+| 가져온 mapper | 1개 (선별) |
+| **못 찾은 네임스페이스** | 없음 |
 ```
+
+> `namespacesNotFound` 가 비어 있지 않으면 **그 SQL 본문은 아무도 못 읽습니다.**
+> 빠뜨리지 말고 적으세요 — SQL 제안자가 이걸 보고 「확인 못 한 것」에 넣습니다.
 
 ## 4. `1-units.md` — 무엇을 볼지 정합니다
 
@@ -175,7 +188,7 @@ python .opencode/skills/refactor-oi-scan/assets/index.py --ws <작업폴더>
 - 산출물: <작업폴더>/1-scope.md · 1-units.md · 1-index.json · 1-index.md
 - 대상 단위 N개
 - 기계 인덱스: 미참조 N(확신 높음 N) · 중복 N쌍 · 미사용 SQL N
-- mapper: 수집됨 N개 / 못 가져옴(이유)
+- mapper: 선별 수집 N개 / 못 가져옴(이유) · 못 찾은 네임스페이스 N개
 ```
 
 ## 금지

@@ -133,9 +133,23 @@ python …/index.py  --ws _workspace/scan-YOEDSMOV
 `collect.py` 가 하는 일:
 
 - 텍스트 소스만 골라 `src/` 로 **바이트 그대로** 복사 (`bin/` · `obj/` · 생성 코드 제외)
-- `mapper-dir.txt` 매핑을 따라 iBATIS mapper 를 `src-sql/` 로
+- **코드가 부르는 mapper 만 골라** `src-sql/` 로 (아래)
 - git 이 있으면 파일별 최종 수정일·커밋 수 (오래 안 건드린 코드의 약한 신호)
 - 이전 실행은 **지우지 않고** `.prev-<시각>` 으로 밀어냄
+
+mapper 선별이 필요한 이유는 규모입니다. DPI mapper 저장소는 전사 공용이라
+dao 폴더 하나에 XML 이 수백 개 있고, 한 화면이 부르는 것은 서너 개입니다.
+
+```
+src/ 의 C# 에서 "lot.selectMcLot" 리터럴을 찾음
+  → 네임스페이스 {lot}
+  → 파일 이름이 맞는 것 (lot.xml) 채택
+  → 이름으로 못 찾은 것만 앞 4KB 를 읽어 namespace= 확인
+  → 그것만 복사
+```
+
+못 찾은 네임스페이스는 `1-meta.json` 의 `namespacesNotFound` 에 남습니다.
+**"정의가 없다"(진짜 문제)와 "확인하지 못했다"(읽지 못함)를 섞지 않기 위해서**입니다.
 
 `index.py` 가 하는 일 — **전수 조사**:
 
@@ -146,7 +160,7 @@ python …/index.py  --ws _workspace/scan-YOEDSMOV
 | `wpfHints` | **WPF 가 참조를 숨기는 14가지 경로** (아래 §5-②) |
 | `unreferenced[]` | 참조 0 + 힌트 없음. **확신 3등급**을 함께 매깁니다 |
 | `duplicateCandidates[]` | 정규화 토큰 5-gram 의 Jaccard ≥ 0.75, 8줄 이상 |
-| `sql` | mapper 정의 ID ↔ C# 호출 ID 대조 → 미사용·정의없음·중복 본문 |
+| `sql` | mapper 정의 ID ↔ C# 호출 ID 대조 → 미사용·정의없음·중복 본문 (**가져온 mapper 안에서만**) |
 
 그다음 `code-scoper` 가 **무엇을 볼지 고릅니다.**
 `symbols[]` 전부를 단위로 만들면 폭발하므로, **제안할 거리가 있을 만한 것만**
@@ -356,7 +370,7 @@ _workspace/scan-YOEDSMOV/
 ├── 1-meta.json               대상·규모·mapper 수집 결과
 ├── 1-files.json              파일별 종류·줄 수·최종 수정일
 ├── src/…                     대상 소스 원문
-├── src-sql/…                 mapper XML
+├── src-sql/…                 이 코드가 부르는 mapper 만
 ├── 1-index.json              ★ 기계가 센 것 — 검증관이 대조하는 사실
 ├── 1-index.md                위의 사람이 읽는 요약
 ├── 1-scope.md                이 코드가 하는 일
@@ -468,6 +482,8 @@ opencode run "/refactor YOEDSMOV"
 | 제안이 200건 나온다 | 대상이 너무 넓음 | 화면 하나로 좁히세요. 규모 게이트가 원래 막습니다 |
 | 멀쩡한 코드가 "안 쓰인다"고 나온다 | 인덱서가 못 본 참조 경로 | `1-index.json` 의 `wpfHints` 를 보세요. 새 경로면 `index.py` 에 추가할 자리입니다 |
 | SQL 미사용 판정이 없다 | mapper 를 못 가져옴 | `1-meta.json` 의 `mapperNote`. `mapper-dir.txt` 에 매핑을 추가하세요 |
+| mapper 를 0개 가져왔다 | 네임스페이스에 맞는 파일이 없음 | `1-meta.json` 의 `namespacesNeeded` 와 mapper 폴더 파일명을 대조. 파일명과 `namespace=` 가 둘 다 다르면 못 찾습니다 |
+| 작업 폴더가 너무 크다 | `--all-mappers` 를 줬음 | 선별이 기본입니다. 그 옵션을 빼세요 |
 | 리포트에 코드가 안 보인다 | `sourceFile` 경로 어긋남 | mapper 는 `src-sql/…` 로 적어야 합니다 |
 | 4인 동시 호출이 안 된다 | `opencode.jsonc` 누락 | 저장소 **루트**에 두세요 |
 | 스크립트가 파일을 못 읽는다 | PowerShell 5.1 의 `>` 가 UTF-16LE 로 씀 | 스크립트가 감지해 경고합니다. `collect.py` 를 쓰면 안 생깁니다 |
@@ -483,6 +499,7 @@ python .opencode/skills/refactor-oi-scan/assets/ws.py --list
 # 스크립트 단독
 S=.opencode/skills/refactor-oi-scan
 python $S/assets/collect.py --path YOEDSMOV --ws _workspace/scan-YOEDSMOV
+#   기본은 선별 수집입니다. 트리 전체가 필요하면 --all-mappers
 python $S/assets/index.py --ws _workspace/scan-YOEDSMOV
 python $S/assets/build-report.py _workspace/scan-YOEDSMOV/4-findings.json \
                                  _workspace/scan-YOEDSMOV/refactor-YOEDSMOV.html

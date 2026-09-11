@@ -511,7 +511,11 @@ RE_MAPPER_STMT = re.compile(
     re.S | re.I,
 )
 RE_SQL_COMMENT = re.compile(r"/\*.*?\*/", re.S)
-RE_SQL_ID_LITERAL = re.compile(r"^[A-Za-z_]\w*\.[A-Za-z_]\w*$")
+# DPI/iBATIS 관례상 SQL ID 는 `lot.selectMcLot` 처럼 **양쪽 모두 소문자로 시작**합니다.
+# 이 조건이 없으면 `System.Data` · `YOEDSMOV.Common` 같은 .NET 이름이
+# "호출하는데 정의 없음"으로 잡혀 리포트에 오탐이 실립니다.
+# 팀 관례가 다르면 이 정규식 하나만 고치면 됩니다. (collect.py 의 RE_SQL_ID 와 같은 규칙)
+RE_SQL_ID_LITERAL = re.compile(r"^[a-z][A-Za-z0-9_]*\.[a-z][A-Za-z0-9_]*$")
 RE_SQL_KEYWORD = re.compile(r"\b(SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM|MERGE)\b", re.I)
 
 
