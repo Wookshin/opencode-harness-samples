@@ -101,6 +101,20 @@ def read_mapper_dir():
 # 팀 관례가 다르면 이 정규식 하나만 고치면 됩니다.
 RE_SQL_ID = re.compile(r"\"([a-z][A-Za-z0-9_]*)\.([a-z][A-Za-z0-9_]*)\"")
 
+# 화면이 데이터를 가지러 나가는 길은 셋이고, **셋의 성격이 다릅니다.**
+# 이걸 안 가르면 찾을 수 없는 것을 찾으려다 「정의 없음」 오탐이 납니다.
+#
+#   DPICALL·DPIEXEC   mapper XML 의 SQL ID       → 로컬에서 찾을 수 있습니다
+#   SET_SIMAXDATA     Rule 시스템의 메시지        → **저장소에 없습니다.** 백엔드 API 입니다
+#   SQLEXEC           화면이 직접 조립한 SQL      → XML 없이 화면 안에서 판단합니다
+#
+# 팀 관례가 다르면 이 세 줄만 고치면 됩니다.
+CALL_MAPPER = ("DPICALL", "DPIEXEC")
+CALL_RULE = ("SET_SIMAXDATA",)
+CALL_INLINE = ("SQLEXEC",)
+
+RE_RULE_CALL = re.compile(r"\b(?:%s)\s*\(" % "|".join(CALL_RULE))
+
 # mapper XML 의 namespace 는 파일 앞부분에 있습니다. 통째로 읽지 않습니다.
 # 다만 DPI mapper 는 앞에 라이선스 주석과 DOCTYPE 이 길게 붙는 일이 흔해서
 # 4KB 로는 선언을 놓칩니다. 놓치면 파일 이름으로만 고르게 되고, 그때부터
@@ -115,8 +129,15 @@ def scan_sql_ids(src_root: Path):
     문자열 리터럴만 봅니다. 주석 안이든 밖이든 상관없습니다 — 여기서는
     **후보를 넉넉히 잡는 편이 안전**합니다. 못 가져온 mapper 는 티가 나지만,
     필요 없는 것을 하나 더 가져오는 건 손해가 거의 없습니다.
+
+    **단 하나 예외가 `SET_SIMAXDATA` 입니다.** 그 메시지는 Rule 시스템에
+    들어 있어 저장소 어디에도 없습니다. 넉넉히 잡으면 mapper 를 찾아 헤매다
+    "정의가 없다"로 보고하게 됩니다 — 멀쩡히 도는 백엔드 호출인데요.
+    그래서 **그 줄의 리터럴은 아예 집지 않고** 따로 모아 둡니다.
+
+    돌려주는 것: (SQL ID, 네임스페이스, Rule 메시지)
     """
-    ids, namespaces = set(), set()
+    ids, namespaces, rule_msgs = set(), set(), set()
     for p in src_root.rglob("*"):
         if not p.is_file() or p.suffix.lower() not in (".cs", ".csx"):
             continue
@@ -124,10 +145,18 @@ def scan_sql_ids(src_root: Path):
             text = p.read_text(encoding="utf-8-sig")
         except (UnicodeDecodeError, OSError):
             continue
-        for ns, sid in RE_SQL_ID.findall(text):
-            ids.add("%s.%s" % (ns, sid))
-            namespaces.add(ns)
-    return ids, namespaces
+        for line in text.split("\n"):
+            hits = RE_SQL_ID.findall(line)
+            if not hits:
+                continue
+            if RE_RULE_CALL.search(line):
+                # Rule 시스템 메시지입니다. 여기서 더 찾지 않습니다.
+                rule_msgs.update("%s.%s" % (ns, sid) for ns, sid in hits)
+                continue
+            for ns, sid in hits:
+                ids.add("%s.%s" % (ns, sid))
+                namespaces.add(ns)
+    return ids, namespaces, sorted(rule_msgs)
 
 
 def declared_ns(p: Path):
@@ -159,7 +188,7 @@ def pick_mapper_files(mapper_src: Path, namespaces):
     돌려주는 것: (가져올 파일, 파일이 아예 없는 네임스페이스, 크기로 건너뛴 파일)
     """
     picked = {}
-    oversized = []
+    oversized = {}
 
     for p in mapper_src.rglob("*.xml"):
         if not p.is_file():
@@ -170,13 +199,120 @@ def pick_mapper_files(mapper_src: Path, namespaces):
         if ns not in namespaces:
             continue
         if p.stat().st_size > MAX_FILE_BYTES:
-            # 조용히 넘기지 않습니다 — 이 파일의 SQL 은 아무도 못 읽습니다
-            oversized.append(p)
+            # 통째로는 못 옮깁니다. 대신 **부르는 문장만 잘라서** 가져옵니다.
+            oversized.setdefault(ns, []).append(p)
             continue
         picked.setdefault(ns, []).append(p)
 
     files = sorted({p for paths in picked.values() for p in paths})
-    return files, sorted(namespaces - set(picked)), sorted(oversized)
+    big = sorted({p for paths in oversized.values() for p in paths})
+    found = set(picked) | set(oversized)
+    return files, sorted(namespaces - found), big
+
+
+# ── 큰 mapper 는 필요한 문장만 잘라 옵니다 ──────────────────────────────
+#
+# DPI 의 `lotMapper.xml` 은 한 파일에 SQL 이 수백 개 있어 1MB 를 넘습니다.
+# 통째로 옮기면 작업 폴더가 부풀고 리뷰어가 읽을 것을 못 찾습니다.
+# 그렇다고 건너뛰면 `lot.countLot` 의 본문을 아무도 못 읽습니다.
+#
+# 필요한 것은 **이 화면이 실제로 부르는 문장뿐**입니다. `<select id="…">` 의
+# id 만 보면 고를 수 있으므로, 그것만 남긴 XML 을 만들어 둡니다.
+RE_STMT = re.compile(
+    r"<(select|insert|update|delete|statement|procedure|sql)\b[^>]*"
+    r"\bid\s*=\s*\"([^\"]+)\"[^>]*>.*?</\1>",
+    re.S | re.I,
+)
+RE_INCLUDE = re.compile(r"<include\b[^>]*\brefid\s*=\s*\"([^\"]+)\"", re.I)
+
+TRIM_HEADER = """<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ★ 잘라 온 파일입니다. 원본이 아닙니다.
+
+  원본:   %s
+  크기:   %.1f MB (1MB 한도 초과)
+  남긴 것: 이 화면이 부르는 문장 %d개 %s/ 원본의 문장 %d개 중
+
+  통째로 옮기면 작업 폴더가 부풀어 읽을 것을 못 찾고, 건너뛰면 본문을
+  아무도 못 읽습니다. 그래서 **부르는 문장만** 남겼습니다.
+
+  ※ 이 파일로는 「정의됐지만 안 쓰는 SQL」을 판정할 수 없습니다.
+     안 쓰는 문장은 애초에 여기 없기 때문입니다.
+-->
+"""
+
+
+def trim_mapper(text, ns, wanted_ids):
+    """큰 mapper 에서 부르는 문장만 남긴 XML 을 만듭니다.
+
+    `<include refid="…">` 로 끌어 쓰는 `<sql>` 조각도 따라가 함께 남깁니다.
+    조각이 빠지면 본문이 반쪽이 되어 읽어도 뜻을 알 수 없습니다.
+
+    돌려주는 것: (남긴 문장 [(kind, id, 원문)], 원본 문장 수, 못 찾은 조각)
+    """
+    stmts = [(m.group(1).lower(), m.group(2), m.group(0))
+             for m in RE_STMT.finditer(text)]
+    by_id = {sid: (kind, sid, raw) for kind, sid, raw in stmts}
+
+    kept = {}
+    for kind, sid, raw in stmts:
+        full = sid if "." in sid else "%s.%s" % (ns, sid)
+        if full in wanted_ids:
+            kept[sid] = (kind, sid, raw)
+
+    # `<include refid>` 를 따라갑니다. 조각이 조각을 부르는 경우가 있어 반복합니다.
+    missing_frag = set()
+    for _ in range(5):
+        need = set()
+        for _kind, _sid, raw in kept.values():
+            for ref in RE_INCLUDE.findall(raw):
+                local = ref.split(".")[-1]
+                if local not in kept:
+                    need.add(local)
+        if not need:
+            break
+        for local in need:
+            if local in by_id:
+                kept[local] = by_id[local]
+            else:
+                missing_frag.add(local)     # 다른 파일에 있는 조각입니다
+        if not (need - missing_frag):
+            break
+
+    ordered = [kept[sid] for _kind, sid, _raw in stmts if sid in kept]
+    return ordered, len(stmts), sorted(missing_frag)
+
+
+def trim_mapper_file(p: Path, wanted_ids):
+    """큰 mapper 파일 하나를 잘라 (본문, 통계) 로 돌려줍니다. 못 읽으면 (None, 이유)."""
+    try:
+        raw = p.read_bytes()
+    except OSError as e:
+        return None, "읽지 못했습니다 (%s)" % e
+    for enc in ("utf-8-sig", "cp949"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        return None, "인코딩을 알 수 없습니다"
+
+    m = RE_NS.search(text[:NS_PROBE_BYTES])
+    ns = m.group(1) if m else p.stem
+    kept, total, missing_frag = trim_mapper(text, ns, wanted_ids)
+    if not kept:
+        return None, "부르는 문장을 찾지 못했습니다 (원본 문장 %d개)" % total
+
+    note = ("· `<sql>` 조각 %s 는 이 파일에 없어 못 남겼습니다 "
+            % ", ".join(missing_frag)) if missing_frag else ""
+    body = TRIM_HEADER % (p.as_posix(), len(raw) / 1024 / 1024, len(kept), note, total)
+    body += '<sqlMap namespace="%s">\n\n' % ns
+    body += "\n\n".join("  " + raw_stmt.strip() for _k, _i, raw_stmt in kept)
+    body += "\n\n</sqlMap>\n"
+    return body, {"path": p.as_posix(), "bytes": len(raw),
+                  "keptStatements": len(kept), "totalStatements": total,
+                  "missingFragments": missing_frag}
 
 
 def git(*args, cwd=None):
@@ -317,9 +453,11 @@ def main():
             mapper_note = ("mapper-dir.txt 에 `%s` 매핑이 없습니다" % (key or "(저장소 이름 미상)"))
 
     # 코드가 실제로 부르는 SQL ID 를 먼저 찾습니다. 이게 있어야 선별할 수 있습니다.
-    sql_ids, namespaces = scan_sql_ids(src_root)
+    sql_ids, namespaces, rule_msgs = scan_sql_ids(src_root)
     missing_ns = []
     oversized_mappers = []
+    trimmed_meta = []
+    trim_failed = []
 
     if mapper_src is not None:
         if not mapper_src.exists():
@@ -345,6 +483,21 @@ def main():
                 dest.write_bytes(p.read_bytes())
                 mapper_count += 1
 
+            # 1MB 를 넘는 파일은 **부르는 문장만 잘라서** 가져옵니다.
+            # 건너뛰면 그 SQL 본문을 아무도 못 읽고, 인덱서가 「정의 없음」으로 봅니다.
+            for p in oversized_mappers:
+                body, info = trim_mapper_file(p, sql_ids)
+                rel = p.relative_to(mapper_src).as_posix()
+                if body is None:
+                    trim_failed.append({"path": p.as_posix(), "why": info})
+                    continue
+                dest = sql_root / rel
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(body, encoding="utf-8", newline="")
+                info["workspacePath"] = ("src-sql/" + rel)
+                trimmed_meta.append(info)
+                mapper_count += 1
+
             if mapper_count == 0:
                 mapper_note = ("필요한 네임스페이스(%s)에 해당하는 mapper 를 찾지 못했습니다: %s"
                                % (", ".join(sorted(namespaces)[:8]) or "없음", mapper_src))
@@ -364,9 +517,14 @@ def main():
             # 코드는 부르는데 mapper 파일을 못 찾은 네임스페이스입니다.
             # SQL 리뷰어가 「확인 못 한 것」에 적어야 합니다.
             "namespacesNotFound": missing_ns,
-            # 필요한 네임스페이스인데 1MB 를 넘어 가져오지 못한 파일입니다.
-            # 네임스페이스는 찾았지만 **그 파일의 SQL 본문은 못 읽었습니다.**
-            "mapperFilesTooLarge": [p.as_posix() for p in oversized_mappers],
+            # 1MB 를 넘어 **부르는 문장만 잘라서** 가져온 파일입니다.
+            # 본문은 읽을 수 있지만, 이 파일로는 「안 쓰는 SQL」을 판정할 수 없습니다.
+            "mapperFilesTrimmed": trimmed_meta,
+            # 자르는 것조차 실패한 파일입니다. 본문을 못 읽었습니다.
+            "mapperFilesUnread": trim_failed,
+            # `SET_SIMAXDATA` 로 나가는 Rule 시스템 메시지입니다.
+            # **저장소에 없습니다.** 백엔드 API 라 여기서 더 찾지 않습니다.
+            "ruleMessages": rule_msgs,
             "skipped": [{"path": str(p), "why": why} for p, why in skipped[:50]],
         },
         "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -397,13 +555,22 @@ def main():
         if missing_ns:
             print("  ! mapper 를 못 찾은 네임스페이스: %s" % ", ".join(missing_ns))
             print("    그 SQL 본문은 읽을 수 없습니다. 리포트의 「확인 못 한 것」에 남습니다.")
-        if oversized_mappers:
-            print("  ! 1MB 를 넘어 가져오지 못한 mapper: %s"
-                  % ", ".join(p.name for p in oversized_mappers))
-            print("    그 파일의 SQL 본문은 읽을 수 없습니다. 「확인 못 한 것」에 남습니다.")
+        for t in trimmed_meta:
+            print("  · %s 는 %.1fMB 라 부르는 문장 %d개만 잘라 왔습니다 (원본 %d개)"
+                  % (Path(t["path"]).name, t["bytes"] / 1024 / 1024,
+                     t["keptStatements"], t["totalStatements"]))
+            print("    본문은 읽을 수 있지만, 이 파일로는 「안 쓰는 SQL」을 판정할 수 없습니다.")
+        for f in trim_failed:
+            print("  ! %s 는 잘라 오지도 못했습니다 — %s"
+                  % (Path(f["path"]).name, f["why"]))
+            print("    그 SQL 본문은 읽을 수 없습니다. 「확인 못 한 것」에 남습니다.")
     else:
         print("  mapper 없음 — %s" % (mapper_note or "매핑을 찾지 못했습니다"))
         print("    SQL 미사용 판정은 할 수 없습니다. 리포트에 그 사실이 남습니다.")
+    if rule_msgs:
+        print("  · Rule 시스템 메시지 %d개는 찾지 않았습니다 (%s)"
+              % (len(rule_msgs), ", ".join(rule_msgs[:4])))
+        print("    `SET_SIMAXDATA` 는 백엔드 API 라 저장소에 없습니다. 정상입니다.")
     if skipped:
         print("  건너뜀 %d개 (생성 코드·대용량)" % len(skipped))
     print()

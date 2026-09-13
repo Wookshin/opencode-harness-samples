@@ -511,11 +511,18 @@ RE_MAPPER_STMT = re.compile(
     re.S | re.I,
 )
 RE_SQL_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+RE_INCLUDE = re.compile(r"<include\b[^>]*\brefid\s*=\s*\"([^\"]+)\"", re.I)
 # DPI/iBATIS 관례상 SQL ID 는 `lot.selectMcLot` 처럼 **양쪽 모두 소문자로 시작**합니다.
 # 이 조건이 없으면 `System.Data` · `YOEDSMOV.Common` 같은 .NET 이름이
 # "호출하는데 정의 없음"으로 잡혀 리포트에 오탐이 실립니다.
 # 팀 관례가 다르면 이 정규식 하나만 고치면 됩니다. (collect.py 의 RE_SQL_ID 와 같은 규칙)
 RE_SQL_ID_LITERAL = re.compile(r"^[a-z][A-Za-z0-9_]*\.[a-z][A-Za-z0-9_]*$")
+
+# 화면이 밖으로 나가는 길 셋 (collect.py 의 CALL_* 와 같은 규칙입니다)
+#   DPICALL·DPIEXEC   mapper XML 의 SQL ID   → 본문을 찾을 수 있습니다
+#   SET_SIMAXDATA     Rule 시스템 메시지      → **저장소에 없습니다.** 찾지 않습니다
+#   SQLEXEC           화면이 직접 만든 SQL    → 아래 inline_sql 로 잡힙니다
+RE_RULE_CALL = re.compile(r"\b(?:SET_SIMAXDATA)\s*\(")
 RE_SQL_KEYWORD = re.compile(r"\b(SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM|MERGE)\b", re.I)
 
 
@@ -612,6 +619,17 @@ def main():
     src = ws / "src"
     src_sql = ws / "src-sql"
 
+    # collect.py 가 남긴 수집 한계를 읽습니다. 없어도 됩니다(인덱싱만 따로 돌릴 때).
+    trimmed_files = []
+    meta_path = ws / "1-meta.json"
+    if meta_path.is_file():
+        try:
+            src_meta = json.loads(meta_path.read_text(encoding="utf-8")).get("sources", {})
+            trimmed_files = [t.get("workspacePath") or t.get("path")
+                             for t in src_meta.get("mapperFilesTrimmed", [])]
+        except (json.JSONDecodeError, OSError, AttributeError) as e:
+            warn("1-meta.json 을 읽지 못했습니다 (%s). 수집 한계는 반영하지 않습니다." % e)
+
     if not src.exists():
         print("✗ %s 가 없습니다." % src)
         print("  → 먼저 collect.py 를 돌려 원문을 수집하세요.")
@@ -697,13 +715,23 @@ def main():
     reflection_names = set()
     inpc_names = set()
     sql_called = []
+    rule_messages = []
     inline_sql = []
     for rel, ln, content in cs_strings:
         c = content.strip()
         if RE_IDENT.match(c):
             string_idents[c] += 1
         if RE_SQL_ID_LITERAL.match(c):
-            sql_called.append({"id": c, "file": rel, "line": ln})
+            # `SET_SIMAXDATA` 로 나가는 것은 Rule 시스템 메시지입니다.
+            # 저장소에 없으니 SQL ID 로 세면 영원히 「정의 없음」이 됩니다.
+            # 멀쩡히 도는 백엔드 호출이라 그 보고는 오탐입니다. 따로 셉니다.
+            # 마스킹된 텍스트를 봅니다 — 문자열은 지워져도 호출 이름은 남습니다
+            masked_lines = cs_masked.get(rel, "").split("\n")
+            line_text = masked_lines[ln - 1] if 0 < ln <= len(masked_lines) else ""
+            if RE_RULE_CALL.search(line_text):
+                rule_messages.append({"id": c, "file": rel, "line": ln})
+            else:
+                sql_called.append({"id": c, "file": rel, "line": ln})
         if RE_SQL_KEYWORD.search(content):
             raw_line = ""
             inline_sql.append({
@@ -926,7 +954,18 @@ def main():
     # ---- SQL 대조 ------------------------------------------------------
     defined_ids = {d["id"] for d in sql_defined}
     called_ids = {c["id"] for c in sql_called}
-    unused_ids = sorted(defined_ids - called_ids)
+
+    # `<sql id="lotCols">` 조각은 **C# 이 부르는 것이 아닙니다.**
+    # 다른 문장이 `<include refid="lotCols"/>` 로 끌어 씁니다. 그래서 호출부가
+    # 없는 것이 당연하고, 미사용으로 세면 "지워도 된다"는 오탐이 됩니다.
+    frag_ids = {d["id"] for d in sql_defined if d["kind"] == "sql"}
+    unused_ids = sorted((defined_ids - frag_ids) - called_ids)
+
+    included = set()
+    for d in sql_defined:
+        for ref in RE_INCLUDE.findall(d["body"]):
+            included.add(ref.split(".")[-1])
+    unused_fragments = sorted(f for f in frag_ids if f.split(".")[-1] not in included)
 
     # 「호출하는데 정의가 안 보인다」를 한 칸에 담으면 안 됩니다. 두 가지가 섞입니다.
     #
@@ -968,7 +1007,15 @@ def main():
                         for d in sql_defined],
             "called": sql_called,
             "collectedNamespaces": sorted(collected_ns),
+            # `SET_SIMAXDATA` 로 나가는 Rule 시스템 메시지입니다.
+            # 저장소에 없는 것이 정상이라 「정의 없음」으로 세지 않습니다.
+            "ruleMessages": rule_messages,
+            # 「안 쓰는 SQL」을 판정할 수 없는 파일입니다 (부르는 문장만 잘라 왔습니다)
+            "trimmedMapperFiles": trimmed_files,
             "unusedIds": unused_ids,
+            # `<include refid>` 로도 안 쓰이는 `<sql>` 조각. 호출부가 없는 것은
+            # 조각의 정상이므로 `unusedIds` 와 섞지 않습니다.
+            "unusedFragments": unused_fragments,
             # 본문을 읽은 네임스페이스인데 그 ID 가 없습니다 — 진짜 「정의 없음」
             "missingIds": missing_ids,
             # 본문을 못 읽은 네임스페이스입니다 — 「정의 없음」이 아니라 「확인 못 함」
@@ -1013,6 +1060,13 @@ def main():
             print("  ! 본문을 못 읽은 SQL ID %d개: %s"
                   % (len(unverified_ids), ", ".join(unverified_ids[:6])))
             print("    「정의 없음」이 아닙니다. 그 네임스페이스의 mapper 를 못 가져온 것입니다.")
+        if trimmed_files:
+            print("  · 잘라 온 mapper %d개 — 그 파일의 「안 쓰는 SQL」은 판정하지 않습니다"
+                  % len(trimmed_files))
+    if rule_messages:
+        print("  · Rule 시스템 메시지 %d개는 SQL ID 로 세지 않았습니다 (%s)"
+              % (len(rule_messages),
+                 ", ".join(sorted({r["id"] for r in rule_messages})[:4])))
     else:
         print("  mapper 를 수집하지 못했습니다 — SQL 미사용 판정은 하지 않았습니다")
     print()
@@ -1087,11 +1141,24 @@ def render_md(ix):
     a("| 호출하는데 정의 없음 | %s |" % (", ".join("`%s`" % i for i in sq["missingIds"]) or "없음"))
     a("| 본문을 못 읽어 **확인 못 함** | %s |"
       % (", ".join("`%s`" % i for i in sq.get("unverifiedIds", [])) or "없음"))
+    a("| Rule 시스템 메시지 (찾지 않음) | %s |"
+      % (", ".join("`%s`" % r["id"] for r in sq.get("ruleMessages", [])) or "없음"))
+    a("| 아무도 `include` 안 하는 `<sql>` 조각 | %s |"
+      % (", ".join("`%s`" % i for i in sq.get("unusedFragments", [])) or "없음"))
     a("| 본문이 거의 같은 쌍 | %s |" % (", ".join("`%s` ↔ `%s`" % (d["ids"][0], d["ids"][1])
                                             for d in sq["duplicateBodies"]) or "없음"))
     a("| 인라인 SQL | %d곳 (문자열 연결 %d곳) |" % (
         len(sq["inline"]), sum(1 for i in sq["inline"] if i["concatenated"])))
     a("")
+    if sq.get("trimmedMapperFiles"):
+        a("> **「정의됐지만 호출 없음」이 이 파일들에 대해서는 비어 있는 것이 당연합니다.**")
+        a("> 1MB 를 넘어 **부르는 문장만 잘라 온** 파일이라 안 쓰는 문장은 애초에 없습니다 —")
+        a("> %s" % ", ".join("`%s`" % f for f in sq["trimmedMapperFiles"]))
+        a("")
+    if sq.get("ruleMessages"):
+        a("> `SET_SIMAXDATA` 로 나가는 메시지는 **Rule 시스템에 있어 저장소에 없습니다.**")
+        a("> 본문을 못 찾는 것이 정상입니다. 「정의 없음」으로 올리지 마세요.")
+        a("")
 
     w = ix["wpf"]
     a("## WPF 참조 경로 (미참조 판정의 근거)")

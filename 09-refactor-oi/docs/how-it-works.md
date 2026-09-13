@@ -154,8 +154,21 @@ src/ 의 C# 에서 "lot.selectMcLot" 리터럴을 찾음
 네임스페이스는 찾았으니 **못 가져왔다는 표시조차 남지 않고**, 인덱서가 그 ID 를
 「정의 없음 = 실행하면 터진다」로 회의 자료에 싣습니다.
 
+**1MB 가 넘는 파일은 건너뛰지 않고 부르는 문장만 잘라 옵니다.** `lotMapper.xml`
+하나에 SQL 이 수천 개인 것이 DPI 에서는 보통이라, 통째로 옮기면 작업 폴더가
+부풀고 리뷰어가 읽을 것을 못 찾습니다. `<select id="…">` 의 id 로 골라 필요한
+문장만 남기고, `<include refid>` 로 끌어 쓰는 `<sql>` 조각도 따라갑니다
+(1.2MB → 1KB 정도로 줄어듭니다). 잘랐다는 사실은 파일 머리말과
+`mapperFilesTrimmed` 양쪽에 남습니다 — **그 파일로는 「안 쓰는 SQL」을 판정할 수
+없기 때문**입니다.
+
+호출 방식 셋도 여기서 가릅니다. `DPICALL`·`DPIEXEC` 는 mapper 에서 찾고,
+`SQLEXEC` 는 화면이 조립한 SQL 이라 화면에서 읽고, **`SET_SIMAXDATA` 는
+Rule 시스템 메시지라 저장소에 없어 아예 SQL ID 로 집지 않습니다.**
+안 가르면 멀쩡한 백엔드 호출이 「정의 없음」으로 회의 자료에 실립니다.
+
 못 찾은 네임스페이스는 `1-meta.json` 의 `namespacesNotFound` 에,
-크기 때문에 못 가져온 파일은 `mapperFilesTooLarge` 에 남습니다.
+잘라 온 파일은 `mapperFilesTrimmed` 에 남습니다.
 인덱서도 「부르는데 정의가 안 보이는 ID」를 `missingIds`(본문을 **읽었는데** 없음)와
 `unverifiedIds`(본문을 **못 읽음**)로 나눠 셉니다.
 **"정의가 없다"(진짜 문제)와 "확인하지 못했다"(읽지 못함)를 섞지 않기 위해서**입니다.
@@ -494,6 +507,8 @@ opencode run "/refactor YOEDSMOV"
 | mapper 를 0개 가져왔다 | 네임스페이스에 맞는 파일이 없음 | `1-meta.json` 의 `namespacesNeeded` 와 mapper 폴더 파일명을 대조. 파일명과 `namespace=` 가 둘 다 다르면 못 찾습니다 |
 | SQL 몇 개만 "정의 없음"으로 나온다 | 그 네임스페이스가 **여러 파일에 나뉘어** 있는데 일부만 가져옴 | `src-sql/` 에 그 네임스페이스 파일이 몇 개 왔는지 보세요. 수집기는 `namespace=` 를 전수로 보고 전부 가져옵니다 — 그래도 빠지면 `mapperFilesTooLarge` 를 확인 |
 | "정의 없음"인데 실제로는 잘 돈다 | 본문을 못 읽은 것을 없는 것으로 본 것 | `1-index.json` 의 `unverifiedIds` 에 있으면 **확인 못 한 것**입니다. `missingIds` 에 있어야 진짜 문제입니다 |
+| Rule 메시지가 "정의 없음"으로 나온다 | `SET_SIMAXDATA` 를 SQL ID 로 센 것 | 저장소에 없는 것이 정상입니다. `sql.ruleMessages` 로 빠져야 합니다 — 호출 이름이 팀마다 다르면 `collect.py` 의 `CALL_RULE` 을 고치세요 |
+| 1MB 넘는 mapper 의 SQL 을 못 읽는다 | — | 이제 건너뛰지 않고 **부르는 문장만 잘라** 옵니다. `mapperFilesTrimmed` 에 남습니다. 다만 그 파일로는 `Q-5`(안 쓰는 SQL)를 판정하지 않습니다 |
 | 제안자 하나가 빈 결과를 돌려준다 | 산출물 파일을 안 쓰고 끝냄 | 파일 유무로 판정합니다. 한 번만 다시 부르고, 그래도 비면 **그 관점 없이** 진행하고 리포트에 그 사실을 적습니다 |
 | 작업 폴더가 너무 크다 | `--all-mappers` 를 줬음 | 선별이 기본입니다. 그 옵션을 빼세요 |
 | 리포트에 코드가 안 보인다 | `sourceFile` 경로 어긋남 | mapper 는 `src-sql/…` 로 적어야 합니다 |

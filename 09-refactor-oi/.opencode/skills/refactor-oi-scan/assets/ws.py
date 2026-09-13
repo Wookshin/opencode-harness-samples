@@ -355,6 +355,75 @@ def selftest():
         check(notfound == [], "못 찾은 네임스페이스 없음%s"
               % ("" if notfound == [] else "  ← 실제: %s" % notfound))
 
+        print("\n9. 1MB 넘는 mapper 와 세 가지 호출 방식")
+        # DPI 의 lotMapper.xml 은 한 파일에 SQL 이 수천 개라 1MB 를 넘습니다.
+        # 통째로 옮기면 작업 폴더가 부풀고, 건너뛰면 본문을 아무도 못 읽습니다.
+        # 부르는 문장만 잘라 오는지, 그리고 세 가지 호출 방식을 가르는지 봅니다.
+        big = Path(tmp) / "big"
+        (big / "src").mkdir(parents=True)
+        (big / "dao" / "lot").mkdir(parents=True)
+        (big / "dao" / "lot" / "lotMapper.xml").write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n<sqlMap namespace="lot">\n'
+            '<sql id="lotCols"><![CDATA[ A.CHIP_QTY, A.PROD_ID ]]></sql>\n'
+            '<select id="countLot"><![CDATA[ SELECT COUNT(*) FROM MC_LOT '
+            'WHERE LOT_ID = #lotId# ]]></select>\n'
+            '<select id="selectByLotIdAndCurLineId"><![CDATA[ SELECT ]]>'
+            '<include refid="lotCols"/><![CDATA[ FROM MC_LOT A '
+            'WHERE A.LOT_ID = #lotId# ]]></select>\n'
+            + "".join('<select id="noise%d"><![CDATA[ SELECT %d FROM DUAL ]]></select>\n'
+                      % (i, i) for i in range(24000))
+            + "</sqlMap>\n", encoding="utf-8")
+        (big / "src" / "Scr.cs").write_text(
+            "public class Scr {\n"
+            "  public void Run() {\n"
+            '    _sql.DPICALL("lot.selectByLotIdAndCurLineId");\n'
+            '    _sql.DPIEXEC("lot.countLot");\n'
+            '    _rule.SET_SIMAXDATA("rule.checkMoveOut");\n'
+            '    _sql.AddSql("SELECT lot_id FROM mc_lot WHERE line_id = \'" + id + "\' ");\n'
+            "    _sql.SQLEXEC();\n"
+            "  }\n}\n", encoding="utf-8")
+        check((big / "dao" / "lot" / "lotMapper.xml").stat().st_size > 1024 * 1024,
+              "시험용 mapper 가 1MB 를 넘습니다")
+
+        bws = Path(tmp) / "scan-big"
+        good, _ = run([sys.executable, str(ASSETS / "collect.py"),
+                       "--path", str(big / "src"), "--ws", str(bws),
+                       "--mapper", str(big / "dao")], timeout=180)
+        trimmed = bws / "src-sql" / "lot" / "lotMapper.xml"
+        check(good and trimmed.is_file(),
+              "1MB 를 넘어도 건너뛰지 않고 가져왔습니다")
+        if trimmed.is_file():
+            body = trimmed.read_text(encoding="utf-8")
+            check(trimmed.stat().st_size < 8000,
+                  "부르는 문장만 남겨 작습니다 (%d bytes)" % trimmed.stat().st_size)
+            check("countLot" in body and "selectByLotIdAndCurLineId" in body,
+                  "부르는 문장의 본문이 들어 있습니다")
+            check("noise1000" not in body, "안 부르는 문장은 빠졌습니다")
+            check('id="lotCols"' in body,
+                  "`<include refid>` 로 끌어 쓰는 조각도 따라왔습니다")
+
+        meta = json.loads((bws / "1-meta.json").read_text(encoding="utf-8"))["sources"]
+        check([r for r in meta.get("ruleMessages", [])] == ["rule.checkMoveOut"],
+              "`SET_SIMAXDATA` 메시지는 SQL ID 로 잡지 않았습니다%s"
+              % ("" if meta.get("ruleMessages") == ["rule.checkMoveOut"]
+                 else "  ← 실제: %s" % meta.get("ruleMessages")))
+        check(len(meta.get("mapperFilesTrimmed", [])) == 1,
+              "잘라 온 사실이 1-meta.json 에 남았습니다")
+
+        good, _ = run([sys.executable, str(ASSETS / "index.py"), "--ws", str(bws)],
+                      timeout=180)
+        bix = json.loads((bws / "1-index.json").read_text(encoding="utf-8"))["sql"]
+        check(bix["missingIds"] == [],
+              "잘라 온 문장을 「정의 없음」으로 보고하지 않습니다%s"
+              % ("" if bix["missingIds"] == [] else "  ← 오탐! %s" % bix["missingIds"]))
+        check([r["id"] for r in bix.get("ruleMessages", [])] == ["rule.checkMoveOut"],
+              "Rule 메시지가 인덱스에도 따로 남았습니다")
+        check(bix["unusedIds"] == [],
+              "`<sql>` 조각을 미사용 SQL 로 세지 않습니다%s"
+              % ("" if bix["unusedIds"] == [] else "  ← 오탐! %s" % bix["unusedIds"]))
+        check(len(bix["inline"]) == 1,
+              "`SQLEXEC` 용 인라인 SQL 을 잡았습니다 (%d곳)" % len(bix["inline"]))
+
     return report(fails)
 
 

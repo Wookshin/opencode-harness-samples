@@ -99,6 +99,7 @@ permission:
 | 이름이 규칙과 어긋남 | `refac-convention` |
 | 중복을 합치기 · 안 쓰는 코드 지우기 | `refac-hygiene` |
 | SQL 본문이 무엇을 하는지 | `refac-sql` (반복문 안에서 **부르는 방식**은 당신) |
+| `SET_SIMAXDATA` 메시지의 내용 | 아무도 안 봅니다 — Rule 시스템에 있어 저장소에 없습니다 |
 | 프레임워크 교체 (MVVM·DI·ORM) | 이 리포트의 범위가 아닙니다 |
 
 ## 금지
