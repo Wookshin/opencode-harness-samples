@@ -914,6 +914,21 @@ def main():
         if gs:
             dup_items.append((s["id"], gs))
 
+    def is_rv_wrapper(sym):
+        """본문이 TibRV 호출 하나로 끝나는 메서드인가.
+
+        `_param.Clear()` → `_param.Add(…)` → `SendMessageWithJSON(…)` 는
+        **호출 하나가 기능 하나**라 같은 모양일 수밖에 없습니다. 글자가 같은
+        것이지 중복이 아니고, 범용 헬퍼로 합치면 메서드 이름이 말해 주던
+        기능이 SQL ID 문자열 뒤로 숨어 **오히려 읽기 나빠집니다.**
+
+        그래서 기계가 미리 표시해 둡니다 — 리뷰어가 원문을 읽고 매번
+        같은 판단을 반복하지 않도록.
+        """
+        raw = text_of.get(sym["file"], "").split("\n")
+        body = "\n".join(raw[sym["lines"][0] - 1:sym["lines"][1]])
+        return bool(calls.RE_RV_SEND.search(body))
+
     sym_by_id = {s["id"]: s for s in symbols}
     duplicate_candidates = []
     for n, (a, b, sim, sh) in enumerate(find_duplicates(dup_items), 1):
@@ -922,6 +937,8 @@ def main():
             "id": "DP%03d" % n,
             "similarity": sim,
             "sharedGrams": sh,
+            # 둘 다 TibRV 호출 래퍼면 「합치세요」가 아닙니다. hygiene-rules.md P-1 참조.
+            "rvWrapper": is_rv_wrapper(sa) and is_rv_wrapper(sb),
             "a": {"symbolId": a, "name": sa["name"], "file": sa["file"], "lines": sa["lines"]},
             "b": {"symbolId": b, "name": sb["name"], "file": sb["file"], "lines": sb["lines"]},
         })
@@ -1049,7 +1066,11 @@ def main():
     print("  파일 %d · 줄 %d · 심볼 %d" % (st["files"], st["lines"], st["symbols"]))
     hi = sum(1 for u in unreferenced if u["confidence"] == "높음")
     print("  미참조 후보 %d건 (확신 높음 %d)" % (len(unreferenced), hi))
-    print("  중복 후보 %d쌍 · XAML 반복 블록 %d종" % (len(duplicate_candidates), len(xaml_repeats)))
+    rvw = sum(1 for d in duplicate_candidates if d["rvWrapper"])
+    print("  중복 후보 %d쌍%s · XAML 반복 블록 %d종"
+          % (len(duplicate_candidates),
+             (" (그중 %d쌍은 TibRV 호출 래퍼 — 합치지 않습니다)" % rvw) if rvw else "",
+             len(xaml_repeats)))
     if mapper_files:
         print("  SQL 정의 %d · 호출 %d · 미사용 %d · 정의없음 %d · 확인못함 %d"
               % (st["sqlDefined"], st["sqlCalled"], len(unused_ids),
@@ -1112,13 +1133,20 @@ def render_md(ix):
     if not ix["duplicateCandidates"]:
         a("없습니다.")
     else:
-        a("| ID | 유사도 | A | B |")
-        a("|---|---|---|---|")
+        a("| ID | 유사도 | A | B | |")
+        a("|---|---|---|---|---|")
         for d in ix["duplicateCandidates"]:
-            a("| %s | %.2f | `%s` %s:%d | `%s` %s:%d |" % (
+            a("| %s | %.2f | `%s` %s:%d | `%s` %s:%d | %s |" % (
                 d["id"], d["similarity"],
                 d["a"]["name"], d["a"]["file"], d["a"]["lines"][0],
-                d["b"]["name"], d["b"]["file"], d["b"]["lines"][0]))
+                d["b"]["name"], d["b"]["file"], d["b"]["lines"][0],
+                "**합치지 않습니다**" if d.get("rvWrapper") else ""))
+        if any(d.get("rvWrapper") for d in ix["duplicateCandidates"]):
+            a("")
+            a("> **`합치지 않습니다`** 로 표시된 쌍은 TibRV 호출 래퍼입니다.")
+            a("> 호출 하나가 기능 하나라 같은 모양일 수밖에 없고, 범용 헬퍼로 합치면")
+            a("> 메서드 이름이 말해 주던 기능이 SQL ID 뒤로 숨어 **읽기 나빠집니다.**")
+            a("> `hygiene-rules.md` 의 `P-1` 을 보세요. 제안으로 올리지 마세요.")
     a("")
 
     if ix["xamlRepeats"]:

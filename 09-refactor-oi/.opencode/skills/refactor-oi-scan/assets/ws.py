@@ -462,6 +462,51 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
         check(len(inline) == 1,
               "`SQLEXEC` 는 인라인으로 셉니다 (%d곳)" % len(inline))
 
+        print("\n11. TibRV 호출 래퍼를 「합치세요」로 올리지 않는가")
+        # `_param.Clear()` → `_param.Add(…)` → `SendMessageWithJSON(…)` 는
+        # 호출 하나가 기능 하나라 같은 모양일 수밖에 없습니다. 글자가 같은 것이지
+        # 중복이 아니고, 범용 헬퍼로 합치면 이름이 말해 주던 기능이 SQL ID 뒤로
+        # 숨어 오히려 읽기 나빠집니다. 기계가 표시해 리뷰어가 매번 판단하지 않게 합니다.
+        rvw = Path(tmp) / "rvw"
+        (rvw / "src").mkdir(parents=True)
+        def _wrapper(name, sqlid):
+            return ("        public RVMessageResult %s(LotVO vo)\n        {\n"
+                    "            if (vo == null || string.IsNullOrEmpty(vo.lotId))\n"
+                    "            {\n"
+                    '                return RVMessageResult.Fail("lotId is empty");\n'
+                    "            }\n"
+                    "            _param.Clear();\n"
+                    '            _param.Add("lotId", vo.lotId);\n'
+                    '            _param.Add("appName", _appName);\n'
+                    "            return new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON("
+                    '"DPICALL", RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, "%s", _appName, _param, 60);\n'
+                    "        }\n\n" % (name, sqlid))
+        (rvw / "src" / "LotManager.cs").write_text(
+            "namespace YOWAFSPL\n{\n    public class LotManager\n    {\n"
+            + _wrapper("GetCurLineId", "lot.selectLineIdProdIdStepSeqByLotId")
+            + _wrapper("GetLotCount", "lot.countLotByLotId")
+            + "    }\n}\n", encoding="utf-8")
+
+        rws = Path(tmp) / "scan-rvw"
+        run([sys.executable, str(ASSETS / "collect.py"),
+             "--path", str(rvw / "src"), "--ws", str(rws)], timeout=120)
+        run([sys.executable, str(ASSETS / "index.py"), "--ws", str(rws)], timeout=120)
+        rix = json.loads((rws / "1-index.json").read_text(encoding="utf-8"))
+        pairs = rix["duplicateCandidates"]
+        check(len(pairs) == 1 and pairs[0]["rvWrapper"] is True,
+              "TibRV 호출 래퍼 쌍에 `rvWrapper` 표시가 붙습니다%s"
+              % ("" if len(pairs) == 1 and pairs[0]["rvWrapper"]
+                 else "  ← 실제: %s" % [(p["a"]["name"], p["rvWrapper"]) for p in pairs]))
+        md = (rws / "1-index.md").read_text(encoding="utf-8")
+        check("합치지 않습니다" in md,
+              "요약에도 「합치지 않습니다」로 적힙니다")
+        # 진짜 중복은 표시가 붙으면 안 됩니다 (3번에서 쓴 샘플로 대조)
+        sample_pairs = json.loads((ws / "1-index.json").read_text(encoding="utf-8"))["duplicateCandidates"]
+        check(all(not p["rvWrapper"] for p in sample_pairs),
+              "TibRV 와 무관한 진짜 중복에는 표시가 붙지 않습니다%s"
+              % ("" if all(not p["rvWrapper"] for p in sample_pairs)
+                 else "  ← 오탐! %s" % [p["a"]["name"] for p in sample_pairs if p["rvWrapper"]]))
+
     return report(fails)
 
 
