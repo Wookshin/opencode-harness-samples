@@ -36,8 +36,15 @@ DPI mapper 저장소는 전사 공용이라 dao 폴더 하나에 XML 이 수백 
 | `sqlIdsCalled` | 코드에서 찾은 SQL ID 전부 |
 | `namespacesNeeded` | 그 ID 들의 네임스페이스 |
 | `namespacesNotFound` | **mapper 파일을 못 찾은 네임스페이스** — 본문을 못 읽었다는 뜻 |
+| `mapperFilesTooLarge` | 필요한 파일인데 1MB 를 넘어 못 가져온 것 — 이것도 본문을 못 읽은 것입니다 |
 | `mapperFiles` | 실제로 가져온 파일 수 |
 | `mapperMode` | `선별` (기본) 또는 `all` (`--all-mappers` 를 준 경우) |
+
+**한 네임스페이스가 파일 하나라고 가정하지 마세요.**
+`dao/lot/` 아래에 `lot.xml` 과 `lotMapper.xml` 이 둘 다 `namespace="lot"` 인 것이
+DPI 의 기본형입니다. 수집기는 선언된 `namespace` 를 전수로 보고 **그 네임스페이스의
+파일을 전부** 가져옵니다. 그래서 `src-sql/` 안에 같은 네임스페이스 파일이
+여러 개 있는 것이 정상입니다 — 하나만 읽고 "나머지는 없다"고 보지 마세요.
 
 > `namespacesNotFound` 가 비어 있지 않으면 **그 SQL 의 본문은 읽을 수 없습니다.**
 > 추측하지 말고 `확인 못 한 것` 에 적으세요.
@@ -130,17 +137,21 @@ WHERE l.mat_key = m.mat_key
 
 ## Q-6 · 부르는데 정의가 없다
 
-`1-index.json` 의 `sql.missingIds` 입니다. 실행하면 터집니다.
-지금 호출부가 죽은 코드 안에 있어 드러나지 않을 수 있으니, **그 사실도 함께** 적으세요.
+「부르는데 정의가 안 보인다」에는 **성격이 다른 두 가지**가 섞입니다.
+인덱서가 이미 나눠 두었으니 **칸을 보고 가르세요.**
 
-다만 **두 가지를 가려야 합니다.**
-
-| 어느 쪽인가 | 어떻게 아나 | 뜻 |
+| 인덱스의 칸 | 뜻 | 어떻게 씁니다 |
 |---|---|---|
-| mapper 파일은 가져왔는데 그 ID 가 없다 | 네임스페이스가 `namespacesNotFound` 에 **없다** | **진짜 문제.** 실행하면 터집니다 |
-| mapper 파일 자체를 못 찾았다 | 네임스페이스가 `namespacesNotFound` 에 **있다** | 확인 불가. `확인 못 한 것` 에 적습니다 |
+| `sql.missingIds` | 그 네임스페이스의 mapper 를 **읽었는데도** 없습니다 | **진짜 문제.** 실행하면 터집니다 |
+| `sql.unverifiedIds` | 그 네임스페이스의 mapper 를 **못 읽었습니다** | 확인 불가. `확인 못 한 것` 에 적습니다 |
 
-둘째 경우를 "정의가 없습니다" 라고 단정하면 오탐입니다.
+`unverifiedIds` 를 "정의가 없습니다" 라고 단정하면 오탐입니다.
+**멀쩡히 돌고 있는 SQL 을 "실행하면 터진다"고 회의 자료에 싣는 것**이라 값이 비쌉니다.
+`1-index.json` 의 `sql.collectedNamespaces` 가 실제로 본문을 읽은 네임스페이스이고,
+`1-meta.json` 의 `namespacesNotFound` · `mapperFilesTooLarge` 에 못 읽은 이유가 남습니다.
+
+`missingIds` 를 올릴 때는, 지금 호출부가 죽은 코드 안에 있어
+드러나지 않을 수 있다는 점도 **함께** 적으세요.
 
 ## Q-7 · 본문이 사실상 같은 SQL 이 두 ID 로 있다
 

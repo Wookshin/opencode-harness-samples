@@ -102,8 +102,11 @@ def read_mapper_dir():
 RE_SQL_ID = re.compile(r"\"([a-z][A-Za-z0-9_]*)\.([a-z][A-Za-z0-9_]*)\"")
 
 # mapper XML 의 namespace 는 파일 앞부분에 있습니다. 통째로 읽지 않습니다.
+# 다만 DPI mapper 는 앞에 라이선스 주석과 DOCTYPE 이 길게 붙는 일이 흔해서
+# 4KB 로는 선언을 놓칩니다. 놓치면 파일 이름으로만 고르게 되고, 그때부터
+# `lotMapper.xml` 같은 파일이 조용히 빠집니다.
 RE_NS = re.compile(r"<(?:sqlMap|mapper)\b[^>]*namespace\s*=\s*\"([^\"]+)\"")
-NS_PROBE_BYTES = 4096
+NS_PROBE_BYTES = 16384
 
 
 def scan_sql_ids(src_root: Path):
@@ -127,41 +130,53 @@ def scan_sql_ids(src_root: Path):
     return ids, namespaces
 
 
+def declared_ns(p: Path):
+    """파일 앞부분에서 선언된 namespace 를 읽습니다. 못 읽으면 None."""
+    try:
+        with p.open("rb") as f:
+            head = f.read(NS_PROBE_BYTES).decode("utf-8", "replace")
+    except OSError:
+        return None
+    m = RE_NS.search(head)
+    return m.group(1) if m else None
+
+
 def pick_mapper_files(mapper_src: Path, namespaces):
-    """필요한 네임스페이스의 mapper 파일만 골라 냅니다.
+    """필요한 네임스페이스의 mapper 파일을 **전부** 골라 냅니다.
 
-    1) 파일 이름이 네임스페이스와 같으면 채택 (`lot` → `lot.xml`) — 대부분 여기서 끝납니다
-    2) 그래도 못 찾은 네임스페이스만, 파일 앞 4KB 를 읽어 `namespace=` 를 확인합니다
+    **한 네임스페이스가 여러 파일에 나뉘어 있는 것이 DPI 의 기본형입니다.**
+    `dao/lot/` 아래에 `lot.xml` 과 `lotMapper.xml` 이 둘 다 `namespace="lot"` 로
+    있고, `lot.countLot` 은 뒤쪽 파일에만 있습니다.
+
+    그래서 **이름이 맞는 파일 하나를 찾았다고 멈추면 안 됩니다.** 멈추면
+    나머지 파일의 SQL 이 통째로 사라지는데, 못 가져왔다는 표시도 남지 않습니다
+    (네임스페이스는 찾았으니까요). 인덱서는 그 ID 를 「정의 없음 = 실행하면
+    터진다」로 보고하고, 그 오탐이 그대로 회의 자료에 실립니다.
+
+    그래서 파일 이름이 아니라 **선언된 `namespace` 를 전수로** 봅니다.
+    선언을 못 읽은 파일만 이름으로 대조합니다.
+
+    돌려주는 것: (가져올 파일, 파일이 아예 없는 네임스페이스, 크기로 건너뛴 파일)
     """
-    by_stem = {}
-    rest = []
-    for p in mapper_src.rglob("*.xml"):
-        if not p.is_file() or p.stat().st_size > MAX_FILE_BYTES:
-            continue
-        stem = p.stem
-        if stem in namespaces:
-            by_stem.setdefault(stem, []).append(p)
-        else:
-            rest.append(p)
-
     picked = {}
-    for ns, paths in by_stem.items():
-        picked[ns] = list(paths)
+    oversized = []
 
-    unresolved = namespaces - set(picked)
-    if unresolved:
-        for p in rest:
-            try:
-                with p.open("rb") as f:
-                    head = f.read(NS_PROBE_BYTES).decode("utf-8", "replace")
-            except OSError:
-                continue
-            m = RE_NS.search(head)
-            if m and m.group(1) in unresolved:
-                picked.setdefault(m.group(1), []).append(p)
+    for p in mapper_src.rglob("*.xml"):
+        if not p.is_file():
+            continue
+        ns = declared_ns(p)
+        if ns is None:
+            ns = p.stem          # 선언을 못 읽었을 때만 이름으로 대조합니다
+        if ns not in namespaces:
+            continue
+        if p.stat().st_size > MAX_FILE_BYTES:
+            # 조용히 넘기지 않습니다 — 이 파일의 SQL 은 아무도 못 읽습니다
+            oversized.append(p)
+            continue
+        picked.setdefault(ns, []).append(p)
 
     files = sorted({p for paths in picked.values() for p in paths})
-    return files, sorted(namespaces - set(picked))
+    return files, sorted(namespaces - set(picked)), sorted(oversized)
 
 
 def git(*args, cwd=None):
@@ -304,6 +319,7 @@ def main():
     # 코드가 실제로 부르는 SQL ID 를 먼저 찾습니다. 이게 있어야 선별할 수 있습니다.
     sql_ids, namespaces = scan_sql_ids(src_root)
     missing_ns = []
+    oversized_mappers = []
 
     if mapper_src is not None:
         if not mapper_src.exists():
@@ -319,7 +335,8 @@ def main():
                 picked = sorted(p for p in mapper_src.rglob("*.xml")
                                 if p.is_file() and p.stat().st_size <= MAX_FILE_BYTES)
             else:
-                picked, missing_ns = pick_mapper_files(mapper_src, namespaces)
+                picked, missing_ns, oversized_mappers = pick_mapper_files(
+                    mapper_src, namespaces)
 
             for p in picked:
                 rel = p.relative_to(mapper_src).as_posix()
@@ -347,6 +364,9 @@ def main():
             # 코드는 부르는데 mapper 파일을 못 찾은 네임스페이스입니다.
             # SQL 리뷰어가 「확인 못 한 것」에 적어야 합니다.
             "namespacesNotFound": missing_ns,
+            # 필요한 네임스페이스인데 1MB 를 넘어 가져오지 못한 파일입니다.
+            # 네임스페이스는 찾았지만 **그 파일의 SQL 본문은 못 읽었습니다.**
+            "mapperFilesTooLarge": [p.as_posix() for p in oversized_mappers],
             "skipped": [{"path": str(p), "why": why} for p, why in skipped[:50]],
         },
         "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -377,6 +397,10 @@ def main():
         if missing_ns:
             print("  ! mapper 를 못 찾은 네임스페이스: %s" % ", ".join(missing_ns))
             print("    그 SQL 본문은 읽을 수 없습니다. 리포트의 「확인 못 한 것」에 남습니다.")
+        if oversized_mappers:
+            print("  ! 1MB 를 넘어 가져오지 못한 mapper: %s"
+                  % ", ".join(p.name for p in oversized_mappers))
+            print("    그 파일의 SQL 본문은 읽을 수 없습니다. 「확인 못 한 것」에 남습니다.")
     else:
         print("  mapper 없음 — %s" % (mapper_note or "매핑을 찾지 못했습니다"))
         print("    SQL 미사용 판정은 할 수 없습니다. 리포트에 그 사실이 남습니다.")

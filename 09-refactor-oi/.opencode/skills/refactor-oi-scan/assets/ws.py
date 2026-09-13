@@ -316,6 +316,45 @@ def selftest():
                   "외부에서 받아 오는 리소스가 없습니다 (폐쇄망에서 열립니다)%s"
                   % ("" if not fetchers else "  ← %s" % fetchers[:3]))
 
+        print("\n8. 한 네임스페이스가 여러 mapper 파일에 나뉘어 있을 때")
+        # DPI 의 기본형입니다 — `dao/lot/` 에 `lot.xml` 과 `lotMapper.xml` 이
+        # 둘 다 `namespace="lot"` 로 있고, `lot.countLot` 은 뒤쪽 파일에만 있습니다.
+        # 이름이 맞는 파일 하나에서 멈추면 나머지 파일의 SQL 이 통째로 사라지는데,
+        # 네임스페이스는 찾았으니 「못 찾음」 표시도 남지 않습니다. 그러면
+        # 인덱서가 그 ID 를 「정의 없음 = 실행하면 터진다」로 보고합니다.
+        dao = Path(tmp) / "dao" / "lot"
+        dao.mkdir(parents=True)
+        (dao / "lot.xml").write_text(
+            '<?xml version="1.0"?>\n<sqlMap namespace="lot">\n'
+            '  <select id="selectMcLot">SELECT 1 FROM dual</select>\n</sqlMap>\n',
+            encoding="utf-8")
+        (dao / "lotMapper.xml").write_text(
+            '<?xml version="1.0"?>\n<!--' + " 긴 라이선스 주석 " * 400 + '-->\n'
+            '<sqlMap namespace="lot">\n'
+            '  <select id="countLot">SELECT COUNT(*) FROM mc_lot</select>\n</sqlMap>\n',
+            encoding="utf-8")
+        (dao / "lotHist.xml").write_text(
+            '<?xml version="1.0"?>\n<sqlMap namespace="lotHist">\n'
+            '  <select id="selectHist">SELECT 1 FROM dual</select>\n</sqlMap>\n',
+            encoding="utf-8")
+
+        sys.path.insert(0, str(ASSETS))
+        try:
+            import collect as _collect
+            picked, notfound, _big = _collect.pick_mapper_files(dao.parent, {"lot"})
+        finally:
+            sys.path.pop(0)
+        names = sorted(p.name for p in picked)
+
+        check("lotMapper.xml" in names,
+              "`lot` 이 두 파일에 나뉘어 있어도 `lotMapper.xml` 을 가져옵니다%s"
+              % ("" if "lotMapper.xml" in names else "  ← 빠짐! 실제: %s" % names))
+        check("lotHist.xml" not in names,
+              "`lotHist` 는 필요 없으므로 가져오지 않습니다%s"
+              % ("" if "lotHist.xml" not in names else "  ← 과수집! 실제: %s" % names))
+        check(notfound == [], "못 찾은 네임스페이스 없음%s"
+              % ("" if notfound == [] else "  ← 실제: %s" % notfound))
+
     return report(fails)
 
 

@@ -237,17 +237,25 @@ DPI mapper 저장소는 **전사 공용**입니다. dao 폴더 하나에 XML 이
 ```
 1. src/ 의 C# 에서 "lot.selectMcLot" 같은 SQL ID 리터럴을 찾습니다
 2. 네임스페이스를 모읍니다                          → {lot}
-3. 파일 이름이 맞는 것을 고릅니다                   → lot.xml
-4. 이름으로 못 찾은 것만 앞 4KB 를 읽어 namespace= 확인
-5. 그것만 src-sql/ 로 복사합니다
+3. 트리의 XML 앞 16KB 를 읽어 선언된 namespace= 를 전수로 확인합니다
+4. namespace 가 lot 인 파일을 **전부** 고릅니다     → lot.xml · lotMapper.xml
+5. 그것만 src-sql/ 로 복사합니다 (선언을 못 읽은 파일만 이름으로 대조)
 ```
 
-301개짜리 트리에서 1개만 가져옵니다. 파일 이름과 `namespace` 가 다른
-`LOT_QUERY_MAP.xml` 같은 것도 4KB 탐색으로 찾아냅니다.
+301개짜리 트리에서 두어 개만 가져옵니다. 파일 이름과 `namespace` 가 다른
+`LOT_QUERY_MAP.xml` 같은 것도 선언 탐색으로 찾아냅니다.
+
+**파일 이름으로 먼저 고르고 멈추면 안 됩니다.** `dao/lot/` 에 `lot.xml` 과
+`lotMapper.xml` 이 둘 다 `namespace="lot"` 인 것이 DPI 의 기본형이라,
+이름이 맞는 하나에서 멈추면 `lot.countLot` 같은 SQL 이 통째로 빠집니다.
+게다가 네임스페이스는 찾았으니 **못 가져왔다는 표시도 남지 않아서**,
+멀쩡히 돌고 있는 SQL 이 「정의 없음 = 실행하면 터진다」로 리포트에 실립니다.
 
 못 찾은 네임스페이스는 `1-meta.json` 의 `namespacesNotFound` 에 남고,
 SQL 제안자가 그것을 **「확인 못 한 것」** 으로 올립니다 —
 "정의가 없다" 와 "확인하지 못했다" 를 섞지 않기 위해서입니다.
+인덱서도 같은 이유로 `missingIds`(본문을 읽었는데 없음)와
+`unverifiedIds`(본문을 못 읽음)를 나눠 셉니다.
 
 > 정말 전부 필요하면 `--all-mappers` 가 있습니다. 보통은 쓸 일이 없습니다.
 

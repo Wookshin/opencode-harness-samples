@@ -390,6 +390,9 @@ if index_path.exists():
             "sqlDefined": st.get("sqlDefined", 0),
             "sqlUnused": len(sq.get("unusedIds", [])),
             "sqlMissing": len(sq.get("missingIds", [])),
+            # 본문을 못 읽어 「정의 없음」이라고 말할 수 없는 것.
+            # 「정의 없는 SQL」과 한 칸에 담으면 오탐이 됩니다.
+            "sqlUnverified": len(sq.get("unverifiedIds", [])),
             "inlineSql": len(sq.get("inline", [])),
         }
     except (json.JSONDecodeError, OSError) as e:

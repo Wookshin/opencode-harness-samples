@@ -143,12 +143,21 @@ dao 폴더 하나에 XML 이 수백 개 있고, 한 화면이 부르는 것은 �
 ```
 src/ 의 C# 에서 "lot.selectMcLot" 리터럴을 찾음
   → 네임스페이스 {lot}
-  → 파일 이름이 맞는 것 (lot.xml) 채택
-  → 이름으로 못 찾은 것만 앞 4KB 를 읽어 namespace= 확인
-  → 그것만 복사
+  → 트리의 XML 앞 16KB 를 읽어 선언된 namespace= 를 전수로 확인
+  → namespace 가 lot 인 파일을 **전부** 복사 (lot.xml · lotMapper.xml · …)
+  → 선언을 못 읽은 파일만 이름으로 대조
 ```
 
-못 찾은 네임스페이스는 `1-meta.json` 의 `namespacesNotFound` 에 남습니다.
+**이름이 맞는 파일 하나를 찾았다고 멈추면 안 됩니다.** `dao/lot/` 아래에
+`lot.xml` 과 `lotMapper.xml` 이 둘 다 `namespace="lot"` 인 것이 DPI 의 기본형이고,
+`lot.countLot` 은 뒤쪽 파일에만 있습니다. 멈추면 그 SQL 이 통째로 사라지는데
+네임스페이스는 찾았으니 **못 가져왔다는 표시조차 남지 않고**, 인덱서가 그 ID 를
+「정의 없음 = 실행하면 터진다」로 회의 자료에 싣습니다.
+
+못 찾은 네임스페이스는 `1-meta.json` 의 `namespacesNotFound` 에,
+크기 때문에 못 가져온 파일은 `mapperFilesTooLarge` 에 남습니다.
+인덱서도 「부르는데 정의가 안 보이는 ID」를 `missingIds`(본문을 **읽었는데** 없음)와
+`unverifiedIds`(본문을 **못 읽음**)로 나눠 셉니다.
 **"정의가 없다"(진짜 문제)와 "확인하지 못했다"(읽지 못함)를 섞지 않기 위해서**입니다.
 
 `index.py` 가 하는 일 — **전수 조사**:
@@ -483,6 +492,9 @@ opencode run "/refactor YOEDSMOV"
 | 멀쩡한 코드가 "안 쓰인다"고 나온다 | 인덱서가 못 본 참조 경로 | `1-index.json` 의 `wpfHints` 를 보세요. 새 경로면 `index.py` 에 추가할 자리입니다 |
 | SQL 미사용 판정이 없다 | mapper 를 못 가져옴 | `1-meta.json` 의 `mapperNote`. `mapper-dir.txt` 에 매핑을 추가하세요 |
 | mapper 를 0개 가져왔다 | 네임스페이스에 맞는 파일이 없음 | `1-meta.json` 의 `namespacesNeeded` 와 mapper 폴더 파일명을 대조. 파일명과 `namespace=` 가 둘 다 다르면 못 찾습니다 |
+| SQL 몇 개만 "정의 없음"으로 나온다 | 그 네임스페이스가 **여러 파일에 나뉘어** 있는데 일부만 가져옴 | `src-sql/` 에 그 네임스페이스 파일이 몇 개 왔는지 보세요. 수집기는 `namespace=` 를 전수로 보고 전부 가져옵니다 — 그래도 빠지면 `mapperFilesTooLarge` 를 확인 |
+| "정의 없음"인데 실제로는 잘 돈다 | 본문을 못 읽은 것을 없는 것으로 본 것 | `1-index.json` 의 `unverifiedIds` 에 있으면 **확인 못 한 것**입니다. `missingIds` 에 있어야 진짜 문제입니다 |
+| 제안자 하나가 빈 결과를 돌려준다 | 산출물 파일을 안 쓰고 끝냄 | 파일 유무로 판정합니다. 한 번만 다시 부르고, 그래도 비면 **그 관점 없이** 진행하고 리포트에 그 사실을 적습니다 |
 | 작업 폴더가 너무 크다 | `--all-mappers` 를 줬음 | 선별이 기본입니다. 그 옵션을 빼세요 |
 | 리포트에 코드가 안 보인다 | `sourceFile` 경로 어긋남 | mapper 는 `src-sql/…` 로 적어야 합니다 |
 | 4인 동시 호출이 안 된다 | `opencode.jsonc` 누락 | 저장소 **루트**에 두세요 |

@@ -764,6 +764,11 @@ function bullets(list, tag){
     [ix.sqlMissing, '정의 없는 SQL', ix.sqlMissing > 0],
     [ix.inlineSql, '인라인 SQL', ix.inlineSql > 0]
   ];
+  /* 본문을 못 읽어 확인하지 못한 SQL 은 「정의 없음」과 다릅니다.
+     0 이면 굳이 칸을 만들지 않습니다 — 보통은 0 입니다. */
+  if (ix.sqlUnverified > 0) {
+    tiles.push([ix.sqlUnverified, '확인 못 한 SQL', true]);
+  }
   box.innerHTML = tiles.map(function(t){
     return '<div class="tile' + (t[2] ? ' warn' : '') + '"><b>' + t[0] + '</b><span>' + t[1] + '</span></div>';
   }).join('');

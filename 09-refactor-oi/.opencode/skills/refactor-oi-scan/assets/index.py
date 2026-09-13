@@ -673,10 +673,12 @@ def main():
 
     # ---- mapper --------------------------------------------------------
     sql_defined = []
+    collected_ns = set()          # 본문을 실제로 읽은 네임스페이스
     for rel, p in mapper_files:
         text = read_text(p)
         total_lines += text.count("\n") + 1
-        _ns, stmts = parse_mapper(rel, text)
+        ns, stmts = parse_mapper(rel, text)
+        collected_ns.add(ns)
         sql_defined.extend(stmts)
 
     # ---- 참조 세기 -----------------------------------------------------
@@ -925,7 +927,17 @@ def main():
     defined_ids = {d["id"] for d in sql_defined}
     called_ids = {c["id"] for c in sql_called}
     unused_ids = sorted(defined_ids - called_ids)
-    missing_ids = sorted(i for i in called_ids - defined_ids)
+
+    # 「호출하는데 정의가 안 보인다」를 한 칸에 담으면 안 됩니다. 두 가지가 섞입니다.
+    #
+    #   · 그 네임스페이스의 mapper 를 **읽었는데도** 없다 → 진짜 문제. 실행하면 터집니다
+    #   · 그 네임스페이스의 mapper 를 **못 읽었다**       → 확인 못 한 것. 있을 수도 있습니다
+    #
+    # 섞어서 「정의 없음」으로 보고하면, 멀쩡히 돌고 있는 SQL 이
+    # "실행하면 터진다"로 회의 자료에 실립니다. 그래서 나눠서 셉니다.
+    not_defined = called_ids - defined_ids
+    missing_ids = sorted(i for i in not_defined if i.split(".")[0] in collected_ns)
+    unverified_ids = sorted(not_defined - set(missing_ids))
 
     sql_dup_items = [(d["id"], grams(normalize_sql(d["body"]).split(), 5))
                      for d in sql_defined]
@@ -955,8 +967,12 @@ def main():
             "defined": [{"id": d["id"], "kind": d["kind"], "file": d["file"], "line": d["line"]}
                         for d in sql_defined],
             "called": sql_called,
+            "collectedNamespaces": sorted(collected_ns),
             "unusedIds": unused_ids,
+            # 본문을 읽은 네임스페이스인데 그 ID 가 없습니다 — 진짜 「정의 없음」
             "missingIds": missing_ids,
+            # 본문을 못 읽은 네임스페이스입니다 — 「정의 없음」이 아니라 「확인 못 함」
+            "unverifiedIds": unverified_ids,
             "duplicateBodies": sql_duplicates,
             "inline": inline_sql,
         },
@@ -990,8 +1006,13 @@ def main():
     print("  미참조 후보 %d건 (확신 높음 %d)" % (len(unreferenced), hi))
     print("  중복 후보 %d쌍 · XAML 반복 블록 %d종" % (len(duplicate_candidates), len(xaml_repeats)))
     if mapper_files:
-        print("  SQL 정의 %d · 호출 %d · 미사용 %d · 정의없음 %d"
-              % (st["sqlDefined"], st["sqlCalled"], len(unused_ids), len(missing_ids)))
+        print("  SQL 정의 %d · 호출 %d · 미사용 %d · 정의없음 %d · 확인못함 %d"
+              % (st["sqlDefined"], st["sqlCalled"], len(unused_ids),
+                 len(missing_ids), len(unverified_ids)))
+        if unverified_ids:
+            print("  ! 본문을 못 읽은 SQL ID %d개: %s"
+                  % (len(unverified_ids), ", ".join(unverified_ids[:6])))
+            print("    「정의 없음」이 아닙니다. 그 네임스페이스의 mapper 를 못 가져온 것입니다.")
     else:
         print("  mapper 를 수집하지 못했습니다 — SQL 미사용 판정은 하지 않았습니다")
     print()
@@ -1064,6 +1085,8 @@ def render_md(ix):
     a("|---|---|")
     a("| 정의됐지만 호출 없음 | %s |" % (", ".join("`%s`" % i for i in sq["unusedIds"]) or "없음"))
     a("| 호출하는데 정의 없음 | %s |" % (", ".join("`%s`" % i for i in sq["missingIds"]) or "없음"))
+    a("| 본문을 못 읽어 **확인 못 함** | %s |"
+      % (", ".join("`%s`" % i for i in sq.get("unverifiedIds", [])) or "없음"))
     a("| 본문이 거의 같은 쌍 | %s |" % (", ".join("`%s` ↔ `%s`" % (d["ids"][0], d["ids"][1])
                                             for d in sq["duplicateBodies"]) or "없음"))
     a("| 인라인 SQL | %d곳 (문자열 연결 %d곳) |" % (
