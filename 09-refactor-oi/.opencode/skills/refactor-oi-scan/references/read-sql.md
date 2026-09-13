@@ -19,7 +19,7 @@ SendMessageWithJSONToTextResult(SET_SIMAXDATA, …, "legacy_semis.updateSemisDel
 
 | 첫 인자 | 무엇인가 | 본문은 어디에 | 당신이 할 일 |
 |---|---|---|---|
-| `DPICALL` · `DPIEXEC` | iBATIS mapper 의 SQL ID | `<작업폴더>/src-sql/` | **읽고 판정합니다** (`Q-1`~`Q-9`) |
+| `DPICALL` | iBATIS mapper 의 SQL ID | `<작업폴더>/src-sql/` | **읽고 판정합니다** (`Q-1`~`Q-9`) |
 | `SQLEXEC` | 화면이 `_sql` 에 조립해 둔 SQL. **ID 가 없습니다** | `<작업폴더>/src/` — 화면 안 | **읽고 판정합니다.** XML 이 없는 것이 정상입니다 |
 | **그 밖의 전부** | **Rule 시스템 메시지** — `SET_SIMAXDATA` · `LOTCOMMENT` · `TKIN` · `TKOUT` · `ISSUE` … | **어디에도 없습니다** | **그냥 지나갑니다** |
 
@@ -46,7 +46,7 @@ SendMessageWithJSONToTextResult(SET_SIMAXDATA, …, "legacy_semis.updateSemisDel
 > 이 메시지들에 대해 할 말이 있다면 하나뿐입니다:
 > **"이 화면은 Rule 시스템 메시지 N개를 부릅니다"** — 그 이상은 이 리포트의 범위 밖입니다.
 
-판정 규칙은 **화이트리스트**입니다. `DPICALL`·`DPIEXEC`·`SQLEXEC` 만 SQL 을 가진
+판정 규칙은 **화이트리스트**입니다. `DPICALL`·`SQLEXEC` 만 SQL 을 가진
 종류로 알고, **RV 로 나가는 나머지는 전부 Rule 로 봅니다.** Rule 메시지 이름은
 계속 늘기 때문에 열거할 수 없습니다 — 새 메시지가 생겨도 저절로 맞습니다.
 
@@ -213,7 +213,7 @@ WHERE l.mat_key = m.mat_key
 `unverifiedIds` 를 "정의가 없습니다" 라고 단정하면 오탐입니다.
 **멀쩡히 돌고 있는 SQL 을 "실행하면 터진다"고 회의 자료에 싣는 것**이라 값이 비쌉니다.
 `1-index.json` 의 `sql.collectedNamespaces` 가 실제로 본문을 읽은 네임스페이스이고,
-`1-meta.json` 의 `namespacesNotFound` · `mapperFilesTooLarge` 에 못 읽은 이유가 남습니다.
+`1-meta.json` 의 `namespacesNotFound` · `mapperFilesUnread` 에 못 읽은 이유가 남습니다.
 
 `missingIds` 를 올릴 때는, 지금 호출부가 죽은 코드 안에 있어
 드러나지 않을 수 있다는 점도 **함께** 적으세요.

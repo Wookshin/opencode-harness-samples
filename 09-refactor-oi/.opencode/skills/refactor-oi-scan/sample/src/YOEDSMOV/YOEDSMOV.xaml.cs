@@ -181,7 +181,7 @@ namespace YOEDSMOV
                 _sqlManager.AddParam("attr", "MOVED");
                 _sqlManager.AddParam("operId", _operId);
 
-                int affected = _sqlManager.DPIEXEC("lot.updateLotAttr");
+                int affected = _sqlManager.DPICALL("lot.updateLotAttr").Rows.Count;
                 if (affected > 0)
                 {
                     okCount++;

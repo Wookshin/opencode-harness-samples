@@ -53,7 +53,7 @@ foreach (string lotId in targetList)
 
 줄일 것은 **반복 자체가 아니라 한 번 도는 동안의 왕복 수**입니다.
 
-**왕복은 세 가지 모두 셉니다** — `DPICALL`·`DPIEXEC`(mapper), `SQLEXEC`(화면이
+**왕복은 세 가지 모두 셉니다** — `DPICALL`(mapper), `SQLEXEC`(화면이
 조립한 SQL), `SET_SIMAXDATA`(Rule 시스템 백엔드 호출). 마지막 것은 **본문을 볼 수
 없지만 왕복인 것은 같습니다.** 반복문 안에 있으면 그대로 지적하세요 — 다만
 "그 메시지가 무엇을 하는지"는 쓰지 마세요. 아무도 읽을 수 없습니다.

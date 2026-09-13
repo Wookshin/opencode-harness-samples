@@ -164,7 +164,7 @@ src/ 의 C# 에서 "lot.selectMcLot" 리터럴을 찾음
 
 호출 방식도 여기서 가릅니다. 전부 `SendMessage*(<종류>, …)` 로 나가고
 **첫 인자가 종류**입니다 — 맨몸 상수(`DPICALL`)일 때도 문자열(`"LOTCOMMENT"`)일
-때도 있습니다. `DPICALL`·`DPIEXEC` 는 mapper 에서 찾고, `SQLEXEC` 는 화면이
+때도 있습니다. `DPICALL` 은 mapper 에서 찾고, `SQLEXEC` 는 화면이
 `_sql` 에 조립한 SQL 이라 화면에서 읽고, **나머지는 전부 Rule 시스템 메시지라
 저장소에 없어 아예 SQL ID 로 집지 않습니다.**
 
@@ -516,7 +516,7 @@ opencode run "/refactor YOEDSMOV"
 | 멀쩡한 코드가 "안 쓰인다"고 나온다 | 인덱서가 못 본 참조 경로 | `1-index.json` 의 `wpfHints` 를 보세요. 새 경로면 `index.py` 에 추가할 자리입니다 |
 | SQL 미사용 판정이 없다 | mapper 를 못 가져옴 | `1-meta.json` 의 `mapperNote`. `mapper-dir.txt` 에 매핑을 추가하세요 |
 | mapper 를 0개 가져왔다 | 네임스페이스에 맞는 파일이 없음 | `1-meta.json` 의 `namespacesNeeded` 와 mapper 폴더 파일명을 대조. 파일명과 `namespace=` 가 둘 다 다르면 못 찾습니다 |
-| SQL 몇 개만 "정의 없음"으로 나온다 | 그 네임스페이스가 **여러 파일에 나뉘어** 있는데 일부만 가져옴 | `src-sql/` 에 그 네임스페이스 파일이 몇 개 왔는지 보세요. 수집기는 `namespace=` 를 전수로 보고 전부 가져옵니다 — 그래도 빠지면 `mapperFilesTooLarge` 를 확인 |
+| SQL 몇 개만 "정의 없음"으로 나온다 | 그 네임스페이스가 **여러 파일에 나뉘어** 있는데 일부만 가져옴 | `src-sql/` 에 그 네임스페이스 파일이 몇 개 왔는지 보세요. 수집기는 `namespace=` 를 전수로 보고 전부 가져옵니다 — 그래도 빠지면 `mapperFilesUnread` 를 확인 |
 | "정의 없음"인데 실제로는 잘 돈다 | 본문을 못 읽은 것을 없는 것으로 본 것 | `1-index.json` 의 `unverifiedIds` 에 있으면 **확인 못 한 것**입니다. `missingIds` 에 있어야 진짜 문제입니다 |
 | Rule 메시지가 "정의 없음"으로 나온다 | `SET_SIMAXDATA` 를 SQL ID 로 센 것 | 저장소에 없는 것이 정상입니다. `sql.ruleMessages` 로 빠져야 합니다 — 호출 이름이 팀마다 다르면 `collect.py` 의 `CALL_RULE` 을 고치세요 |
 | 1MB 넘는 mapper 의 SQL 을 못 읽는다 | — | 이제 건너뛰지 않고 **부르는 문장만 잘라** 옵니다. `mapperFilesTrimmed` 에 남습니다. 다만 그 파일로는 `Q-5`(안 쓰는 SQL)를 판정하지 않습니다 |

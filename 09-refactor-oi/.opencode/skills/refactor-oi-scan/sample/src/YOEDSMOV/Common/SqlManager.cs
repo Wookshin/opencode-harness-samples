@@ -48,11 +48,6 @@ namespace YOEDSMOV.Common
             return DpiGateway.Select(_appName, sqlId, _param);
         }
 
-        public int DPIEXEC(string sqlId)
-        {
-            return DpiGateway.Execute(_appName, sqlId, _param);
-        }
-
         public DataTable SQLEXEC()
         {
             return DpiGateway.SelectRaw(_appName, _sql.ToString(), _param);

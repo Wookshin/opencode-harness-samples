@@ -37,7 +37,12 @@
 import re
 
 # ── 팀 관례가 바뀌면 여기만 고치세요 ────────────────────────────────────
-KIND_MAPPER = ("DPICALL", "DPIEXEC")   # 인자 중 `ns.id` 가 mapper 의 SQL ID
+#
+# **SQL 을 가진 종류는 이 둘뿐입니다.** 새 종류를 여기 적기 전에
+# 실제 코드에 그런 호출이 있는지 먼저 확인하세요 — 없는 이름을 적어 두면
+# 아무 일도 안 하지만, 있는 이름을 빠뜨리면 그 SQL ID 가 Rule 로 분류되어
+# **mapper 를 아예 안 가져옵니다.**
+KIND_MAPPER = ("DPICALL",)             # 인자 중 `ns.id` 가 mapper 의 SQL ID
 KIND_INLINE = ("SQLEXEC",)             # 화면이 조립한 SQL. ID 가 없습니다
 KIND_RULE = ("SET_SIMAXDATA",)         # 이름이 알려진 Rule 메시지 (문서용)
 # 그 밖에 RV 로 나가는 것은 **전부** Rule 시스템 메시지로 봅니다.

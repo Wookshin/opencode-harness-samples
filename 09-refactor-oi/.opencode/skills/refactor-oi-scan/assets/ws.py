@@ -378,7 +378,7 @@ def selftest():
             "public class Scr {\n"
             "  public void Run() {\n"
             '    _sql.DPICALL("lot.selectByLotIdAndCurLineId");\n'
-            '    _sql.DPIEXEC("lot.countLot");\n'
+            '    _sql.DPICALL("lot.countLot");\n'
             '    _rule.SET_SIMAXDATA("rule.checkMoveOut");\n'
             '    _sql.AddSql("SELECT lot_id FROM mc_lot WHERE line_id = \'" + id + "\' ");\n'
             "    _sql.SQLEXEC();\n"
