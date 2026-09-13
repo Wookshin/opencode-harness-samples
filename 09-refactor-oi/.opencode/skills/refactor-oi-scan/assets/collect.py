@@ -41,6 +41,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# 같은 폴더의 공용 규칙 (파이썬이 스크립트 폴더를 sys.path 에 넣어 줍니다)
+import calls
+
 for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8")
@@ -96,24 +99,9 @@ def read_mapper_dir():
     return out
 
 
-# DPI/iBATIS 관례상 SQL ID 는 `lot.selectMcLot` 처럼 **양쪽 모두 소문자로 시작**합니다.
-# 이 조건이 `System.Data` · `YOEDSMOV.Common` 같은 .NET 이름을 걸러 줍니다.
-# 팀 관례가 다르면 이 정규식 하나만 고치면 됩니다.
-RE_SQL_ID = re.compile(r"\"([a-z][A-Za-z0-9_]*)\.([a-z][A-Za-z0-9_]*)\"")
-
-# 화면이 데이터를 가지러 나가는 길은 셋이고, **셋의 성격이 다릅니다.**
-# 이걸 안 가르면 찾을 수 없는 것을 찾으려다 「정의 없음」 오탐이 납니다.
-#
-#   DPICALL·DPIEXEC   mapper XML 의 SQL ID       → 로컬에서 찾을 수 있습니다
-#   SET_SIMAXDATA     Rule 시스템의 메시지        → **저장소에 없습니다.** 백엔드 API 입니다
-#   SQLEXEC           화면이 직접 조립한 SQL      → XML 없이 화면 안에서 판단합니다
-#
-# 팀 관례가 다르면 이 세 줄만 고치면 됩니다.
-CALL_MAPPER = ("DPICALL", "DPIEXEC")
-CALL_RULE = ("SET_SIMAXDATA",)
-CALL_INLINE = ("SQLEXEC",)
-
-RE_RULE_CALL = re.compile(r"\b(?:%s)\s*\(" % "|".join(CALL_RULE))
+# 호출 종류를 가리는 규칙은 `calls.py` 에 모여 있습니다 (index.py 와 공용).
+# 한쪽만 고치면 수집과 인덱싱이 어긋나 오탐이 납니다.
+RE_SQL_ID = calls.RE_SQL_ID
 
 # mapper XML 의 namespace 는 파일 앞부분에 있습니다. 통째로 읽지 않습니다.
 # 다만 DPI mapper 는 앞에 라이선스 주석과 DOCTYPE 이 길게 붙는 일이 흔해서
@@ -126,18 +114,18 @@ NS_PROBE_BYTES = 16384
 def scan_sql_ids(src_root: Path):
     """수집한 코드에서 호출하는 SQL ID 를 찾습니다.
 
-    문자열 리터럴만 봅니다. 주석 안이든 밖이든 상관없습니다 — 여기서는
-    **후보를 넉넉히 잡는 편이 안전**합니다. 못 가져온 mapper 는 티가 나지만,
-    필요 없는 것을 하나 더 가져오는 건 손해가 거의 없습니다.
+    **부르는 쪽을 보고 성격을 가릅니다** (`calls.py`). 같은 `ns.id` 라도
+    `DPICALL` 로 나가면 mapper 에 있고, `SET_SIMAXDATA` 로 나가면 Rule 시스템에
+    있어 저장소 어디에도 없습니다. 안 가르면 멀쩡히 도는 백엔드 호출을
+    "정의가 없다"로 보고하게 됩니다.
 
-    **단 하나 예외가 `SET_SIMAXDATA` 입니다.** 그 메시지는 Rule 시스템에
-    들어 있어 저장소 어디에도 없습니다. 넉넉히 잡으면 mapper 를 찾아 헤매다
-    "정의가 없다"로 보고하게 됩니다 — 멀쩡히 도는 백엔드 호출인데요.
-    그래서 **그 줄의 리터럴은 아예 집지 않고** 따로 모아 둡니다.
+    호출 밖에 홀로 있는 리터럴은 **넉넉히 SQL ID 로 잡습니다.** 변수에 담아
+    넘기는 코드가 있어서입니다 — 필요 없는 mapper 를 하나 더 가져오는 것은
+    손해가 거의 없지만, 못 가져오면 본문을 아무도 못 읽습니다.
 
     돌려주는 것: (SQL ID, 네임스페이스, Rule 메시지)
     """
-    ids, namespaces, rule_msgs = set(), set(), set()
+    ids, rule_msgs = set(), set()
     for p in src_root.rglob("*"):
         if not p.is_file() or p.suffix.lower() not in (".cs", ".csx"):
             continue
@@ -145,18 +133,14 @@ def scan_sql_ids(src_root: Path):
             text = p.read_text(encoding="utf-8-sig")
         except (UnicodeDecodeError, OSError):
             continue
-        for line in text.split("\n"):
-            hits = RE_SQL_ID.findall(line)
-            if not hits:
-                continue
-            if RE_RULE_CALL.search(line):
-                # Rule 시스템 메시지입니다. 여기서 더 찾지 않습니다.
-                rule_msgs.update("%s.%s" % (ns, sid) for ns, sid in hits)
-                continue
-            for ns, sid in hits:
-                ids.add("%s.%s" % (ns, sid))
-                namespaces.add(ns)
-    return ids, namespaces, sorted(rule_msgs)
+        sql, rule, _inline, claimed = calls.classify(text)
+        ids.update(sql)
+        rule_msgs.update(rule)
+        for lit in RE_SQL_ID.findall(text):
+            if lit not in claimed:
+                ids.add(lit)          # 부르는 쪽이 안 보이는 리터럴 — 넉넉히
+    ids -= rule_msgs
+    return ids, calls.namespaces_of(ids), sorted(rule_msgs)
 
 
 def declared_ns(p: Path):

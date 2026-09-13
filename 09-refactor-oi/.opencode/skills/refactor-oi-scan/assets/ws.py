@@ -149,6 +149,7 @@ def doctor():
     print("\n하네스 파일 (.opencode/ 는 숨김 폴더라 검색 도구에는 안 잡힙니다)")
     need = [ASSETS / "collect.py", ASSETS / "index.py",
             ASSETS / "build-report.py", ASSETS / "ws.py",
+            ASSETS / "calls.py",              # collect.py · index.py 공용 규칙
             ASSETS / "report-template.html",
             SKILL / "mapper-dir.txt",
             REFS / "suggest-format.md", REFS / "html-report.md",
@@ -423,6 +424,43 @@ def selftest():
               % ("" if bix["unusedIds"] == [] else "  ← 오탐! %s" % bix["unusedIds"]))
         check(len(bix["inline"]) == 1,
               "`SQLEXEC` 용 인라인 SQL 을 잡았습니다 (%d곳)" % len(bix["inline"]))
+
+        print("\n10. 실제 TibRV 호출 포맷을 가르는가")
+        # 실제 코드는 전부 `SendMessage*(<종류>, …)` 로 나갑니다.
+        # 종류가 첫 인자이고, 맨몸 상수(DPICALL)일 때도 문자열("LOTCOMMENT")일 때도 있습니다.
+        # `SET_SIMAXDATA` 뒤의 `"legacy_semis.updateSemisDelivery"` 는 SQL ID 처럼
+        # 생겼지만 mapper 에 없습니다 — 쫓아가면 영원히 「정의 없음」이 됩니다.
+        sys.path.insert(0, str(ASSETS))
+        try:
+            import calls as _calls
+            sql, rule, inline, _claimed = _calls.classify('''
+new TibRVHelper(P).SendMessageWithJSON(SQLEXEC, T, S, _appName, _sql.GetSql(), 60);
+new TibRVHelper(P).SendMessageWithJSON(DPICALL, T, S, "mat.selectTrimMatId", _appName, _param);
+new TibRVHelper(C).SendMessage("LOTCOMMENT", T, S, m_StrAppname, Params, 30);
+new TibRVHelper(C).SendMessageWithJSONToTextResult(SET_SIMAXDATA, T, S, "legacy_semis.updateSemisDelivery", _appName, _param);
+new TibRVHelper(C).SendMessageWithJSON("ISSUE", T, S, "wip.reportIssue", _appName, _param);
+var r = new TibRVHelper(P).SendMessageWithJSON(
+        DPICALL,
+        T, S,
+        "lotreltn.selectByFromLotId",
+        _appName, _param);
+''')
+        finally:
+            sys.path.pop(0)
+
+        check(sql == ["lotreltn.selectByFromLotId", "mat.selectTrimMatId"],
+              "`DPICALL` 의 SQL ID 만 골랐습니다 (여러 줄 호출 포함)%s"
+              % ("" if sql == ["lotreltn.selectByFromLotId", "mat.selectTrimMatId"]
+                 else "  ← 실제: %s" % sql))
+        check("legacy_semis.updateSemisDelivery" in rule,
+              "`SET_SIMAXDATA` 뒤의 ID 를 SQL 로 쫓아가지 않습니다%s"
+              % ("" if "legacy_semis.updateSemisDelivery" in rule
+                 else "  ← 오탐! SQL 로 잡힘"))
+        check("wip.reportIssue" in rule,
+              "열거한 적 없는 Rule 메시지(`ISSUE`)도 Rule 로 봅니다%s"
+              % ("" if "wip.reportIssue" in rule else "  ← 오탐! SQL 로 잡힘"))
+        check(len(inline) == 1,
+              "`SQLEXEC` 는 인라인으로 셉니다 (%d곳)" % len(inline))
 
     return report(fails)
 

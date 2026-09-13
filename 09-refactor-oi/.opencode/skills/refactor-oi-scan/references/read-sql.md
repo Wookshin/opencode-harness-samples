@@ -8,16 +8,31 @@
 **이 절을 안 읽으면 나머지가 전부 오탐이 됩니다.** 호출 방식마다 본문이 있는
 곳이 다르고, **하나는 아예 저장소에 없습니다.**
 
-| 호출 | 무엇인가 | 본문은 어디에 | 당신이 할 일 |
+전부 TibRV 로 나가고, **첫 번째 인자가 무엇을 하는 호출인지 말해 줍니다.**
+
+```csharp
+SendMessageWithJSON(SQLEXEC, …, _sql.GetSql(), 60)
+SendMessageWithJSON(DPICALL, …, "mat.selectTrimMatId", _appName, _param)
+SendMessage("LOTCOMMENT", …, m_StrAppname, Params, 30)
+SendMessageWithJSONToTextResult(SET_SIMAXDATA, …, "legacy_semis.updateSemisDelivery", …)
+```
+
+| 첫 인자 | 무엇인가 | 본문은 어디에 | 당신이 할 일 |
 |---|---|---|---|
 | `DPICALL` · `DPIEXEC` | iBATIS mapper 의 SQL ID | `<작업폴더>/src-sql/` | **읽고 판정합니다** (`Q-1`~`Q-9`) |
-| `SQLEXEC` | 화면 C# 이 `AddSql(...)` 로 직접 조립한 SQL | `<작업폴더>/src/` — 화면 안 | **읽고 판정합니다.** XML 이 없는 것이 정상입니다 |
-| **`SET_SIMAXDATA`** | **Rule 시스템에 등록된 메시지** | **어디에도 없습니다** | **그냥 지나갑니다** |
+| `SQLEXEC` | 화면이 `_sql` 에 조립해 둔 SQL. **ID 가 없습니다** | `<작업폴더>/src/` — 화면 안 | **읽고 판정합니다.** XML 이 없는 것이 정상입니다 |
+| **그 밖의 전부** | **Rule 시스템 메시지** — `SET_SIMAXDATA` · `LOTCOMMENT` · `TKIN` · `TKOUT` · `ISSUE` … | **어디에도 없습니다** | **그냥 지나갑니다** |
 
-### `SET_SIMAXDATA` 는 찾지 마세요
+### Rule 메시지는 찾지 마세요
 
-백엔드 API 호출입니다. 메시지 정의는 **Rule 시스템 쪽에 있고 이 저장소에
-들어오지 않습니다.** 그래서:
+백엔드 API 호출입니다. 로직은 **Rule 시스템 쪽에 있고 이 저장소에
+들어오지 않습니다.**
+
+**`SET_SIMAXDATA` 가 특히 헷갈립니다.** 뒤에 붙는
+`"legacy_semis.updateSemisDelivery"` 가 SQL ID 와 똑같이 생겼거든요.
+**mapper 에 없습니다.** 쫓아가면 영원히 못 찾습니다.
+
+그래서:
 
 - mapper 에서 **찾지 마세요.** 없는 것이 정상입니다
 - 검색기로 저장소 밖을 **뒤지지 마세요.** 거기에도 없습니다
@@ -30,6 +45,10 @@
 
 > 이 메시지들에 대해 할 말이 있다면 하나뿐입니다:
 > **"이 화면은 Rule 시스템 메시지 N개를 부릅니다"** — 그 이상은 이 리포트의 범위 밖입니다.
+
+판정 규칙은 **화이트리스트**입니다. `DPICALL`·`DPIEXEC`·`SQLEXEC` 만 SQL 을 가진
+종류로 알고, **RV 로 나가는 나머지는 전부 Rule 로 봅니다.** Rule 메시지 이름은
+계속 늘기 때문에 열거할 수 없습니다 — 새 메시지가 생겨도 저절로 맞습니다.
 
 ---
 

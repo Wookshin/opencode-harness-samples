@@ -162,10 +162,21 @@ src/ 의 C# 에서 "lot.selectMcLot" 리터럴을 찾음
 `mapperFilesTrimmed` 양쪽에 남습니다 — **그 파일로는 「안 쓰는 SQL」을 판정할 수
 없기 때문**입니다.
 
-호출 방식 셋도 여기서 가릅니다. `DPICALL`·`DPIEXEC` 는 mapper 에서 찾고,
-`SQLEXEC` 는 화면이 조립한 SQL 이라 화면에서 읽고, **`SET_SIMAXDATA` 는
-Rule 시스템 메시지라 저장소에 없어 아예 SQL ID 로 집지 않습니다.**
-안 가르면 멀쩡한 백엔드 호출이 「정의 없음」으로 회의 자료에 실립니다.
+호출 방식도 여기서 가릅니다. 전부 `SendMessage*(<종류>, …)` 로 나가고
+**첫 인자가 종류**입니다 — 맨몸 상수(`DPICALL`)일 때도 문자열(`"LOTCOMMENT"`)일
+때도 있습니다. `DPICALL`·`DPIEXEC` 는 mapper 에서 찾고, `SQLEXEC` 는 화면이
+`_sql` 에 조립한 SQL 이라 화면에서 읽고, **나머지는 전부 Rule 시스템 메시지라
+저장소에 없어 아예 SQL ID 로 집지 않습니다.**
+
+`SET_SIMAXDATA` 가 함정입니다 — 뒤에 붙는 `"legacy_semis.updateSemisDelivery"` 가
+SQL ID 와 똑같이 생겼거든요. 안 가르면 멀쩡한 백엔드 호출이 「정의 없음 =
+실행하면 터진다」로 회의 자료에 실립니다.
+
+**화이트리스트로 가릅니다.** SQL 을 가진 종류만 적어 두고 나머지는 Rule 로
+봅니다 — Rule 메시지 이름(`TKIN`·`TKOUT`·`ISSUE` …)은 계속 늘어 열거할 수
+없어서, 새 메시지가 생겨도 저절로 맞는 쪽을 골랐습니다.
+규칙은 `assets/calls.py` 한 곳에 있고 두 스크립트가 같이 씁니다 — 한쪽만
+고치면 수집과 인덱싱이 어긋나 오탐이 납니다.
 
 못 찾은 네임스페이스는 `1-meta.json` 의 `namespacesNotFound` 에,
 잘라 온 파일은 `mapperFilesTrimmed` 에 남습니다.

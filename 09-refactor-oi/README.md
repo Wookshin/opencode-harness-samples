@@ -264,18 +264,32 @@ SQL 제안자가 그것을 **「확인 못 한 것」** 으로 올립니다 —
 
 ### ⑪ 화면이 밖으로 나가는 길 셋을 가른다
 
-셋의 성격이 달라서, 안 가르면 멀쩡한 호출이 오탐으로 실립니다.
+전부 TibRV 로 나가고 **첫 인자가 종류**입니다. 성격이 달라서, 안 가르면
+멀쩡한 호출이 오탐으로 실립니다.
 
-| 호출 | 본문이 어디에 | 어떻게 |
+```csharp
+SendMessageWithJSON(SQLEXEC, …, _sql.GetSql(), 60)                              // 화면이 조립
+SendMessageWithJSON(DPICALL, …, "mat.selectTrimMatId", _appName, _param)        // mapper
+SendMessage("LOTCOMMENT", …, m_StrAppname, Params, 30)                          // Rule
+SendMessageWithJSONToTextResult(SET_SIMAXDATA, …, "legacy_semis.updateSemisDelivery", …)  // Rule
+```
+
+| 첫 인자 | 본문이 어디에 | 어떻게 |
 |---|---|---|
 | `DPICALL` · `DPIEXEC` | mapper XML | 가져와서 읽습니다 |
-| `SQLEXEC` (`AddSql` 조립) | 화면 C# 안 | 인라인 SQL 로 잡습니다 (문자열 연결 여부까지) |
-| **`SET_SIMAXDATA`** | **저장소에 없음** (Rule 시스템) | **SQL ID 로 집지 않고 지나갑니다** |
+| `SQLEXEC` | 화면 C# 안 (`_sql`) | 인라인 SQL 로 잡습니다 (문자열 연결 여부까지) |
+| **그 밖의 전부** | **저장소에 없음** (Rule 시스템) | **SQL ID 로 집지 않고 지나갑니다** |
 
-`SET_SIMAXDATA` 는 백엔드 API 호출이라 메시지 정의가 저장소에 들어오지 않습니다.
-SQL ID 로 세면 영원히 「정의 없음 = 실행하면 터진다」가 됩니다 — 멀쩡히 도는데요.
-그래서 `1-index.json` 의 `sql.ruleMessages` 로 따로 세고, 리뷰어에게는
-**찾지 말라고** 적어 둡니다.
+마지막 줄이 함정입니다 — `"legacy_semis.updateSemisDelivery"` 는 SQL ID 와
+똑같이 생겼지만 mapper 에 없습니다. SQL ID 로 세면 영원히
+「정의 없음 = 실행하면 터진다」가 됩니다. 멀쩡히 도는데요.
+
+**판정은 화이트리스트로 합니다.** `DPICALL`·`DPIEXEC`·`SQLEXEC` 만 SQL 을 가진
+종류로 알고 나머지는 전부 Rule 로 봅니다. Rule 메시지 이름(`TKIN`·`TKOUT`·
+`ISSUE` …)은 계속 늘어 열거할 수 없어서, **새 메시지가 생겨도 저절로 맞는
+쪽**을 골랐습니다. 반대로 했다면 새 메시지마다 오탐이 납니다.
+
+규칙은 `assets/calls.py` 한 곳에 있고 `collect.py` 와 `index.py` 가 같이 씁니다.
 
 > 정말 전부 필요하면 `--all-mappers` 가 있습니다. 보통은 쓸 일이 없습니다.
 

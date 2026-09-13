@@ -213,8 +213,15 @@ nav.toc{position:sticky;top:64px;max-height:calc(100vh - 90px);overflow:auto;
 nav.toc .f{margin:14px 0 4px;padding-top:12px;border-top:2px solid var(--line);
   font-weight:700;word-break:break-all;line-height:1.4}
 nav.toc .f:first-child{margin-top:0;padding-top:0;border-top:0}
-nav.toc a{display:block;padding:6px 0 6px 10px;color:var(--muted);text-decoration:none;
-  border-left:2px solid var(--line);border-bottom:1px solid var(--line);line-height:1.45}
+nav.toc a{display:flex;align-items:baseline;padding:6px 0 6px 10px;color:var(--muted);
+  text-decoration:none;border-left:2px solid var(--line);border-bottom:1px solid var(--line);
+  line-height:1.45}
+/* 폴더는 줄어들고, 파일명은 안 줄어듭니다. 눈이 찾는 것이 파일명이라서입니다. */
+nav.toc a .dir{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;opacity:.55;font-size:12px}
+nav.toc a .base{flex:0 0 auto;color:var(--ink);font-weight:600}
+/* 곁들이는 숫자는 본문 글자와 **색이 달라야** 합니다. 같으면 이름이 안 읽힙니다. */
+nav.toc a .note{margin-left:auto;padding-left:8px;font-size:11px;color:var(--muted);opacity:.7}
 nav.toc a:last-child{border-bottom:0}
 nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
 nav.toc a .uid{color:var(--ink);font-weight:700}
@@ -909,12 +916,19 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
   var html = '', tocHtml = '';
   files.forEach(function(f){
     var units = byFile[f.path] || [];
-    var count = units.reduce(function(n, u){ return n + (byUnit[u.id] || []).length; }, 0);
     var fid = 'file-' + cssId(f.path);
 
-    tocHtml += '<a href="#' + fid + '" data-jump="' + fid + '">' +
-      '<span class="mono">' + esc(f.path) + '</span>' +
-      '<span class="note">' + units.length + '단위 · 제안 ' + count + '</span></a>';
+    /* 목차는 **어디로 갈지** 고르는 곳입니다. 숫자는 본문에 이미 있고,
+       파일명과 같은 색으로 붙어 있으면 파일명이 안 읽힙니다. 이름만 둡니다.
+
+       경로가 길면 폴더 쪽을 줄입니다. 눈이 찾는 것은 **파일명**이라
+       그쪽은 절대 자르지 않습니다. 한 줄로 끝나 목록이 가지런합니다. */
+    var cut = f.path.lastIndexOf('/');
+    var dir = cut < 0 ? '' : f.path.slice(0, cut + 1);
+    var base = cut < 0 ? f.path : f.path.slice(cut + 1);
+    tocHtml += '<a href="#' + fid + '" data-jump="' + fid + '" title="' + esc(f.path) + '">' +
+      (dir ? '<span class="dir">' + esc(dir) + '</span>' : '') +
+      '<span class="mono base">' + esc(base) + '</span></a>';
 
     html += '<section class="file" id="' + fid + '">' +
       '<h2><span class="kind">' + esc(f.kind) + '</span> <span class="mono">' + esc(f.path) + '</span></h2>';

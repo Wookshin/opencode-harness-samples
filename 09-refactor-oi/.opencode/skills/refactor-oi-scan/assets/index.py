@@ -30,6 +30,9 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+# 같은 폴더의 공용 규칙 (파이썬이 스크립트 폴더를 sys.path 에 넣어 줍니다)
+import calls
+
 for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8")
@@ -517,12 +520,6 @@ RE_INCLUDE = re.compile(r"<include\b[^>]*\brefid\s*=\s*\"([^\"]+)\"", re.I)
 # "호출하는데 정의 없음"으로 잡혀 리포트에 오탐이 실립니다.
 # 팀 관례가 다르면 이 정규식 하나만 고치면 됩니다. (collect.py 의 RE_SQL_ID 와 같은 규칙)
 RE_SQL_ID_LITERAL = re.compile(r"^[a-z][A-Za-z0-9_]*\.[a-z][A-Za-z0-9_]*$")
-
-# 화면이 밖으로 나가는 길 셋 (collect.py 의 CALL_* 와 같은 규칙입니다)
-#   DPICALL·DPIEXEC   mapper XML 의 SQL ID   → 본문을 찾을 수 있습니다
-#   SET_SIMAXDATA     Rule 시스템 메시지      → **저장소에 없습니다.** 찾지 않습니다
-#   SQLEXEC           화면이 직접 만든 SQL    → 아래 inline_sql 로 잡힙니다
-RE_RULE_CALL = re.compile(r"\b(?:SET_SIMAXDATA)\s*\(")
 RE_SQL_KEYWORD = re.compile(r"\b(SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM|MERGE)\b", re.I)
 
 
@@ -658,6 +655,7 @@ def main():
     text_of = {}         # rel → 원문 (문자열 연결 판별에 씁니다)
     cs_masked = {}       # rel → masked text
     cs_strings = []      # (rel, line, content)
+    rule_ids_by_file = {}     # rel → Rule 시스템으로 나간 리터럴
     for rel, p in cs_files:
         text = read_text(p)
         total_lines += text.count("\n") + 1
@@ -667,6 +665,9 @@ def main():
         cs_masked[rel] = masked
         for ln, content in strings:
             cs_strings.append((rel, ln, content))
+        # 부르는 쪽을 보고 성격을 가릅니다 — collect.py 와 같은 규칙입니다
+        _sql, rule, _inline, _claimed = calls.classify(text)
+        rule_ids_by_file[rel] = set(rule)
 
     # ---- XAML ----------------------------------------------------------
     xaml = {
@@ -722,13 +723,10 @@ def main():
         if RE_IDENT.match(c):
             string_idents[c] += 1
         if RE_SQL_ID_LITERAL.match(c):
-            # `SET_SIMAXDATA` 로 나가는 것은 Rule 시스템 메시지입니다.
-            # 저장소에 없으니 SQL ID 로 세면 영원히 「정의 없음」이 됩니다.
-            # 멀쩡히 도는 백엔드 호출이라 그 보고는 오탐입니다. 따로 셉니다.
-            # 마스킹된 텍스트를 봅니다 — 문자열은 지워져도 호출 이름은 남습니다
-            masked_lines = cs_masked.get(rel, "").split("\n")
-            line_text = masked_lines[ln - 1] if 0 < ln <= len(masked_lines) else ""
-            if RE_RULE_CALL.search(line_text):
+            # Rule 시스템으로 나간 것은 SQL ID 가 아닙니다. 저장소에 없으니
+            # SQL ID 로 세면 영원히 「정의 없음」이 됩니다 — 멀쩡히 도는데요.
+            # 부르는 쪽을 보고 가릅니다 (calls.py). 파일 단위로 미리 분류해 둡니다.
+            if c in rule_ids_by_file.get(rel, ()):
                 rule_messages.append({"id": c, "file": rel, "line": ln})
             else:
                 sql_called.append({"id": c, "file": rel, "line": ln})
