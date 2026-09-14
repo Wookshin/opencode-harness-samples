@@ -18,6 +18,7 @@
 표준 라이브러리만 씁니다. pip 설치 불필요. Python 3.8 이상.
 """
 import argparse
+import re
 import subprocess
 import unicodedata
 import sys
@@ -582,16 +583,37 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
 
         def bad_kind(d):
             d["findings"][0]["improvementKind"] = "구조 개선"
-        rejects(bad_kind, "일곱 유형 밖의 값을 거부합니다")
+        rejects(bad_kind, "여덟 유형 밖의 값을 거부합니다")
 
         def drop_kind(d):
             del d["findings"][0]["improvementKind"]
         rejects(drop_kind, "`improvementKind` 가 없으면 거부합니다")
 
+        KINDS8 = ["이름 변경", "삭제", "중복 통합", "함수 추출",
+                  "흐름 정리", "호출 방식", "상수화", "SqlManager 이관"]
         kinds = sorted({f["improvementKind"] for f in base["findings"]})
-        check(all(k in ["이름 변경", "삭제", "중복 통합", "함수 추출",
-                        "흐름 정리", "호출 방식", "상수화"] for k in kinds),
-              "샘플 제안이 전부 일곱 유형 안입니다 (%s)" % ", ".join(kinds))
+        check(all(k in KINDS8 for k in kinds),
+              "샘플 제안이 전부 여덟 유형 안입니다 (%s)" % ", ".join(kinds))
+        # 여덟 번째 유형은 **나중에 붙인 것**이라, 빌더·템플릿 어느 한쪽만
+        # 고쳐 두면 여기서 걸립니다.
+        check("SqlManager 이관" in kinds,
+              "샘플에 `SqlManager 이관`(A-14) 제안이 들어 있습니다")
+        # 값이 본문에 보이는 것만으로는 부족합니다 — 제안 데이터에 그대로
+        # 박혀 있기 때문입니다. **템플릿이 그 유형을 아는지**를 봅니다.
+        check("'SqlManager 이관':'k8'" in rep,
+              "템플릿이 `SqlManager 이관` 을 칩 색(`k8`)에 대응시킵니다")
+        check(".ikind.k8" in rep and rep.count(".ikind.k8") >= 2,
+              "`k8` 칩 색이 라이트·다크 양쪽에 있습니다")
+        # 시스템 설정을 따르는 규칙(`:not([data-theme="light"])`)이 미디어 쿼리
+        # **밖**에 있으면, 라이트 화면에서도 어두운 칩 색이 그대로 나옵니다.
+        # 눈으로만 보면 놓치는 자리라 중괄호 깊이로 셉니다.
+        css = rep.split("</style>")[0]
+        SYS = ':root:not([data-theme="light"]) .ikind'
+        loose = [m.start() for m in re.finditer(re.escape(SYS), css)
+                 if css[:m.start()].count("{") <= css[:m.start()].count("}")]
+        check(not loose,
+              "시스템 다크 칩 규칙이 `@media (prefers-color-scheme)` 안에 있습니다%s"
+              % ("" if not loose else "  ← %d곳이 밖에 있습니다" % len(loose)))
         # 「먼저」는 평범한 한국어로도 쓰이므로 **태그 마크업**만 봅니다.
         gone = ['class="sev', "SEVS", "SEVC", 'data-sev=', "먼저 · 비용 작음",
                 "<th>우선순위</th>"]

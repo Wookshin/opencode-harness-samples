@@ -298,15 +298,30 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .ikind.k5{background:#fff2dd;color:#8a5300;border-color:#f2ddb8}
 .ikind.k6{background:#e6f4f6;color:#0f6674;border-color:#c2e2e7}
 .ikind.k7{background:#f1f0ec;color:#5c5646;border-color:#ddd9cd}
-:root[data-theme="dark"] .ikind,
-:root:not([data-theme="light"]) .ikind{background:var(--code);color:var(--ink);border-color:var(--line)}
-:root[data-theme="dark"] .ikind.k1,:root:not([data-theme="light"]) .ikind.k1{color:#8ab4f8}
-:root[data-theme="dark"] .ikind.k2,:root:not([data-theme="light"]) .ikind.k2{color:#f28b82}
-:root[data-theme="dark"] .ikind.k3,:root:not([data-theme="light"]) .ikind.k3{color:#81c995}
-:root[data-theme="dark"] .ikind.k4,:root:not([data-theme="light"]) .ikind.k4{color:#c9a8f0}
-:root[data-theme="dark"] .ikind.k5,:root:not([data-theme="light"]) .ikind.k5{color:#fdd663}
-:root[data-theme="dark"] .ikind.k6,:root:not([data-theme="light"]) .ikind.k6{color:#78d9e6}
-:root[data-theme="dark"] .ikind.k7,:root:not([data-theme="light"]) .ikind.k7{color:#c8c2ae}
+.ikind.k8{background:#fbeaf4;color:#9c2a72;border-color:#f0c9e0}
+/* 어둡게 — 사용자가 직접 고른 경우 */
+:root[data-theme="dark"] .ikind{background:var(--code);color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .ikind.k1{color:#8ab4f8}
+:root[data-theme="dark"] .ikind.k2{color:#f28b82}
+:root[data-theme="dark"] .ikind.k3{color:#81c995}
+:root[data-theme="dark"] .ikind.k4{color:#c9a8f0}
+:root[data-theme="dark"] .ikind.k5{color:#fdd663}
+:root[data-theme="dark"] .ikind.k6{color:#78d9e6}
+:root[data-theme="dark"] .ikind.k7{color:#c8c2ae}
+:root[data-theme="dark"] .ikind.k8{color:#f0a8d4}
+/* 시스템 설정을 따를 때. **미디어 쿼리 안에 있어야** 합니다 —
+   밖에 두면 라이트 화면에서도 어두운 칩 색이 그대로 적용됩니다. */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .ikind{background:var(--code);color:var(--ink);border-color:var(--line)}
+  :root:not([data-theme="light"]) .ikind.k1{color:#8ab4f8}
+  :root:not([data-theme="light"]) .ikind.k2{color:#f28b82}
+  :root:not([data-theme="light"]) .ikind.k3{color:#81c995}
+  :root:not([data-theme="light"]) .ikind.k4{color:#c9a8f0}
+  :root:not([data-theme="light"]) .ikind.k5{color:#fdd663}
+  :root:not([data-theme="light"]) .ikind.k6{color:#78d9e6}
+  :root:not([data-theme="light"]) .ikind.k7{color:#c8c2ae}
+  :root:not([data-theme="light"]) .ikind.k8{color:#f0a8d4}
+}
 .persp{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
 .fid{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);font-weight:700}
 .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
@@ -727,9 +742,10 @@ function hlBlock(src, lang){
 /* ── 어휘 ────────────────────────────────────── */
 var PERSP = {convention:'컨벤션', hygiene:'중복·미사용', design:'구조'};
 /* 개선 유형 — 경중이 아니라 **무엇을 바꾸는 변경인가** 입니다. */
-var KINDS = ['이름 변경', '삭제', '중복 통합', '함수 추출', '흐름 정리', '호출 방식', '상수화'];
+var KINDS = ['이름 변경', '삭제', '중복 통합', '함수 추출', '흐름 정리', '호출 방식',
+              '상수화', 'SqlManager 이관'];
 var KINDC = {'이름 변경':'k1', '삭제':'k2', '중복 통합':'k3', '함수 추출':'k4',
-             '흐름 정리':'k5', '호출 방식':'k6', '상수화':'k7'};
+             '흐름 정리':'k5', '호출 방식':'k6', '상수화':'k7', 'SqlManager 이관':'k8'};
 var EFFS  = ['작음', '보통', '큼'];
 var EFFC  = {'작음':'e1', '보통':'e2', '큼':'e3'};
 var UNIT_LEGEND = [

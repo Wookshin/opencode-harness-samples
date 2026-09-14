@@ -99,7 +99,8 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
       "id":          "N001",            // 필수. N### | H### | D###
       "perspective": "convention",      // 필수. convention | hygiene | design
       "improvementKind": "이름 변경",    // 필수. 무엇을 바꾸는 변경인가
-      //   이름 변경 | 삭제 | 중복 통합 | 함수 추출 | 흐름 정리 | 호출 방식 | 상수화
+      //   이름 변경 | 삭제 | 중복 통합 | 함수 추출 | 흐름 정리 | 호출 방식 |
+      //   상수화 | SqlManager 이관
       //   (우선순위 severity 는 없어졌습니다 — 순서를 정해 주지 않습니다)
       "effort":      "보통",             // 필수. 작음 | 보통 | 큼
       "verdict":     "CONFIRMED",       // 필수. CONFIRMED | NEEDS-INFO

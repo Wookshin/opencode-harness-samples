@@ -30,6 +30,8 @@
 | 2-1 | `함수명 + VO` | `GetEqpHistoryVO`, `GetLotListToConfirmVO` | `EqpHistoryVO`, `LotInfoVO` |
 
 VO 를 쓰는 함수의 이름이 `GetMatIdList` 라면 VO 는 반드시 `GetMatIdListVO` 입니다.
+**`A-14`(SqlManager 이관) 제안이 VO 를 새로 만들 때도 이 규칙을 따릅니다** —
+`GetRunIdAndComment` 를 만들면 VO 는 `GetRunIdAndCommentVO` 입니다.
 **함수명이 바뀌었는데 VO 명이 그대로면 위반**입니다 — 리네이밍 PR 에서 가장 자주 새는 곳입니다.
 
 ## 3. 지역변수명

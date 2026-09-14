@@ -111,6 +111,7 @@ _workspace/scan-YOEDSMOV/
 | **흐름 정리** | 중첩·조기 반환·예외 처리·구독 해제 | `A-2` · `A-6` · `A-9` · `A-11` |
 | **호출 방식** | DB 왕복·비동기·SQL 을 부르는 방식 | `A-3` · `A-4` · `A-5` · `A-12` · `A-13` |
 | **상수화** | 흩어진 리터럴을 `const`·`enum` 으로 | `P-3` · `A-10` |
+| **SqlManager 이관** | 화면이 들고 있던 DB 통신을 `SqlManager` + VO 로 | `A-14` |
 
 | 비용 | 뜻 |
 |---|---|
@@ -127,7 +128,7 @@ _workspace/scan-YOEDSMOV/
 |---|---|---|
 | [references/naming-rules.md](references/naming-rules.md) | 컨벤션 제안자 | 함수·VO·변수·상수·`this` 명명 규칙 8종 |
 | [references/hygiene-rules.md](references/hygiene-rules.md) | 중복·미사용 제안자 | 죽은 코드 판정 `K-*` · 중복·공통화 `P-*` · **WPF 참조 경로 표** |
-| [references/design-rules.md](references/design-rules.md) | 구조 제안자 | 가독성·성능 체크리스트 `A-1`~`A-13` (SQL 을 **부르는 방식** 포함) |
+| [references/design-rules.md](references/design-rules.md) | 구조 제안자 | 가독성·성능 체크리스트 `A-1`~`A-14` (SQL 을 **부르는 방식**과 `SqlManager` 이관 포함) |
 | [references/suggest-format.md](references/suggest-format.md) | 세 제안자 전원 | 공통 출력 형식 · 개선 유형·비용 기준 |
 | [references/html-report.md](references/html-report.md) | 리포트 담당 | findings.json 스키마와 빌드 스크립트 사용법 |
 | [mapper-dir.txt](mapper-dir.txt) | SQL 제안자 · `collect.py` | 저장소 → mapper 경로 매핑. **팀 환경에 맞게 고쳐 쓰는 파일** |

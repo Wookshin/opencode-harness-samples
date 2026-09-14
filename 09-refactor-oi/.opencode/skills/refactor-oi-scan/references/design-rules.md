@@ -32,6 +32,61 @@
 > - `MoveOutResult MoveOutLots(IEnumerable<string> ids)` — 검증·저장
 > - `string BuildResultMessage(MoveOutResult r)` — 메시지 조립
 
+### 이 팀의 기본형 — 조회하고, 실패하면 빠져나갑니다
+
+가장 자주 나오는 조각이 **「값을 가져오고, 못 가져왔으면 그만둔다」** 입니다.
+`bool` 을 돌려주고 결과는 `out` 으로 넘기면, 호출부가 **가드 한 줄**이 됩니다.
+
+```csharp
+// 지금 — Confirm() 안에 조회와 분기가 통째로 들어 있습니다
+void Confirm()
+{
+    string runId = "";
+    string comment = "";
+
+    Params.Add("lotId", txtLotId.Text);
+    RVMessageResult dGetRunid = new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON(
+        DPICALL, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, "lot.selectNvlRunIdNote", m_StrAppname, Params, 30);
+
+    if (dGetRunid.STATUS.Equals("PASS"))
+    {
+        runId = dGetRunid.Result.Tables[0].Rows[0]["RUNID"].ToString();
+        comment = dGetRunid.Result.Tables[0].Rows[0]["NOTE"].ToString();
+    }
+    else
+    {
+        return;
+    }
+    // …
+}
+```
+
+```csharp
+// 이렇게 — 단계가 한 줄로 줄고, 이름이 무엇을 가져오는지 말합니다
+void Confirm()
+{
+    if (!GetRunIdAndComment(txtLotId.Text, out string runId, out string comment))
+    {
+        return;
+    }
+    // …
+}
+
+private bool GetRunIdAndComment(string lotId, out string runId, out string comment)
+{
+    runId = "";
+    comment = "";
+    // … 조회 …
+    return true;    // 못 가져왔으면 false
+}
+```
+
+`Confirm()` 같은 긴 메서드는 이 형태로 **단계마다 한 줄**이 됩니다.
+
+> **이 조각 안에 DB 통신이 들어 있으면 `A-14` 입니다.**
+> 함수로 묶는 데서 멈추지 말고 `SqlManager` 까지 옮기세요 —
+> 그때는 개선 유형도 `함수 추출` 이 아니라 **`SqlManager 이관`** 입니다.
+
 ## A-2 · 깊은 중첩
 
 `if` 안의 `if` 안의 `foreach`. 조기 반환(guard clause)이나 메서드 추출로 평평하게 만듭니다.
@@ -170,7 +225,12 @@ AddSql("   AND TRIM(l.line_id) = '" + lineId + "' ");
 있습니다.** 바인딩 변수(`_sql.Bind("lineId")`)로 바꾸자고 하세요.
 
 **이것은 화면 코드입니다.** mapper 의 SQL 본문이 아니라 `AddSql(...)` 로
-화면이 직접 만든 문자열이라, 고치는 것도 화면 안에서 끝납니다.
+화면이 직접 만든 문자열입니다.
+
+> **그 조립이 화면에 있으면 `A-14` 와 한 제안으로 묶으세요.**
+> `SqlManager` 로 옮기면서 `_sql.Bind()` 를 쓰면 두 문제가 한 번에 풀립니다.
+> 그때 개선 유형은 **`SqlManager 이관`** 입니다.
+> 이미 `SqlManager` 안에 있는 코드가 값을 이어 붙이면 그건 `호출 방식` 입니다.
 
 ## A-13 · 부르는 SQL ID 가 mapper 에 없다
 
@@ -181,17 +241,118 @@ AddSql("   AND TRIM(l.line_id) = '" + lineId + "' ");
 
 지금 호출부가 죽은 코드 안에 있어 드러나지 않을 수 있으니 **그 사실도 함께** 적으세요.
 
+## A-14 · 화면이 DB 통신을 직접 들고 있다
+
+`1-index.json` 의 **`sql.toSqlManager`** 입니다. **기계가 이미 세어 두었습니다** —
+파일 · 줄 · 소속 메서드까지 나와 있으니 당신은 판정만 하면 됩니다.
+
+화면이 SQL ID(`"lot.selectNvlRunIdNote"`)나 `SendMessage*` 호출을 직접 들고
+있으면, 그 화면은 **무엇을 가져오는지와 어떻게 가져오는지를 동시에** 알고
+있는 것입니다. 통신을 `SqlManager` 로 옮기면 화면에는 **무엇을**만 남습니다.
+
+### 옮기면 이렇게 됩니다
+
+```csharp
+// 지금 — 화면이 SQL ID 와 TibRV 호출을 들고 있습니다
+private bool GetRunIdAndComment(string lotId, out string runId, out string comment)
+{
+    Dictionary<string, string> param = new Dictionary<string, string>();
+    param.Add("lotId", txtLotId.Text);
+
+    RVMessageResult dGetRunid = new TibRVHelper(RV_COM_PUB_SUBJECT).SendMessageWithJSON(
+        DPICALL, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, "lot.selectNvlRunIdNote", m_StrAppname, param, 30);
+    // …
+}
+```
+
+```csharp
+// 이렇게 — 화면은 무엇을 가져올지만 말합니다
+private SqlManager _sql = new SqlManager("YOWAFSPL");
+
+private bool GetRunIdAndComment(string lotId, out string runId, out string comment)
+{
+    RVMessageResult dGetRunid = _sql.GetRunIdAndComment(new GetRunIdAndCommentVO
+    {
+        lotId = txtLotId.Text
+    });
+    // …
+}
+```
+
+```csharp
+// SqlManager.cs — 어떻게 가져오는지는 여기만 압니다
+public RVMessageResult GetRunIdAndComment(GetRunIdAndCommentVO vo)
+{
+    _param.Clear();
+    _param.Add("lotId", vo.lotId);
+    return new TibRVHelper(RV_PUB_SUBJECT).SendMessageWithJSON(
+        DPICALL, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, "lot.selectNvlRunIdNote", _appName, _param, 30);
+}
+```
+
+```csharp
+// GetRunIdAndCommentVO.cs — 규칙 2-1 (함수명 + VO)
+public class GetRunIdAndCommentVO
+{
+    public string lotId;
+}
+```
+
+### `SQLEXEC` 도 같습니다
+
+화면이 `AddSql` 로 조립하던 SQL 도 그대로 옮깁니다. 옮긴 뒤
+**`_sql.Bind("lotId")`** 를 쓰면 `_sql.GetSql()` 이 따옴표와 바인딩을
+처리하므로, **`A-12`(값을 이어 붙인다)가 함께 풀립니다.**
+
+```csharp
+public RVMessageResult GetLotAndWaferInfo(GetLotAndWaferInfoVO vo)
+{
+    _sql.Init();
+    _sql.param.Add("lotId", vo.lotId);
+    _sql.AddSql($@"
+SELECT RTRIM(LOT_ID) AS LOT_ID, RTRIM(PROD_ID) AS PROD_ID
+  FROM LOT
+ WHERE LOT_ID = {_sql.Bind("lotId")}
+   AND NVL(TXNSTATE, '-') = '-'
+");
+    return new TibRVHelper(RV_PUB_SUBJECT).SendMessageWithJSON(
+        SQLEXEC, RV_DPIMGR_TARGET, RV_DPIMGR_SUBJECT, _appName, _sql.GetSql(), 60);
+}
+```
+
+### 제안할 때
+
+| | |
+|---|---|
+| **메서드 이름** | `naming-rules.md` 의 `1-3`(반환이 목적이면 `Get`) |
+| **VO 이름** | `2-1`(함수명 + `VO`) — `GetRunIdAndComment` → `GetRunIdAndCommentVO` |
+| **비용** | 최소 `보통`. 화면 · `SqlManager.cs` · VO **세 파일**이 함께 바뀝니다 |
+| **개선 유형** | **`SqlManager 이관`** — 함수로 묶는 것과 옮기는 것이 한 묶음입니다 |
+
+> **여기서 만든 메서드는 `P-1` 의 `rvWrapper` 예외입니다.**
+> `SqlManager` 의 메서드들은 서로 모양이 같아질 수밖에 없습니다 —
+> **호출 하나가 기능 하나**라서입니다. `hygiene-rules.md` 의 `P-1` 이
+> 그것을 합치지 말라고 못박아 두었습니다. 이 규칙과 그 규칙은 같은 편입니다.
+
 ---
 
 ## 개선 유형을 붙이는 기준
 
 | 이 문서의 규칙 | 개선 유형 |
 |---|---|
-| `A-1` (한 메서드가 여러 일을 한다) | **함수 추출** |
+| `A-14` (화면이 DB 통신을 직접 들고 있다) | **SqlManager 이관** |
+| `A-1` (한 메서드가 여러 일을 한다) — **통신이 없을 때** | **함수 추출** |
 | `A-2` 중첩 · `A-6` 화면 상태 · `A-9` 예외 삼킴 · `A-11` 구독 해제 | **흐름 정리** |
 | `A-3` 반복문 왕복 · `A-4` 두 번 조회 · `A-5` 동기 I/O · `A-12` 인라인 SQL · `A-13` 없는 SQL ID | **호출 방식** |
 | `A-7` XAML 반복 · `A-8` 이중 정의 | **중복 통합** |
 | `A-10` 매직 값이 분기를 만든다 | **상수화** |
+
+### `A-1` 과 `A-14` 는 **통신이 들어 있는가**로 가릅니다
+
+| 떼어 낼 조각 안에 | 규칙 | 개선 유형 | 왜 |
+|---|---|---|---|
+| `DPICALL` · `SQLEXEC` 통신이 **있다** | `A-14` | **SqlManager 이관** | 함수로 묶는 것과 옮기는 것이 **한 묶음**입니다. 묶기만 하고 화면에 두면 절반만 한 것입니다 |
+| 통신이 **없다** (계산 · 검증 · 메시지 조립) | `A-1` | **함수 추출** | 같은 파일 안에서 끝납니다 |
 
 **"그래서 무엇이 나아지는지" 한 문장을 반드시 쓰세요.** 구조 제안은 비용이
 커서, 그 한 문장이 없으면 읽는 사람이 고를 이유를 찾지 못합니다.
