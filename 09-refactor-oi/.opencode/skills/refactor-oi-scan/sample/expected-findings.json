@@ -167,7 +167,7 @@
     {
       "id": "H001",
       "perspective": "hygiene",
-      "severity": "먼저",
+      "improvementKind": "삭제",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U1",
@@ -183,7 +183,7 @@
     {
       "id": "H002",
       "perspective": "hygiene",
-      "severity": "먼저",
+      "improvementKind": "삭제",
       "effort": "보통",
       "verdict": "CONFIRMED",
       "unitId": "U3",
@@ -200,7 +200,7 @@
     {
       "id": "H003",
       "perspective": "hygiene",
-      "severity": "먼저",
+      "improvementKind": "삭제",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U6",
@@ -216,7 +216,7 @@
     {
       "id": "H005",
       "perspective": "hygiene",
-      "severity": "다음",
+      "improvementKind": "삭제",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U7",
@@ -232,7 +232,7 @@
     {
       "id": "N001",
       "perspective": "convention",
-      "severity": "먼저",
+      "improvementKind": "이름 변경",
       "effort": "보통",
       "verdict": "CONFIRMED",
       "unitId": "U4",
@@ -249,7 +249,7 @@
     {
       "id": "N002",
       "perspective": "convention",
-      "severity": "다음",
+      "improvementKind": "이름 변경",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U2",
@@ -265,7 +265,7 @@
     {
       "id": "N003",
       "perspective": "convention",
-      "severity": "참고",
+      "improvementKind": "이름 변경",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U5",
@@ -281,7 +281,7 @@
     {
       "id": "D001",
       "perspective": "design",
-      "severity": "먼저",
+      "improvementKind": "함수 추출",
       "effort": "큼",
       "verdict": "CONFIRMED",
       "unitId": "U5",
@@ -298,7 +298,7 @@
     {
       "id": "D002",
       "perspective": "design",
-      "severity": "다음",
+      "improvementKind": "호출 방식",
       "effort": "보통",
       "verdict": "CONFIRMED",
       "unitId": "U5",
@@ -315,7 +315,7 @@
     {
       "id": "D003",
       "perspective": "design",
-      "severity": "참고",
+      "improvementKind": "중복 통합",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U10",
@@ -331,7 +331,7 @@
     {
       "id": "D004",
       "perspective": "design",
-      "severity": "먼저",
+      "improvementKind": "호출 방식",
       "effort": "보통",
       "verdict": "CONFIRMED",
       "unitId": "U8",
@@ -348,7 +348,7 @@
     {
       "id": "D005",
       "perspective": "design",
-      "severity": "먼저",
+      "improvementKind": "호출 방식",
       "effort": "작음",
       "verdict": "CONFIRMED",
       "unitId": "U3",

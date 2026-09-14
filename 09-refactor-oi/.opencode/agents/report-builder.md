@@ -61,7 +61,7 @@ HTML 은 `build-report.py` 가 만듭니다.
 | `NEEDS-INFO` | `findings[]`, `verdict: "NEEDS-INFO"` |
 | `REJECTED` | **`rejected[]`** — 본문에 넣지 마세요 |
 
-`severity` 와 `effort` 는 **`3-verify.md` 의 「등급 조정」을 반영한 최종값**을 씁니다.
+`improvementKind` 와 `effort` 는 **`3-verify.md` 의 「등급 조정」을 반영한 최종값**을 씁니다.
 제안자가 쓴 원래 값이 아닙니다.
 
 ## 파일 경로 두 가지를 조심하세요
@@ -100,8 +100,8 @@ HTML 을 손으로 고치지 마세요.
 ## 리포트 완료
 
 - 파일: <작업폴더>/refactor-<slug>.html  (NN KB)
-- 제안 N건 (먼저 N · 다음 N · 참고 N)
-- 즉시 착수 후보(먼저 · 작음) N건
+- 제안 N건 (이름 변경 N · 삭제 N · …)
+- 지금 바로 할 수 있는 것(비용 작음) N건
 - 반려 N건은 접이식 절에 남겼습니다
 ```
 

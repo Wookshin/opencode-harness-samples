@@ -38,7 +38,7 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
 ```
 ✗ findings.json 검증 실패 — 2건
   · findings[3] (H004): unitId "U99" 가 units 에 없습니다
-  · findings[7] (D002): "effort" 는 작음 | 보통 | 큼 중 하나여야 합니다 (받은 값: 중간)
+  · findings[7] (D002): "improvementKind" 는 이름 변경 | 삭제 | … 중 하나여야 합니다 (받은 값: 구조 개선)
 ```
 
 ---
@@ -98,14 +98,16 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
     {
       "id":          "N001",            // 필수. N### | H### | D###
       "perspective": "convention",      // 필수. convention | hygiene | design
-      "severity":    "먼저",             // 필수. 먼저 | 다음 | 참고
+      "improvementKind": "이름 변경",    // 필수. 무엇을 바꾸는 변경인가
+      //   이름 변경 | 삭제 | 중복 통합 | 함수 추출 | 흐름 정리 | 호출 방식 | 상수화
+      //   (우선순위 severity 는 없어졌습니다 — 순서를 정해 주지 않습니다)
       "effort":      "보통",             // 필수. 작음 | 보통 | 큼
       "verdict":     "CONFIRMED",       // 필수. CONFIRMED | NEEDS-INFO
       "unitId":      "U4",              // 필수. units[].id 중 하나
       "file":        "YOEDSMOV/YOEDSMOV.xaml.cs",  // 필수
       "line":        138,               // 필수. 원문 기준 줄 번호
       "title":       "`bool` 반환 함수가 `Is` 로 시작하지 않는다",  // 필수
-      "problem":     "…",               // 필수. `먼저` 면 "그래서 무엇이 나아지는지" 포함
+      "problem":     "…",               // 필수. **"그래서 무엇이 나아지는지"를 반드시 포함**
       "basis":       "규칙 1-4",         // 필수. 규칙/체크리스트 번호
       "current":     "private bool CheckLot(string lotId)",  // 필수. 원문과 글자 그대로
       "suggestion":  "private bool IsMovableLot(string lotId)",  // 필수. 코드 또는 문장
@@ -169,7 +171,8 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
 | mapper 파일은 `sourceFile` 을 **직접** 적는다 | 기본값이 `src/` 라 `src-sql/lot/lot.xml` 은 자동으로 안 잡힙니다 |
 | `current` 를 길게 붙이지 않는다 | 원문은 스크립트가 임베드합니다. 어느 자리인지만 가리키면 됩니다 |
 | `suggestion` 에 **코드든 문장이든** 자연스럽게 쓴다 | 리포트가 구분해 그립니다. 문장을 코드처럼 쓰면 줄바꿈이 안 돼 한 줄로 늘어납니다 |
-| `severity` · `effort` 는 검증 결과(강등·상향 포함)를 반영한 **최종값** | `3-verify.md` 가 조정한 것을 그대로 씁니다 |
+| `effort` 는 검증 결과(상향 포함)를 반영한 **최종값** | `3-verify.md` 가 조정한 것을 그대로 씁니다 |
+| `improvementKind` 는 **정확히 하나** | 둘에 걸치면 제안이 두 개여야 한다는 신호입니다 |
 | `sql[].role` 은 **한 줄**로 | 「이 SQL 이 무엇을 하는가」입니다. 개선점을 적는 칸이 아닙니다 |
 
 ## 리포트가 보여 주는 순서
@@ -188,8 +191,9 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
 
 ## HTML 이 제공하는 것
 
-- **`먼저 · 비용 작음` 한 번 누르기** — 이번 주에 할 일만 남깁니다. 이 리포트의 핵심 장치입니다
-- 우선순위 · 비용 · 관점 **3종 필터** (겹쳐 걸 수 있습니다)
+- **「개선 제안 한눈에 보기」 표** — 제안 전체를 한 줄씩. **`findings` 에서 자동 생성**되고, 행을 누르면 그 카드로 내려갑니다
+- **`지금 바로 할 수 있는 것` 한 번 누르기** — 비용 `작음` 만 남깁니다
+- 개선 유형 · 비용 · 관점 **3종 필터** (겹쳐 걸 수 있습니다). 표와 본문이 같이 줄어듭니다
 - **C# · XAML · SQL 문법 하이라이트** — 외부 라이브러리 없이 내장.
   `$@"…"` 축자 문자열 안의 여러 줄 SQL 도 SQL 키워드로 물듭니다
 - 검색 — 제안 내용·파일·근거를 한 번에

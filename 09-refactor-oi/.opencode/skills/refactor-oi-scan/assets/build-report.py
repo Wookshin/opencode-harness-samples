@@ -90,12 +90,13 @@ except json.JSONDecodeError as e:
     die("findings.json 이 올바른 JSON 이 아닙니다: %s" % e)
 
 # ── 어휘 ────────────────────────────────────────────────────────────────
-# 이 리포트는 합격/불합격을 판정하지 않습니다. 제안이므로 **우선순위**로 부릅니다.
-SEV_KO = {
-    "먼저": "먼저", "다음": "다음", "참고": "참고",
-    "HIGH": "먼저", "MEDIUM": "다음", "LOW": "참고",
-}
-SEVERITIES = ["먼저", "다음", "참고"]
+# 이 리포트는 **순서를 정해 주지 않습니다.** 고르는 것은 개발자입니다.
+# 그래서 「무엇이 급한가」(우선순위)가 아니라 **「무엇을 바꾸는 변경인가」**
+# 로 분류합니다. 개발자가 "이번엔 이름만 몰아서" 처럼 고를 수 있게.
+#
+# `units[].kind`(클래스·메서드·…)가 이미 「대상 유형」이라, 이쪽은
+# **「개선 유형」** 으로 부르고 필드도 improvementKind 로 갈라 둡니다.
+KINDS = ["이름 변경", "삭제", "중복 통합", "함수 추출", "흐름 정리", "호출 방식", "상수화"]
 
 # 비용은 "어디부터 손댈지"를 정하는 두 번째 축입니다.
 EFFORT_KO = {
@@ -240,17 +241,16 @@ for i, u in enumerate(D["units"]):
 seen_ids = set()
 for i, f in enumerate(D["findings"]):
     w = "findings[%d]%s" % (i, (" (%s)" % f["id"]) if f.get("id") else "")
-    for k in ("id", "perspective", "severity", "effort", "unitId", "file", "line",
-              "title", "problem", "basis", "suggestion"):
+    for k in ("id", "perspective", "improvementKind", "effort", "unitId", "file",
+              "line", "title", "problem", "basis", "suggestion"):
         need(f, k, w)
     one_of(f, "perspective", PERSPECTIVES, w)
 
-    sev = SEV_KO.get(str(f.get("severity", "")).strip())
-    if sev is None:
-        bad('%s: "severity" 는 먼저 | 다음 | 참고 중 하나여야 합니다 (받은 값: %s)'
-            % (w, f.get("severity")))
-    else:
-        f["severity"] = sev
+    if "severity" in f:
+        bad('%s: "severity"(먼저/다음/참고) 는 없어졌습니다 — 이 리포트는 순서를 '
+            '정해 주지 않습니다. "improvementKind" 에 무엇을 바꾸는 변경인지 '
+            '적으세요 (%s)' % (w, " | ".join(KINDS)))
+    one_of(f, "improvementKind", KINDS, w)
 
     eff = EFFORT_KO.get(str(f.get("effort", "")).strip())
     if eff is None:
@@ -432,17 +432,19 @@ out_path.parent.mkdir(parents=True, exist_ok=True)
 out_path.write_text(html, encoding="utf-8", newline="")
 
 # ── 보고 ────────────────────────────────────────────────────────────────
-by_sev = " · ".join("%s %d" % (s, sum(1 for f in D["findings"] if f["severity"] == s))
-                    for s in SEVERITIES)
+by_kind = " · ".join("%s %d" % (k, n) for k, n in
+                     ((k, sum(1 for f in D["findings"] if f.get("improvementKind") == k))
+                      for k in KINDS) if n)
 by_eff = " · ".join("%s %d" % (e, sum(1 for f in D["findings"] if f["effort"] == e))
                     for e in EFFORTS)
-now = sum(1 for f in D["findings"] if f["severity"] == "먼저" and f["effort"] == "작음")
+# 「지금 바로 할 수 있는 것」 — 우선순위가 없어졌으므로 비용만 봅니다
+now = sum(1 for f in D["findings"] if f["effort"] == "작음")
 kb = round(len(html.encode("utf-8")) / 1024)
 
 print("✓ %s" % out_path)
-print("  제안 %d건 (%s)" % (len(D["findings"]), by_sev))
+print("  제안 %d건 (%s)" % (len(D["findings"]), by_kind))
 print("  비용 (%s)" % by_eff)
-print("  즉시 착수 후보 (먼저 · 작음) %d건" % now)
+print("  지금 바로 할 수 있는 것 (비용 작음) %d건" % now)
 print("  파일 %d · 대상 단위 %d (코드 표시 %d) · SQL %d · 반려 %d"
       % (len(D["files"]), len(D["units"]), units_with_code, len(D["sql"]), len(D["rejected"])))
 print("  %d KB · 외부 요청 없음" % kb)

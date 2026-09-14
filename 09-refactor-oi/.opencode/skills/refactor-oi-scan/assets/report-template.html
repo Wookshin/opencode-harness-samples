@@ -284,14 +284,29 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 /* ── 지적 카드 ──────────────────────────────────── */
 .finding{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;
   padding:12px 14px;margin:10px 0;background:var(--panel)}
-.finding.s1{border-left-color:var(--major)}
-.finding.s2{border-left-color:var(--accent)}
-.finding.s3{border-left-color:var(--line)}
+.finding{border-left-color:var(--line)}
+
 .finding>h4{margin:0 0 8px;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.sev{font-size:11px;font-weight:800;padding:2px 8px;border-radius:5px;letter-spacing:.01em;white-space:nowrap}
-.sev.s1{background:var(--major-bg);color:var(--major)}
-.sev.s2{background:var(--accent-soft);color:var(--accent)}
-.sev.s3{background:var(--code);color:var(--muted)}
+/* 개선 유형 칩 — 경중이 아니라 종류라서 **강약 없이** 구분만 합니다 */
+.ikind{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;
+  letter-spacing:.01em;white-space:nowrap;background:var(--code);color:var(--ink);
+  border:1px solid var(--line)}
+.ikind.k1{background:#e8f0fe;color:#1a56b8;border-color:#c5d9f7}
+.ikind.k2{background:#fdeaea;color:#b3261e;border-color:#f6c9c6}
+.ikind.k3{background:#e9f5ec;color:#1e6b33;border-color:#c5e3ce}
+.ikind.k4{background:#f3ecfb;color:#6b2fa8;border-color:#ddc9f0}
+.ikind.k5{background:#fff2dd;color:#8a5300;border-color:#f2ddb8}
+.ikind.k6{background:#e6f4f6;color:#0f6674;border-color:#c2e2e7}
+.ikind.k7{background:#f1f0ec;color:#5c5646;border-color:#ddd9cd}
+:root[data-theme="dark"] .ikind,
+:root:not([data-theme="light"]) .ikind{background:var(--code);color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .ikind.k1,:root:not([data-theme="light"]) .ikind.k1{color:#8ab4f8}
+:root[data-theme="dark"] .ikind.k2,:root:not([data-theme="light"]) .ikind.k2{color:#f28b82}
+:root[data-theme="dark"] .ikind.k3,:root:not([data-theme="light"]) .ikind.k3{color:#81c995}
+:root[data-theme="dark"] .ikind.k4,:root:not([data-theme="light"]) .ikind.k4{color:#c9a8f0}
+:root[data-theme="dark"] .ikind.k5,:root:not([data-theme="light"]) .ikind.k5{color:#fdd663}
+:root[data-theme="dark"] .ikind.k6,:root:not([data-theme="light"]) .ikind.k6{color:#78d9e6}
+:root[data-theme="dark"] .ikind.k7,:root:not([data-theme="light"]) .ikind.k7{color:#c8c2ae}
 .persp{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
 .fid{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);font-weight:700}
 .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
@@ -711,8 +726,10 @@ function hlBlock(src, lang){
 
 /* ── 어휘 ────────────────────────────────────── */
 var PERSP = {convention:'컨벤션', hygiene:'중복·미사용', design:'구조'};
-var SEVS  = ['먼저', '다음', '참고'];
-var SEVC  = {'먼저':'s1', '다음':'s2', '참고':'s3'};
+/* 개선 유형 — 경중이 아니라 **무엇을 바꾸는 변경인가** 입니다. */
+var KINDS = ['이름 변경', '삭제', '중복 통합', '함수 추출', '흐름 정리', '호출 방식', '상수화'];
+var KINDC = {'이름 변경':'k1', '삭제':'k2', '중복 통합':'k3', '함수 추출':'k4',
+             '흐름 정리':'k5', '호출 방식':'k6', '상수화':'k7'};
 var EFFS  = ['작음', '보통', '큼'];
 var EFFC  = {'작음':'e1', '보통':'e2', '큼':'e3'};
 var UNIT_LEGEND = [
@@ -725,7 +742,7 @@ var UNIT_LEGEND = [
   ['SQL',           'mapper 문 하나 또는 인라인 쿼리 하나']
 ];
 
-function sevc(v){ return SEVC[v] || 's3'; }
+function kindc(v){ return KINDC[v] || 'k0'; }
 function effc(v){ return EFFC[v] || 'e2'; }
 
 var KEY = 'oi-refactor-' + (D.meta.slug || 'x');
@@ -770,8 +787,8 @@ function bullets(list, tag){
    않고, 새로 쓸 것도 없습니다. 개발자가 위에서 훑고 바로 고릅니다. */
 function glanceRows(){
   return D.findings.slice().sort(function(a, b){
-    return (SEVS.indexOf(a.severity) - SEVS.indexOf(b.severity)) ||
-           (EFFS.indexOf(a.effort)   - EFFS.indexOf(b.effort))   ||
+    return (KINDS.indexOf(a.improvementKind) - KINDS.indexOf(b.improvementKind)) ||
+           (EFFS.indexOf(a.effort) - EFFS.indexOf(b.effort)) ||
            a.id.localeCompare(b.id);
   });
 }
@@ -785,12 +802,12 @@ function renderGlance(){
   }
   box.innerHTML =
     '<table class="glance"><thead><tr>' +
-      '<th>ID</th><th>우선순위</th><th>비용</th><th>단위</th><th>무엇이 바뀌나</th>' +
+      '<th>ID</th><th>개선 유형</th><th>비용</th><th>단위</th><th>무엇이 바뀌나</th>' +
     '</tr></thead><tbody>' +
     rows.map(function(f){
       return '<tr data-jump="f-' + esc(f.id) + '">' +
         '<td><span class="fid">' + esc(f.id) + '</span></td>' +
-        '<td><span class="sev ' + sevc(f.severity) + '">' + esc(f.severity) + '</span></td>' +
+        '<td><span class="ikind ' + kindc(f.improvementKind) + '">' + esc(f.improvementKind) + '</span></td>' +
         '<td><span class="eff ' + effc(f.effort) + '">' + esc(f.effort) + '</span></td>' +
         '<td><span class="uid">' + esc(f.unitId || '') + '</span></td>' +
         '<td>' + inline(f.title) + '</td></tr>';
@@ -851,9 +868,9 @@ function jump(id){
   var body = D.units.map(function(u){
     var fs = byUnit[u.id] || [];
     var badge = fs.length
-      ? SEVS.map(function(s){
-          var n = fs.filter(function(f){ return f.severity === s; }).length;
-          return n ? '<span class="sev ' + sevc(s) + '">' + s + ' ' + n + '</span>' : '';
+      ? KINDS.map(function(s){
+          var n = fs.filter(function(f){ return f.improvementKind === s; }).length;
+          return n ? '<span class="ikind ' + kindc(s) + '">' + s + ' ' + n + '</span>' : '';
         }).join(' ')
       : '<span class="note">—</span>';
     return '<tr data-jump="u-' + esc(u.id) + '">' +
@@ -918,7 +935,7 @@ function findingCard(f){
 
   var head = '<h4>' +
     '<span class="fid">' + esc(f.id) + '</span>' +
-    '<span class="sev ' + sevc(f.severity) + '">' + esc(f.severity) + '</span>' +
+    '<span class="ikind ' + kindc(f.improvementKind) + '">' + esc(f.improvementKind) + '</span>' +
     '<span class="eff ' + effc(f.effort) + '">비용 ' + esc(f.effort) + '</span>' +
     '<span class="persp">' + esc(PERSP[f.perspective] || f.perspective) + '</span>' +
     (f.verdict === 'NEEDS-INFO' ? '<span class="needsinfo">확인 필요</span>' : '') +
@@ -934,8 +951,8 @@ function findingCard(f){
     '<input type="text" placeholder="메모" data-memo="' + esc(f.id) + '">' +
     '</div>';
 
-  return '<article class="finding ' + sevc(f.severity) + '" id="f-' + esc(f.id) + '" ' +
-    'data-sev="' + esc(f.severity) + '" data-eff="' + esc(f.effort) + '" ' +
+  return '<article class="finding" id="f-' + esc(f.id) + '" ' +
+    'data-kind="' + esc(f.improvementKind) + '" data-eff="' + esc(f.effort) + '" ' +
     'data-persp="' + esc(f.perspective) + '">' +
     head + '<dl>' + dl + '</dl>' + dec + '</article>';
 }
@@ -1091,13 +1108,14 @@ function paintProgress(){
   paintProgress();
 })();
 
-/* ── 필터 (우선순위 × 비용 × 관점) ───────────── */
-var filt = {sev:{}, eff:{}, persp:{}, now:false};
+/* ── 필터 (개선 유형 × 비용 × 관점) ───────────── */
+var filt = {kind:{}, eff:{}, persp:{}, now:false};
 
 (function(){
   var box = document.getElementById('chips'), h = '';
-  h += '<button class="chip now" data-k="now">먼저 · 비용 작음</button>';
-  SEVS.forEach(function(s){ h += '<button class="chip" data-k="sev" data-v="' + s + '">' + s + '</button>'; });
+  /* 우선순위가 없어졌으므로 「지금 바로 할 수 있는 것」은 비용만 봅니다 */
+  h += '<button class="chip now" data-k="now">지금 바로 할 수 있는 것</button>';
+  KINDS.forEach(function(s){ h += '<button class="chip" data-k="kind" data-v="' + s + '">' + s + '</button>'; });
   EFFS.forEach(function(s){ h += '<button class="chip" data-k="eff" data-v="' + s + '">비용 ' + s + '</button>'; });
   Object.keys(PERSP).forEach(function(p){
     h += '<button class="chip" data-k="persp" data-v="' + p + '">' + PERSP[p] + '</button>';
@@ -1123,8 +1141,8 @@ var filt = {sev:{}, eff:{}, persp:{}, now:false};
 function anyOn(o){ return Object.keys(o).some(function(k){ return o[k]; }); }
 
 function visible(f){
-  if (filt.now && !(f.severity === '먼저' && f.effort === '작음')) return false;
-  if (anyOn(filt.sev)   && !filt.sev[f.severity])      return false;
+  if (filt.now && f.effort !== '작음') return false;
+  if (anyOn(filt.kind)  && !filt.kind[f.improvementKind]) return false;
   if (anyOn(filt.eff)   && !filt.eff[f.effort])        return false;
   if (anyOn(filt.persp) && !filt.persp[f.perspective]) return false;
   var q = (document.getElementById('q').value || '').trim().toLowerCase();
@@ -1168,8 +1186,8 @@ function reviewMd(){
   L.push('');
   L.push('## 한 줄 진단', '', (D.diagnosis || ''), '');
   L.push('', '## 제안', '');
-  SEVS.forEach(function(s){
-    var fs = D.findings.filter(function(f){ return f.severity === s; });
+  KINDS.forEach(function(s){
+    var fs = D.findings.filter(function(f){ return f.improvementKind === s; });
     if (!fs.length) return;
     L.push('### ' + s, '');
     fs.forEach(function(f){

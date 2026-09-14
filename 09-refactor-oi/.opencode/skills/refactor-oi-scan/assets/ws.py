@@ -573,6 +573,34 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
         check("function renderGlance" in rep,
               "표는 findings 에서 만들어집니다 (authoring 하지 않습니다)")
 
+        print("\n14. 우선순위 대신 개선 유형인가")
+        # 순서를 정해 주지 않으므로 「무엇이 급한가」가 아니라
+        # **「무엇을 바꾸는 변경인가」** 로 분류합니다.
+        def old_sev(d):
+            d["findings"][0]["severity"] = "먼저"
+        rejects(old_sev, "예전 `severity` 가 남아 있으면 거부합니다")
+
+        def bad_kind(d):
+            d["findings"][0]["improvementKind"] = "구조 개선"
+        rejects(bad_kind, "일곱 유형 밖의 값을 거부합니다")
+
+        def drop_kind(d):
+            del d["findings"][0]["improvementKind"]
+        rejects(drop_kind, "`improvementKind` 가 없으면 거부합니다")
+
+        kinds = sorted({f["improvementKind"] for f in base["findings"]})
+        check(all(k in ["이름 변경", "삭제", "중복 통합", "함수 추출",
+                        "흐름 정리", "호출 방식", "상수화"] for k in kinds),
+              "샘플 제안이 전부 일곱 유형 안입니다 (%s)" % ", ".join(kinds))
+        # 「먼저」는 평범한 한국어로도 쓰이므로 **태그 마크업**만 봅니다.
+        gone = ['class="sev', "SEVS", "SEVC", 'data-sev=', "먼저 · 비용 작음",
+                "<th>우선순위</th>"]
+        left = [g for g in gone if g in rep]
+        check(not left, "우선순위 축의 흔적이 남지 않았습니다%s"
+              % ("" if not left else "  ← %s" % left))
+        check("지금 바로 할 수 있는 것" in rep,
+              "핵심 칩이 「지금 바로 할 수 있는 것」(비용 작음)으로 바뀌었습니다")
+
     return report(fails)
 
 
