@@ -601,6 +601,46 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
         check("지금 바로 할 수 있는 것" in rep,
               "핵심 칩이 「지금 바로 할 수 있는 것」(비용 작음)으로 바뀌었습니다")
 
+        print("\n15. 화면이 직접 들고 있는 통신을 찾는가")
+        # 화면이 SQL ID 를 직접 들고 있으면 SqlManager 로 옮길 후보입니다(A-14).
+        # 기계가 파일·줄·**소속 메서드**까지 세어 두어야 제안자가 판정만 합니다.
+        tsm = ix["sql"].get("toSqlManager", [])
+        got = sorted((x["owner"], x["sqlId"]) for x in tsm)
+        want = sorted([("CheckLot", "lot.selectMcLot"),
+                       ("Confirm", "lot.updateLotAttr"),
+                       ("SearchLot", "lot.selectMcLot"),
+                       ("SearchLotByLine", "lot.selectMcLotWithLine")])
+        check(got == want, "샘플의 이관 후보 4곳을 메서드까지 잡았습니다%s"
+              % ("" if got == want else "  ← 실제: %s" % got))
+        check(all(x["file"].endswith("YOEDSMOV.xaml.cs") for x in tsm),
+              "후보가 전부 화면 파일입니다")
+
+        # SqlManager.cs **안**의 통신은 후보가 아닙니다 — 이미 제자리입니다.
+        lay = Path(tmp) / "layer"
+        (lay / "src" / "Common").mkdir(parents=True)
+        (lay / "src" / "Common" / "SqlManager.cs").write_text(
+            "namespace App\n{\n    public class SqlManager\n    {\n"
+            "        public DataTable GetMcLot(GetMcLotVO vo)\n        {\n"
+            '            return DPICALL("lot.selectMcLot");\n'
+            "        }\n    }\n}\n", encoding="utf-8")
+        (lay / "src" / "Scr.xaml.cs").write_text(
+            "namespace App\n{\n    public class Scr\n    {\n"
+            "        public void Load()\n        {\n"
+            '            var dt = _sqlManager.DPICALL("lot.countLot");\n'
+            "        }\n    }\n}\n", encoding="utf-8")
+        lws = Path(tmp) / "scan-layer"
+        run([sys.executable, str(ASSETS / "collect.py"),
+             "--path", str(lay / "src"), "--ws", str(lws)], timeout=120)
+        run([sys.executable, str(ASSETS / "index.py"), "--ws", str(lws)], timeout=120)
+        lix = json.loads((lws / "1-index.json").read_text(encoding="utf-8"))["sql"]
+        ltsm = [(x["file"], x["sqlId"]) for x in lix.get("toSqlManager", [])]
+        check(ltsm == [("Scr.xaml.cs", "lot.countLot")],
+              "`SqlManager.cs` **안**의 호출은 후보에서 빠집니다%s"
+              % ("" if ltsm == [("Scr.xaml.cs", "lot.countLot")] else "  ← 실제: %s" % ltsm))
+
+        lmd = (lws / "1-index.md").read_text(encoding="utf-8")
+        check("## SqlManager 로 옮길 호출" in lmd, "요약에 「SqlManager 로 옮길 호출」 표가 있습니다")
+
     return report(fails)
 
 

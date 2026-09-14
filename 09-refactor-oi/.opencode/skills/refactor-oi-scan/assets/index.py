@@ -754,13 +754,25 @@ def main():
     # 인라인 SQL 이 문자열 연결로 조립되는지 — 같은 **메서드 전체**를 봅니다.
     # `AddSql("SELECT …")` 와 `+ lineId +` 가 여러 줄 떨어져 있는 것이 보통이라,
     # 한두 줄 창으로 보면 전부 놓칩니다.
-    for item in inline_sql:
-        owner = None
+    def owner_of(file, line):
+        """그 줄이 어느 메서드 안인가. 겹치면 **가장 안쪽**을 고릅니다."""
+        found = None
         for sym in symbols:
-            if sym["file"] == item["file"] and sym["kind"] in ("method", "property", "constructor") \
-                    and sym["lines"][0] <= item["line"] <= sym["lines"][1]:
-                if owner is None or sym["lines"][0] > owner["lines"][0]:
-                    owner = sym
+            if sym["file"] == file and sym["kind"] in ("method", "property", "constructor") \
+                    and sym["lines"][0] <= line <= sym["lines"][1]:
+                if found is None or sym["lines"][0] > found["lines"][0]:
+                    found = sym
+        return found
+
+    # SQL ID 호출에도 소속 메서드를 붙입니다 — 「어디를 고쳐야 하나」가
+    # 파일·줄만으로는 안 보이기 때문입니다.
+    for item in sql_called:
+        o = owner_of(item["file"], item["line"])
+        item["owner"] = o["name"] if o else None
+        item["ownerType"] = o["owner"] if o else None
+
+    for item in inline_sql:
+        owner = owner_of(item["file"], item["line"])
         if owner:
             raw = text_of.get(item["file"], "").split("\n")
             body = "\n".join(raw[owner["lines"][0] - 1:owner["lines"][1]])
@@ -982,6 +994,30 @@ def main():
             included.add(ref.split(".")[-1])
     unused_fragments = sorted(f for f in frag_ids if f.split(".")[-1] not in included)
 
+    # ── SqlManager 로 옮길 호출 ─────────────────────────────────────────
+    #
+    # 화면이 SQL ID 나 조립한 SQL 을 **직접** 들고 있으면, 그 화면은
+    # "무엇을 가져오는지"와 "어떻게 가져오는지"를 동시에 아는 것입니다.
+    # 통신을 SqlManager 로 옮기면 화면에는 무엇을만 남습니다 (design-rules 의 A-14).
+    #
+    # 계층이 어디인지는 calls.py 한 곳에 있습니다 — 팀이 클래스 이름을 바꾸면 거기만 고칩니다.
+    to_sql_manager = []
+    for c in sql_called:
+        if calls.in_sql_layer(c["file"]):
+            continue
+        to_sql_manager.append({
+            "kind": "DPICALL", "sqlId": c["id"], "file": c["file"],
+            "line": c["line"], "owner": c.get("owner"), "ownerType": c.get("ownerType"),
+        })
+    for c in inline_sql:
+        if calls.in_sql_layer(c["file"]):
+            continue
+        to_sql_manager.append({
+            "kind": "SQLEXEC", "sqlId": None, "file": c["file"],
+            "line": c["line"], "owner": c.get("owner"), "ownerType": None,
+        })
+    to_sql_manager.sort(key=lambda x: (x["file"], x["line"]))
+
     # 「호출하는데 정의가 안 보인다」를 한 칸에 담으면 안 됩니다. 두 가지가 섞입니다.
     #
     #   · 그 네임스페이스의 mapper 를 **읽었는데도** 없다 → 진짜 문제. 실행하면 터집니다
@@ -1025,6 +1061,8 @@ def main():
             # `SET_SIMAXDATA` 로 나가는 Rule 시스템 메시지입니다.
             # 저장소에 없는 것이 정상이라 「정의 없음」으로 세지 않습니다.
             "ruleMessages": rule_messages,
+            # 화면이 직접 들고 있는 통신 — SqlManager 로 옮길 후보 (A-14)
+            "toSqlManager": to_sql_manager,
             # 「안 쓰는 SQL」을 판정할 수 없는 파일입니다 (부르는 문장만 잘라 왔습니다)
             "trimmedMapperFiles": trimmed_files,
             "unusedIds": unused_ids,
@@ -1082,6 +1120,9 @@ def main():
         if trimmed_files:
             print("  · 잘라 온 mapper %d개 — 그 파일의 「안 쓰는 SQL」은 판정하지 않습니다"
                   % len(trimmed_files))
+    if to_sql_manager:
+        print("  · SqlManager 로 옮길 호출 %d곳 (화면이 SQL 을 직접 들고 있습니다)"
+              % len(to_sql_manager))
     if rule_messages:
         print("  · Rule 시스템 메시지 %d개는 SQL ID 로 세지 않았습니다 (%s)"
               % (len(rule_messages),
@@ -1185,6 +1226,25 @@ def render_md(ix):
         a("> `SET_SIMAXDATA` 로 나가는 메시지는 **Rule 시스템에 있어 저장소에 없습니다.**")
         a("> 본문을 못 찾는 것이 정상입니다. 「정의 없음」으로 올리지 마세요.")
         a("")
+
+    tsm = sq.get("toSqlManager", [])
+    a("## SqlManager 로 옮길 호출")
+    a("")
+    if not tsm:
+        a("없습니다 — 통신이 전부 SQL 계층 안에 있습니다.")
+    else:
+        a("화면이 **SQL ID 나 조립한 SQL 을 직접 들고 있는** 자리입니다.")
+        a("통신을 `SqlManager` 의 이름 있는 메서드로 옮기면 화면에는 «무엇을»만 남습니다.")
+        a("판정 기준은 `design-rules.md` 의 **`A-14`** 입니다.")
+        a("")
+        a("| 파일 | 줄 | 메서드 | 종류 | SQL ID |")
+        a("|---|---|---|---|---|")
+        for x in tsm:
+            a("| %s | %d | %s | %s | %s |" % (
+                x["file"], x["line"],
+                "`%s()`" % x["owner"] if x.get("owner") else "—",
+                x["kind"], "`%s`" % x["sqlId"] if x.get("sqlId") else "(인라인)"))
+    a("")
 
     w = ix["wpf"]
     a("## WPF 참조 경로 (미참조 판정의 근거)")

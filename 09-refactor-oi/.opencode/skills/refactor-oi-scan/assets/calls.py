@@ -47,6 +47,18 @@ KIND_INLINE = ("SQLEXEC",)             # 화면이 조립한 SQL. ID 가 없습�
 KIND_RULE = ("SET_SIMAXDATA",)         # 이름이 알려진 Rule 메시지 (문서용)
 # 그 밖에 RV 로 나가는 것은 **전부** Rule 시스템 메시지로 봅니다.
 
+# SQL 통신을 모아 두는 계층입니다. **이 파일 밖에서 SQL ID 를 들고 있으면
+# 이관 후보**입니다 — 화면이 "무엇을 가져오는지"와 "어떻게 가져오는지"를
+# 동시에 알고 있다는 뜻이라, 통신을 이쪽으로 옮기면 화면에는 무엇을만 남습니다.
+# 팀이 클래스 이름을 바꾸면 이 한 줄만 고치면 됩니다.
+SQL_LAYER = re.compile(r"(^|/)\w*SqlManager\.cs$", re.I)
+
+
+def in_sql_layer(rel_path):
+    """이 파일이 SQL 통신 계층인가."""
+    return bool(SQL_LAYER.search((rel_path or "").replace("\\", "/")))
+
+
 # TibRV 보내는 메서드. `SendMessage` · `SendMessageWithJSON` ·
 # `SendMessageWithJSONToTextResult` … 이름이 계속 늘어서 접두사로 잡습니다.
 RE_RV_SEND = re.compile(r"\bSendMessage\w*\s*\(")
