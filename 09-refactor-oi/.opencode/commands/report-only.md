@@ -11,7 +11,7 @@ agent: refactor-lead
 - `<작업폴더>/1-units.md`
 - `<작업폴더>/2-suggest-*.md`
 - `<작업폴더>/3-verify.md`
-- `<작업폴더>/3-roadmap.md`
+- `<작업폴더>/3-diagnosis.md`
 
 `report-builder` 를 **작업 폴더 전체 경로와 함께** 부릅니다.
 제안과 검증은 그대로 두고 JSON 과 HTML 만 다시 만듭니다.

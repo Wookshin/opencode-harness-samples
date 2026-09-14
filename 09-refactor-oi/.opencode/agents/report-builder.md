@@ -50,7 +50,7 @@ HTML 은 `build-report.py` 가 만듭니다.
 | `<작업폴더>/1-files.json` | `files` |
 | `<작업폴더>/2-suggest-*.md` | `findings` · `sql` · `quickWins` · `unknowns` |
 | `<작업폴더>/3-verify.md` | **어느 제안이 실리고 등급이 얼마인지 — 유일한 권한** |
-| `<작업폴더>/3-roadmap.md` | `roadmap` |
+| `<작업폴더>/3-diagnosis.md` | `diagnosis` |
 | `.opencode/skills/refactor-oi-scan/references/html-report.md` | 스키마 전문 |
 
 ## 3-verify.md 가 결정합니다

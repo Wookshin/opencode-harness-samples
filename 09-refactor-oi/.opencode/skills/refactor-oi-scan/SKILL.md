@@ -60,7 +60,7 @@ _workspace/scan-YOEDSMOV/
 ├── 2-suggest-hygiene.md      중복·미사용 관점
 ├── 2-suggest-design.md       구조 관점
 ├── 3-verify.md               제안별 CONFIRMED / NEEDS-INFO / REJECTED
-├── 3-roadmap.md              개선 로드맵 (오케스트레이터가 직접)
+├── 3-diagnosis.md            한 줄 진단 (오케스트레이터가 직접)
 ├── 4-findings.json           HTML 입력 (스키마 고정)
 └── refactor-YOEDSMOV.html    ★ 회의에서 여는 파일
 ```

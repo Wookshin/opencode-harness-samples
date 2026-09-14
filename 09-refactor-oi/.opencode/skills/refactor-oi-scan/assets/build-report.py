@@ -163,19 +163,16 @@ if not isinstance(ov, dict):
 need(ov, "narrative", "overview")
 ov["highlights"] = arr(ov.get("highlights"), "overview.highlights")
 
-# ── roadmap (개선 로드맵) ───────────────────────────────────────────────
-rm = D.get("roadmap")
-if not isinstance(rm, dict):
-    bad("roadmap 이 없습니다 — 어디부터 손댈지 순서를 적으세요 "
-        "(refactor-lead 의 3-roadmap.md)")
-    D["roadmap"] = rm = {}
-need(rm, "diagnosis", "roadmap")
-for k in ("order", "batches", "leaveAlone"):
-    rm[k] = arr(rm.get(k), "roadmap.%s" % k)
-if not rm["leaveAlone"]:
-    # 「지금은 두는 게 나은 것」이 비면 리포트가 "전부 고치라"는 문서로 읽힙니다.
-    print("! roadmap.leaveAlone 이 비어 있습니다 — 손대지 않는 편이 나은 것을 "
-          "한 줄이라도 적으면 리포트의 신뢰가 올라갑니다.", file=sys.stderr)
+# ── diagnosis (한 줄 진단) ──────────────────────────────────────────────
+#
+# 예전에는 여기에 「손대는 순서」·「묶어서 하면 좋은 것」·「지금은 두는 게
+# 낫습니다」가 함께 들어갔습니다. 전부 뺐습니다 — **고르는 것은 개발자**이고,
+# 하네스가 정해 준 순서는 쓰이지 않습니다. 대신 리포트가 제안 전체를
+# 「한눈에 보기」 표로 그려, 훑고 바로 고를 수 있게 합니다.
+if "roadmap" in D:
+    bad('"roadmap" 은 없어졌습니다 — 순서·묶음·보류는 더 이상 적지 않습니다. '
+        '최상위 "diagnosis" 에 한 줄 진단만 3~5줄로 쓰세요')
+need(D, "diagnosis", "(최상위)")
 
 # ── files ───────────────────────────────────────────────────────────────
 XAML_EXT = (".xaml", ".axaml", ".xml", ".config", ".csproj", ".props", ".targets", ".resx")

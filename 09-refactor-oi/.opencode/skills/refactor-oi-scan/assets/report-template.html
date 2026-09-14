@@ -385,6 +385,16 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 .roadmap h3{font-size:13px;margin:14px 0 2px}
 .roadmap ol{margin:4px 0 0;padding-left:22px}
 .roadmap ol li{margin:5px 0}
+table.glance{width:100%;border-collapse:collapse;font-size:13px}
+table.glance th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);
+  padding:6px 10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.glance td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.glance tr[data-jump]{cursor:pointer}
+table.glance tbody tr:hover{background:var(--accent-soft)}
+table.glance td .uid{font-weight:700;color:var(--ink);font-size:12px}
+table.glance td:nth-child(5){width:100%}
+.glnone{color:var(--muted);font-size:13px;margin:0}
+#glance .body{overflow-x:auto}
 .roadmap .leave{border-left:3px solid var(--line);padding-left:12px;margin-top:14px}
 .roadmap .leave h3{margin:0 0 4px;color:var(--muted)}
 
@@ -443,7 +453,8 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   </div>
 
   <section class="band" id="overview"><h2>이 코드가 하는 일</h2><div class="body" id="ov-body"></div></section>
-  <section class="band roadmap" id="roadmap"><h2>개선 로드맵</h2><div class="body" id="rm-body"></div></section>
+  <section class="band roadmap" id="roadmap"><h2>한 줄 진단</h2><div class="body" id="rm-body"></div></section>
+  <section class="band" id="glance"><h2>개선 제안 한눈에 보기</h2><div class="body" id="gl-body"></div></section>
 
   <section class="panel" id="index">
     <h2>기계가 센 것 <span class="note">index.py 가 전수 조사한 사실입니다. 모델이 쓴 숫자가 아닙니다</span></h2>
@@ -749,15 +760,42 @@ function bullets(list, tag){
   document.getElementById('ov-body').innerHTML =
     '<div class="prose">' + prose(ov.narrative) + '</div>' + bullets(ov.highlights);
 
-  var h = '<div class="prose">' + prose(rm.diagnosis) + '</div>';
-  if (rm.order && rm.order.length)
-    h += '<h3>손대는 순서</h3>' + bullets(rm.order, 'ol');
-  if (rm.batches && rm.batches.length)
-    h += '<h3>묶어서 하면 좋은 것</h3>' + bullets(rm.batches);
-  if (rm.leaveAlone && rm.leaveAlone.length)
-    h += '<div class="leave"><h3>지금은 두는 게 낫습니다</h3>' + bullets(rm.leaveAlone) + '</div>';
-  document.getElementById('rm-body').innerHTML = h;
+  /* 순서·묶음·보류를 정해 주지 않습니다. 고르는 것은 개발자입니다. */
+  document.getElementById('rm-body').innerHTML =
+    '<div class="prose">' + prose(D.diagnosis) + '</div>';
 })();
+
+/* ── 개선 제안 한눈에 보기 ───────────────────────
+   authoring 하지 않습니다. findings 에서 만들기 때문에 본문과 절대 어긋나지
+   않고, 새로 쓸 것도 없습니다. 개발자가 위에서 훑고 바로 고릅니다. */
+function glanceRows(){
+  return D.findings.slice().sort(function(a, b){
+    return (SEVS.indexOf(a.severity) - SEVS.indexOf(b.severity)) ||
+           (EFFS.indexOf(a.effort)   - EFFS.indexOf(b.effort))   ||
+           a.id.localeCompare(b.id);
+  });
+}
+
+function renderGlance(){
+  var rows = glanceRows().filter(visible);
+  var box = document.getElementById('gl-body');
+  if (!rows.length) {
+    box.innerHTML = '<p class="glnone">필터에 걸리는 제안이 없습니다.</p>';
+    return;
+  }
+  box.innerHTML =
+    '<table class="glance"><thead><tr>' +
+      '<th>ID</th><th>우선순위</th><th>비용</th><th>단위</th><th>무엇이 바뀌나</th>' +
+    '</tr></thead><tbody>' +
+    rows.map(function(f){
+      return '<tr data-jump="f-' + esc(f.id) + '">' +
+        '<td><span class="fid">' + esc(f.id) + '</span></td>' +
+        '<td><span class="sev ' + sevc(f.severity) + '">' + esc(f.severity) + '</span></td>' +
+        '<td><span class="eff ' + effc(f.effort) + '">' + esc(f.effort) + '</span></td>' +
+        '<td><span class="uid">' + esc(f.unitId || '') + '</span></td>' +
+        '<td>' + inline(f.title) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
 
 /* ── 기계가 센 것 ────────────────────────────── */
 (function(){
@@ -1112,7 +1150,9 @@ function applyFilters(){
     var any = s.querySelector('.unit:not([style*="none"])') || s.id.indexOf('sec-') === 0;
     s.style.display = any ? '' : 'none';
   });
+  renderGlance();          // 표와 본문이 항상 같은 것을 보여 줍니다
 }
+renderGlance();
 document.getElementById('q').addEventListener('input', applyFilters);
 
 /* ── 내보내기 ────────────────────────────────── */
@@ -1126,12 +1166,7 @@ function reviewMd(){
            ' · 중복 후보 ' + D.indexSummary.duplicatePairs + '쌍' +
            ' · 미사용 SQL ' + D.indexSummary.sqlUnused);
   L.push('');
-  L.push('## 개선 로드맵', '', (D.roadmap.diagnosis || ''), '');
-  (D.roadmap.order || []).forEach(function(t, i){ L.push((i + 1) + '. ' + t); });
-  if ((D.roadmap.leaveAlone || []).length) {
-    L.push('', '### 지금은 두는 게 낫습니다', '');
-    D.roadmap.leaveAlone.forEach(function(t){ L.push('- ' + t); });
-  }
+  L.push('## 한 줄 진단', '', (D.diagnosis || ''), '');
   L.push('', '## 제안', '');
   SEVS.forEach(function(s){
     var fs = D.findings.filter(function(f){ return f.severity === s; });

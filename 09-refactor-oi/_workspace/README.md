@@ -47,7 +47,7 @@ _workspace/
 | `1-units.md` | `code-scoper` | 제안자 3인 · 검증관 · `report-builder` → `units` |
 | `2-suggest-*.md` | 제안자 3인 | 검증관 · `report-builder` |
 | `3-verify.md` | `refac-verifier` | 오케스트레이터(게이트) · `report-builder` |
-| `3-roadmap.md` | **오케스트레이터가 직접** | `report-builder` → `roadmap` |
+| `3-diagnosis.md` | **오케스트레이터가 직접** | `report-builder` → `diagnosis` |
 | `4-findings.json` | `report-builder` | `build-report.py` |
 | `refactor-<slug>.html` | `build-report.py` | **사람** |
 | `STATUS.md` | 오케스트레이터만 | `/status` (읽기만) |

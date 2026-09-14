@@ -54,7 +54,7 @@ PHASES = [
     ("1-units.md",       "1 대상 단위 확정"),
     ("2-suggest-*.md",   "2 제안"),
     ("3-verify.md",      "3 검증"),
-    ("3-roadmap.md",     "3 로드맵"),
+    ("3-diagnosis.md",   "3 진단"),
     ("4-findings.json",  "4 정리"),
     ("*.html",           "4 리포트 완료"),
 ]
@@ -550,6 +550,28 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
             h = html.read_text(encoding="utf-8")
             check("이 화면이 부르는 SQL" in h and "SQL 본문과 개선점" not in h,
                   "SQL 절이 「이 화면이 부르는 SQL」 참고 자료로 바뀌었습니다")
+
+        print("\n13. 로드맵 대신 진단과 한눈에 보기 표인가")
+        # 순서·묶음·보류는 정해 주지 않습니다 — 고르는 것은 개발자입니다.
+        # 대신 제안 전체를 표로 늘어놓되, **findings 에서 만들어** 본문과
+        # 어긋날 수 없게 합니다.
+        def drop_diag(d):
+            del d["diagnosis"]
+        rejects(drop_diag, "`diagnosis` 가 없으면 거부합니다")
+
+        def old_roadmap(d):
+            d["roadmap"] = {"diagnosis": d.pop("diagnosis"), "order": ["A"],
+                            "batches": [], "leaveAlone": ["B"]}
+        rejects(old_roadmap, "예전 `roadmap` 객체가 오면 거부합니다")
+
+        rep = out.read_text(encoding="utf-8") if out.is_file() else ""
+        check("개선 제안 한눈에 보기" in rep, "「개선 제안 한눈에 보기」 절이 있습니다")
+        check("한 줄 진단" in rep, "「한 줄 진단」 절이 있습니다")
+        for gone in ("손대는 순서", "묶어서 하면 좋은 것", "지금은 두는 게 낫습니다"):
+            check(gone not in rep, "「%s」 가 사라졌습니다%s"
+                  % (gone, "" if gone not in rep else "  ← 남아 있음!"))
+        check("function renderGlance" in rep,
+              "표는 findings 에서 만들어집니다 (authoring 하지 않습니다)")
 
     return report(fails)
 
