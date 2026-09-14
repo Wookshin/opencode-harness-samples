@@ -40,12 +40,12 @@ _workspace/
 | 파일 | 누가 만드나 | 누가 읽나 |
 |---|---|---|
 | `1-meta.json` · `1-files.json` | `collect.py` | `code-scoper` → `1-scope.md` |
-| `src/**` · `src-sql/**` | `collect.py` | 제안자 4인 · 검증관 · `build-report.py` |
+| `src/**` · `src-sql/**` | `collect.py` | 제안자 3인 · 검증관 · `build-report.py` |
 | `1-index.json` | `index.py` | **검증관(`V-4`·`V-5`)** · `hygiene`·`sql` 제안자 · `build-report.py` |
-| `1-index.md` | `index.py` | 제안자 4인 |
-| `1-scope.md` | `code-scoper` | 제안자 4인 · `report-builder` → `overview` |
-| `1-units.md` | `code-scoper` | 제안자 4인 · 검증관 · `report-builder` → `units` |
-| `2-suggest-*.md` | 제안자 4인 | 검증관 · `report-builder` |
+| `1-index.md` | `index.py` | 제안자 3인 |
+| `1-scope.md` | `code-scoper` | 제안자 3인 · `report-builder` → `overview` |
+| `1-units.md` | `code-scoper` | 제안자 3인 · 검증관 · `report-builder` → `units` |
+| `2-suggest-*.md` | 제안자 3인 | 검증관 · `report-builder` |
 | `3-verify.md` | `refac-verifier` | 오케스트레이터(게이트) · `report-builder` |
 | `3-roadmap.md` | **오케스트레이터가 직접** | `report-builder` → `roadmap` |
 | `4-findings.json` | `report-builder` | `build-report.py` |
@@ -105,7 +105,7 @@ permission:
 | **컨텍스트 절약** | 긴 산출물이 오케스트레이터의 기억을 잡아먹지 않습니다 |
 | **감사 흔적** | 무슨 일이 있었는지 파일로 남습니다. 실패해도 어디서 틀어졌는지 보입니다 |
 | **재개 가능** | 중간에 끊겨도 `/status` 로 이어서 할 수 있습니다 |
-| **병렬 안전** | 동시에 도는 제안자 4인이 각자 다른 파일에 쓰므로 충돌하지 않습니다 |
+| **병렬 안전** | 동시에 도는 제안자 3인이 각자 다른 파일에 쓰므로 충돌하지 않습니다 |
 | **검증 가능** | `1-index.json` 이 파일로 남아 있어, 검증관이 제안을 **기계가 센 사실과 대조**할 수 있습니다 |
 
 산출물은 `.gitignore` 되어 있어 커밋되지 않습니다. 이 `README.md` 만 예외입니다.

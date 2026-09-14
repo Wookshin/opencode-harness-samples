@@ -1,11 +1,11 @@
 ---
 name: refactor-oi-scan
-description: 소스 경로를 받아 컨벤션·중복과 미사용 코드·구조·SQL 네 관점에서 개선할 곳을 찾아 제안하고, 팀이 모여서 볼 수 있는 단일 HTML 리포트를 만듭니다. 코드는 고치지 않습니다. 리팩토링할 곳을 찾아 달라는 요청을 받았을 때, 기술 부채를 정리할 순서를 정해야 할 때 이 스킬을 먼저 검토하세요.
+description: 소스 경로를 받아 컨벤션·중복과 미사용 코드·구조 세 관점에서 개선할 곳을 찾아 제안하고, 팀이 모여서 볼 수 있는 단일 HTML 리포트를 만듭니다. 코드는 고치지 않습니다. 리팩토링할 곳을 찾아 달라는 요청을 받았을 때, 기술 부채를 정리할 순서를 정해야 할 때 이 스킬을 먼저 검토하세요.
 ---
 
 # OI 리팩토링 제안 (소스 경로 단위)
 
-기존 코드를 **네 관점이 동시에** 훑고, 제안을 **검증으로 걸러낸 뒤**,
+기존 코드를 **세 관점이 동시에** 훑고, 제안을 **검증으로 걸러낸 뒤**,
 팀이 "그래서 뭐부터 할까"를 정할 때 쓰는 **단일 HTML 파일**을 만듭니다.
 
 **코드를 고치지 않습니다.** 제안만 합니다.
@@ -36,7 +36,7 @@ opencode run "/doctor"                # 돌 준비가 됐는지 점검 (막히�
 경로는 고정이니 확인하지 말고 그대로 쓰세요. 정말 없으면 `/doctor` 가 알려 줍니다.
 
 실제 코드에 처음 적용할 때는 **`/scan-only` 부터** 돌리세요.
-무엇을 볼지가 틀리면 뒤의 네 제안자가 전부 틀린 것을 봅니다.
+무엇을 볼지가 틀리면 뒤의 세 제안자가 전부 틀린 것을 봅니다.
 
 > 모델을 한 번도 부르지 않고 스크립트만 확인하려면
 > `python .opencode/skills/refactor-oi-scan/assets/ws.py --selftest` 를 쓰세요.
@@ -55,11 +55,10 @@ _workspace/scan-YOEDSMOV/
 ├── 1-index.json              ★ 심볼·참조·미참조·중복·SQL 대조 (기계가 센 것)
 ├── 1-index.md                위의 사람이 읽는 요약
 ├── 1-scope.md                이 코드가 하는 일 · 파일 목록
-├── 1-units.md                대상 단위 표 (U1, U2 … ← 네 제안자가 공유하는 ID)
+├── 1-units.md                대상 단위 표 (U1, U2 … ← 세 제안자가 공유하는 ID)
 ├── 2-suggest-convention.md   컨벤션 관점
 ├── 2-suggest-hygiene.md      중복·미사용 관점
 ├── 2-suggest-design.md       구조 관점
-├── 2-suggest-sql.md          SQL 관점
 ├── 3-verify.md               제안별 CONFIRMED / NEEDS-INFO / REJECTED
 ├── 3-roadmap.md              개선 로드맵 (오케스트레이터가 직접)
 ├── 4-findings.json           HTML 입력 (스키마 고정)
@@ -69,7 +68,7 @@ _workspace/scan-YOEDSMOV/
 터미널 두 개로 `/refactor YOEDSMOV` 와 `/refactor YOSTKMGR` 를 동시에 돌리면
 폴더가 각각 채워집니다. `/status` 로 둘 다 한눈에 봅니다.
 
-## 이 하네스의 전제 (네 관점 공통)
+## 이 하네스의 전제 (세 관점 공통)
 
 - **기계가 먼저 세고, 모델은 판정만 합니다.** `index.py` 가 심볼·참조·중복·SQL 을
   전수 조사해 `1-index.json` 에 올립니다. **인덱스에 없는 것을 미참조·중복이라고
@@ -122,10 +121,13 @@ _workspace/scan-YOEDSMOV/
 |---|---|---|
 | [references/naming-rules.md](references/naming-rules.md) | 컨벤션 제안자 | 함수·VO·변수·상수·`this` 명명 규칙 8종 |
 | [references/hygiene-rules.md](references/hygiene-rules.md) | 중복·미사용 제안자 | 죽은 코드 판정 `K-*` · 중복·공통화 `P-*` · **WPF 참조 경로 표** |
-| [references/design-rules.md](references/design-rules.md) | 구조 제안자 | 가독성·성능 체크리스트 `A-1`~`A-11` |
-| [references/read-sql.md](references/read-sql.md) | SQL 제안자 | mapper 본문 읽는 절차와 판정 규칙 `Q-1`~`Q-9` |
-| [references/suggest-format.md](references/suggest-format.md) | 네 제안자 전원 | 공통 출력 형식 · 우선순위·비용 기준 |
+| [references/design-rules.md](references/design-rules.md) | 구조 제안자 | 가독성·성능 체크리스트 `A-1`~`A-13` (SQL 을 **부르는 방식** 포함) |
+| [references/suggest-format.md](references/suggest-format.md) | 세 제안자 전원 | 공통 출력 형식 · 우선순위·비용 기준 |
 | [references/html-report.md](references/html-report.md) | 리포트 담당 | findings.json 스키마와 빌드 스크립트 사용법 |
 | [mapper-dir.txt](mapper-dir.txt) | SQL 제안자 · `collect.py` | 저장소 → mapper 경로 매핑. **팀 환경에 맞게 고쳐 쓰는 파일** |
 
 전문을 한꺼번에 읽지 마세요. 각 제안자는 **자기 문서 하나만** 읽습니다.
+
+> **mapper 의 SQL 본문은 아무도 리뷰하지 않습니다.** 인덱스를 타는지·조인이
+> 어떤지는 이 팀이 하는 일이 아닙니다. 다만 그 SQL 이 **무슨 일을 하는지**는
+> 알아야 하므로, 리포트의 「이 화면이 부르는 SQL」 절에 **참고 자료로** 실립니다.

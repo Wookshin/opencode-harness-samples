@@ -104,7 +104,7 @@ EFFORT_KO = {
 }
 EFFORTS = ["작음", "보통", "큼"]
 
-PERSPECTIVES = ["convention", "hygiene", "design", "sql"]
+PERSPECTIVES = ["convention", "hygiene", "design"]
 VERDICTS = ["CONFIRMED", "NEEDS-INFO"]
 
 # 대상 단위의 유형. 변경 유형(08)이 아니라 **무엇인지**를 말합니다.
@@ -280,14 +280,24 @@ for i, f in enumerate(D["findings"]):
         bad("%s: line 은 정수여야 합니다" % w)
 
 # ── sql ─────────────────────────────────────────────────────────────────
+# 「이 화면이 부르는 SQL」 — 참고 자료입니다. 제안이 아닙니다.
+# mapper 본문은 리뷰하지 않지만, 그 SQL 을 쓰는 로직을 고치려면
+# **무엇을 하는 SQL 인지** 알아야 해서 역할과 본문을 함께 싣습니다.
 for i, s in enumerate(D["sql"]):
     w = "sql[%d]" % i
-    for k in ("id", "callType", "body"):
+    for k in ("id", "callType", "role"):
         need(s, k, w)
+    # body 는 **비어 있어도 됩니다.** mapper 를 못 읽었거나 그 ID 가 없는 경우가
+    # 정상이기 때문입니다. 그때는 role 이 왜 비었는지 말해 줍니다.
+    if not isinstance(s.get("body"), str):
+        bad('%s: "body" 는 문자열이어야 합니다 (본문을 못 읽었으면 "" 로 두고 '
+            'role 에 이유를 적으세요)' % w)
     one_of(s, "callType", ["DPICALL", "SQLEXEC", "MAPPER"], w)
     if s.get("callType") in ("DPICALL", "MAPPER"):
         need(s, "sqlId", w)
-    s["tuningPoints"] = arr(s.get("tuningPoints"), "%s.tuningPoints" % w)
+    if "tuningPoints" in s:
+        bad('%s: "tuningPoints" 는 없어졌습니다 — mapper 의 SQL 본문은 리뷰하지 '
+            '않습니다. 대신 "role" 에 이 SQL 이 무엇을 하는지 한 줄로 적으세요' % w)
     if s.get("unitId") and s["unitId"] not in unit_ids:
         bad('%s: unitId "%s" 가 units 에 없습니다' % (w, s["unitId"]))
 

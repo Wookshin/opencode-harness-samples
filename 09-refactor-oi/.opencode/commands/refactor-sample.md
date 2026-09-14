@@ -22,7 +22,7 @@ python .opencode/skills/refactor-oi-scan/assets/index.py --ws _workspace/scan-sa
 
 ## 이 샘플에는 결함이 일부러 심어져 있습니다
 
-네 관점에 각각 걸리는 것이 있고, **미참조로 오인하기 쉬운 WPF 함정**도 함께 있습니다.
+세 관점에 각각 걸리는 것이 있고, **미참조로 오인하기 쉬운 WPF 함정**도 함께 있습니다.
 
 | 심어 둔 것 | 어느 관점 |
 |---|---|

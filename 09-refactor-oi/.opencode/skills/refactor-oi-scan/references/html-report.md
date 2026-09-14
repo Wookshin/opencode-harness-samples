@@ -102,8 +102,8 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
 
   "findings": [                         // 필수(빈 배열 허용)
     {
-      "id":          "N001",            // 필수. N### | H### | D### | S###
-      "perspective": "convention",      // 필수. convention | hygiene | design | sql
+      "id":          "N001",            // 필수. N### | H### | D###
+      "perspective": "convention",      // 필수. convention | hygiene | design
       "severity":    "먼저",             // 필수. 먼저 | 다음 | 참고
       "effort":      "보통",             // 필수. 작음 | 보통 | 큼
       "verdict":     "CONFIRMED",       // 필수. CONFIRMED | NEEDS-INFO
@@ -124,15 +124,24 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
     { "unitId": "U7", "content": "미사용 `using System.Web;` 삭제", "note": "없음" }
   ],
 
-  "sql": [                              // SQL 본문 절. 없으면 []
+  // ── 이 화면이 부르는 SQL — **참고 자료입니다. 제안이 아닙니다** ──────
+  //
+  // mapper 의 SQL 본문은 이 리포트에서 **리뷰하지 않습니다.** 인덱스를 타는지,
+  // 조인이 어떤지는 범위가 아닙니다. 다만 그 SQL 을 쓰는 화면 로직을 고치려면
+  // **무슨 일을 하는 SQL 인지 알아야 하므로** 본문과 역할을 함께 싣습니다.
+  //
+  // 담을 것: `1-index.json` 의 `sql.called` 에 있는 ID **전부**.
+  "sql": [                              // 없으면 []
     {
       "id":       "Q001",               // 필수
       "callType": "MAPPER",             // 필수. MAPPER | DPICALL | SQLEXEC
       "sqlId":    "lot.selectMcLot",    // MAPPER·DPICALL 이면 필수
       "sourcePath": "src-sql/lot/lot.xml:8",   // 본문을 찾은 위치
       "unitId":   "U12",
-      "body":     "SELECT /*QR…*/ …",   // 필수. 찾은 SQL 본문
-      "tuningPoints": ["`TRIM(l.lot_id)` 이 인덱스를 막습니다 (S004)"]   // 없으면 []
+      "role":     "Lot 하나의 수량·상태·라인을 가져옵니다",  // 필수. **한 줄**
+      "body":     "SELECT /*QR…*/ …"    // 필수. 찾은 SQL 본문
+      // 본문을 못 읽었으면 role 에 "본문을 못 읽었습니다 — <이유>" 를 적고
+      // body 는 "" 로 둡니다. **지어내지 마세요.**
     }
   ],
 
@@ -167,6 +176,7 @@ python .opencode/skills/refactor-oi-scan/assets/build-report.py \
 | `current` 를 길게 붙이지 않는다 | 원문은 스크립트가 임베드합니다. 어느 자리인지만 가리키면 됩니다 |
 | `suggestion` 에 **코드든 문장이든** 자연스럽게 쓴다 | 리포트가 구분해 그립니다. 문장을 코드처럼 쓰면 줄바꿈이 안 돼 한 줄로 늘어납니다 |
 | `severity` · `effort` 는 검증 결과(강등·상향 포함)를 반영한 **최종값** | `3-verify.md` 가 조정한 것을 그대로 씁니다 |
+| `sql[].role` 은 **한 줄**로 | 「이 SQL 이 무엇을 하는가」입니다. 개선점을 적는 칸이 아닙니다 |
 
 ## 리포트가 보여 주는 순서
 

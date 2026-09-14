@@ -154,7 +154,7 @@ def doctor():
             SKILL / "mapper-dir.txt",
             REFS / "suggest-format.md", REFS / "html-report.md",
             REFS / "naming-rules.md", REFS / "hygiene-rules.md",
-            REFS / "design-rules.md", REFS / "read-sql.md"]
+            REFS / "design-rules.md"]
     for p in need:
         if p.is_file():
             ok(str(p))
@@ -167,7 +167,7 @@ def doctor():
         ok("opencode.jsonc")
     else:
         no("opencode.jsonc 가 저장소 루트에 없습니다",
-           "복사를 빠뜨리면 subagent_depth 가 없어 4인 동시 제안이 막힙니다.")
+           "복사를 빠뜨리면 subagent_depth 가 없어 3인 동시 제안이 막힙니다.")
 
     mapper = SKILL / "mapper-dir.txt"
     if mapper.is_file():
@@ -506,6 +506,50 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
               "TibRV 와 무관한 진짜 중복에는 표시가 붙지 않습니다%s"
               % ("" if all(not p["rvWrapper"] for p in sample_pairs)
                  else "  ← 오탐! %s" % [p["a"]["name"] for p in sample_pairs if p["rvWrapper"]]))
+
+        print("\n12. SQL 관점을 폐지한 스키마를 지키는가")
+        # mapper 의 SQL 본문은 리뷰하지 않습니다. 「이 화면이 부르는 SQL」 절은
+        # 개선점(tuningPoints)이 아니라 역할(role)을 싣는 **참고 자료**입니다.
+        base = json.loads((sample / "expected-findings.json").read_text(encoding="utf-8"))
+
+        def rejects(mutate, label):
+            d = json.loads(json.dumps(base))
+            mutate(d)
+            f = Path(tmp) / "mutant.json"
+            f.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+            good, _ = run([sys.executable, str(ASSETS / "build-report.py"),
+                           str(f), str(Path(tmp) / "mutant.html"),
+                           str(ws / "1-index.json")], timeout=120)
+            check(not good, label + "%s" % ("" if not good else "  ← 통과시킴!"))
+
+        def set_persp(d):
+            d["findings"][0]["perspective"] = "sql"
+        rejects(set_persp, "`perspective: \"sql\"` 을 거부합니다")
+
+        def add_tuning(d):
+            d["sql"][0]["tuningPoints"] = ["인덱스를 못 탑니다"]
+        rejects(add_tuning, "`tuningPoints` 가 남아 있으면 거부합니다")
+
+        def drop_role(d):
+            del d["sql"][0]["role"]
+        rejects(drop_role, "`role` 이 없으면 거부합니다")
+
+        # 본문을 못 읽은 SQL 은 body 가 비어도 정상입니다
+        d = json.loads(json.dumps(base))
+        d["sql"][0]["body"] = ""
+        f = Path(tmp) / "emptybody.json"
+        f.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+        good, _ = run([sys.executable, str(ASSETS / "build-report.py"),
+                       str(f), str(Path(tmp) / "emptybody.html"),
+                       str(ws / "1-index.json")], timeout=120)
+        check(good, "본문을 못 읽어 `body` 가 비어도 통과합니다 (그 경우가 정상)%s"
+              % ("" if good else "  ← 막힘!"))
+
+        html = (Path(tmp) / "emptybody.html")
+        if html.is_file():
+            h = html.read_text(encoding="utf-8")
+            check("이 화면이 부르는 SQL" in h and "SQL 본문과 개선점" not in h,
+                  "SQL 절이 「이 화면이 부르는 SQL」 참고 자료로 바뀌었습니다")
 
     return report(fails)
 

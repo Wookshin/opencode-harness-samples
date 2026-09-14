@@ -2,7 +2,7 @@
 #
 # 형식:  <Git root repository 이름>: <mapper XML 폴더 절대 경로>
 # 사용:  collect.py 가 mapper 를 <작업폴더>/src-sql/ 로 가져올 때,
-#        references/read-sql.md 의 2단계에서 SQL 리뷰어가 읽습니다.
+#        리포트의 「이 화면이 부르는 SQL」 절에 참고 자료로 실립니다.
 #
 # ★ 팀 환경에 맞게 고쳐 쓰는 파일입니다.
 #    매핑에 없는 저장소는 mapper 수집을 건너뛰고, SQL 미사용 판정을 하지 않습니다.

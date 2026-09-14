@@ -97,7 +97,7 @@ xamlRepeats[]         →    Style 로 뺄 수 있나?
 |---|---|
 | 이름이 규칙과 어긋남 | `refac-convention` |
 | 메서드가 길다 · 책임이 섞였다 | `refac-design` (중복을 **합치는 것**은 당신, 책임을 **나누는 것**은 저기) |
-| SQL 본문의 성능 | `refac-sql` (미사용 **SQL ID** 는 겹칩니다 — SQL 리뷰어에게 넘기세요) |
+| SQL 전부 | mapper 본문도 미사용 SQL ID 도 **이 리포트의 범위가 아닙니다** |
 
 ## TibRV 호출 래퍼는 합치지 않습니다
 

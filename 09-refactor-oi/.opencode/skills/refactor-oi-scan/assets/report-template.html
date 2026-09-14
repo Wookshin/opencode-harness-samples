@@ -315,6 +315,8 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .sqlbox{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;background:var(--panel)}
 .sqlbox h4{margin:0 0 8px;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .sqlbox .path{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace;word-break:break-all}
+.sqlbox .role{margin:6px 0 8px;font-size:13px}
+.sqlnote{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.6}
 .sqlbox pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:10px 12px;
   overflow-x:auto;margin:8px 0;font-size:12.5px;line-height:1.55}
 .sqlbox ul{margin:6px 0 0;padding-left:20px}
@@ -697,7 +699,7 @@ function hlBlock(src, lang){
 }
 
 /* ── 어휘 ────────────────────────────────────── */
-var PERSP = {convention:'컨벤션', hygiene:'중복·미사용', design:'구조', sql:'SQL'};
+var PERSP = {convention:'컨벤션', hygiene:'중복·미사용', design:'구조'};
 var SEVS  = ['먼저', '다음', '참고'];
 var SEVC  = {'먼저':'s1', '다음':'s2', '참고':'s3'};
 var EFFS  = ['작음', '보통', '큼'];
@@ -951,9 +953,12 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
     html += '</section>';
   });
 
-  /* SQL 본문 */
+  /* 이 화면이 부르는 SQL — 참고 자료입니다. 제안이 아닙니다. */
   if (D.sql.length) {
-    html += '<section class="file" id="sec-sql"><h2>SQL 본문과 개선점</h2>' +
+    html += '<section class="file" id="sec-sql"><h2>이 화면이 부르는 SQL</h2>' +
+      '<p class="sqlnote">mapper 의 SQL 본문은 <b>리뷰하지 않습니다.</b> ' +
+      '그 SQL 을 쓰는 화면 로직을 고칠 때 <b>무슨 일을 하는지</b> 알아야 해서 ' +
+      '싣는 <b>참고 자료</b>입니다 — 여기에는 제안이 없습니다.</p>' +
       D.sql.map(function(s){
         return '<div class="sqlbox" id="q-' + esc(s.id) + '">' +
           '<h4><span class="fid">' + esc(s.id) + '</span>' +
@@ -962,10 +967,10 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
           (s.unitId ? '<button class="seecode" data-jump="u-' + esc(s.unitId) + '">' + esc(s.unitId) + '</button>' : '') +
           '</h4>' +
           (s.sourcePath ? '<div class="path">' + esc(s.sourcePath) + '</div>' : '') +
-          '<pre>' + hlBlock(s.body, 'sql') + '</pre>' +
-          bullets(s.tuningPoints) + '</div>';
+          (s.role ? '<div class="role">' + inline(s.role) + '</div>' : '') +
+          (s.body ? '<pre>' + hlBlock(s.body, 'sql') + '</pre>' : '') + '</div>';
       }).join('') + '</section>';
-    tocHtml += '<a href="#sec-sql" data-jump="sec-sql"><span>SQL 본문</span>' +
+    tocHtml += '<a href="#sec-sql" data-jump="sec-sql"><span>부르는 SQL</span>' +
       '<span class="note">' + D.sql.length + '건</span></a>';
   }
 

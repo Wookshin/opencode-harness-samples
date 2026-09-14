@@ -14,9 +14,9 @@
 |---|---|
 | **입력** | 소스 경로 하나 (`YOEDSMOV` · `src/Screens/YOEDSMOV` · 저장소 전체는 `.`) |
 | **출력** | `_workspace/scan-<slug>/refactor-<slug>.html` — 브라우저로 그냥 여는 파일 |
-| **관점** | 컨벤션 · 중복/미사용 · 구조 · SQL |
-| **등장인물** | 오케스트레이터 1 + 스코퍼 1 + 제안자 4 + 검증관 1 + 빌더 1 = **8** |
-| **한 사이클** | 모델 호출 **8회** |
+| **관점** | 컨벤션 · 중복/미사용 · 구조 |
+| **등장인물** | 오케스트레이터 1 + 스코퍼 1 + 제안자 3 + 검증관 1 + 빌더 1 = **7** |
+| **한 사이클** | 모델 호출 **7회** |
 | **필요한 것** | Python 3.8+ 만. `gh` 불필요, git 은 선택 |
 | **네트워크** | **0** — 리포트도 폐쇄망에서 열립니다 |
 
@@ -53,18 +53,16 @@ flowchart TD
     G1 -- "멈춤" --> X1["경로를 좁히라고 요구"]
     G1 -- "통과" --> F
 
-    subgraph P2["Phase 2 · 4인 동시 제안 (한 응답에서)"]
+    subgraph P2["Phase 2 · 3인 동시 제안 (한 응답에서)"]
       F[" "]
       F --> A1["refac-convention<br/>N###"]
       F --> A2["refac-hygiene<br/>H###"]
       F --> A3["refac-design<br/>D###"]
-      F --> A4["refac-sql<br/>S### · Q###"]
     end
 
     A1 --> V
     A2 --> V
     A3 --> V
-    A4 --> V
 
     subgraph P3["Phase 3 · 검증"]
       V["refac-verifier<br/>V-1 ~ V-7"]
@@ -96,7 +94,7 @@ flowchart TD
 |---|---|---|---|
 | 0 | `refactor-lead` | — | `STATUS.md` |
 | 1 | `code-scoper` | 대상 소스 | `src/` · `1-index.json` · `1-scope.md` · `1-units.md` |
-| 2 | 제안자 4인 | `1-units.md` · `1-index.md` · `src/` · 자기 참조 문서 | `2-suggest-*.md` |
+| 2 | 제안자 3인 | `1-units.md` · `1-index.md` · `src/` · 자기 참조 문서 | `2-suggest-*.md` |
 | 3 | `refac-verifier` | 위 전부 + `1-index.json` | `3-verify.md` |
 | 3.5 | `refactor-lead` | `2-*` · `3-verify.md` | `3-roadmap.md` |
 | 4 | `report-builder` | 위 전부 | `4-findings.json` → **HTML** |
@@ -193,7 +191,7 @@ SQL ID 와 똑같이 생겼거든요. 안 가르면 멀쩡한 백엔드 호출�
 | `wpfHints` | **WPF 가 참조를 숨기는 14가지 경로** (아래 §5-②) |
 | `unreferenced[]` | 참조 0 + 힌트 없음. **확신 3등급**을 함께 매깁니다 |
 | `duplicateCandidates[]` | 정규화 토큰 5-gram 의 Jaccard ≥ 0.75, 8줄 이상 |
-| `sql` | mapper 정의 ID ↔ C# 호출 ID 대조 → 미사용·정의없음·중복 본문 (**가져온 mapper 안에서만**) |
+| `sql` | mapper 정의 ID ↔ C# 호출 ID 대조 → 정의없음·확인못함 (**본문은 참고 자료로만 싣습니다**) |
 
 그다음 `code-scoper` 가 **무엇을 볼지 고릅니다.**
 `symbols[]` 전부를 단위로 만들면 폭발하므로, **제안할 거리가 있을 만한 것만**
@@ -206,21 +204,20 @@ SQL ID 와 똑같이 생겼거든요. 안 가르면 멀쩡한 백엔드 호출�
 | U5 | YOEDSMOV.xaml.cs | 메서드 | 150–213 | 1 | `Confirm()` — 선택 수집·검증·저장을 한 덩어리로 (64줄) |
 ```
 
-### Phase 2 — 4인 동시 제안 (팬아웃)
+### Phase 2 — 3인 동시 제안 (팬아웃)
 
-오케스트레이터가 **한 응답에서 네 개의 `task`** 를 부릅니다.
+오케스트레이터가 **한 응답에서 세 개의 `task`** 를 부릅니다.
 나눠 부르면 직렬이 되어 느리고 비쌉니다.
 
-네 프롬프트는 **산출물 파일명만 다릅니다.** 각자 읽을 참조 문서는 자기 프롬프트가 압니다.
+세 프롬프트는 **산출물 파일명만 다릅니다.** 각자 읽을 참조 문서는 자기 프롬프트가 압니다.
 
 | 제안자 | 참조 문서 | ID |
 |---|---|---|
 | `refac-convention` | `naming-rules.md` | `N###` |
 | `refac-hygiene` | `hygiene-rules.md` | `H###` |
 | `refac-design` | `design-rules.md` | `D###` |
-| `refac-sql` | `read-sql.md` | `S###` (본문 `Q###`) |
 
-**넷이 전부를 읽으면 컨텍스트가 4배로 낭비되고, 남의 영역까지 제안하기 시작합니다.**
+**셋이 전부를 읽으면 컨텍스트가 3배로 낭비되고, 남의 영역까지 제안하기 시작합니다.**
 
 ### Phase 3 — 검증 (생성-검증)
 
@@ -242,7 +239,7 @@ SQL ID 와 똑같이 생겼거든요. 안 가르면 멀쩡한 백엔드 호출�
 
 ### Phase 3.5 — 개선 로드맵 (오케스트레이터가 직접)
 
-**위임하지 않습니다.** 네 관점을 전부 본 사람은 오케스트레이터뿐입니다.
+**위임하지 않습니다.** 세 관점을 전부 본 사람은 오케스트레이터뿐입니다.
 
 제안자들은 각자 자기 것만 봅니다. "그래서 뭐부터 해요?" 에 답할 수 있는 것은
 **네 묶음을 한자리에 놓고 순서를 만드는 사람**뿐이고, 그게 이 리포트의 값입니다.
@@ -472,7 +469,7 @@ opencode run "/refactor-sample"
 ```
 
 `_workspace/scan-sample/refactor-sample.html` 이 나옵니다.
-샘플에는 네 관점 결함과 **WPF 오탐 함정**이 함께 심어져 있으니,
+샘플에는 세 관점 결함과 **WPF 오탐 함정**이 함께 심어져 있으니,
 맨 아래 **반려된 제안**을 펴서 `V-4` 가 무엇을 잡았는지 보세요.
 
 ### ③ 실제 코드는 Phase 1 부터
@@ -505,7 +502,7 @@ opencode run "/refactor YOEDSMOV"
 `.opencode/` 와 `opencode.jsonc` 를 **저장소 루트에** 복사합니다.
 그다음 `mapper-dir.txt` 에 팀의 mapper 경로를 넣고 `/doctor` 를 돌리세요.
 
-`opencode.jsonc` 를 빠뜨리면 **`subagent_depth: 1` 이 사라져 4인 동시 제안이 막힙니다.**
+`opencode.jsonc` 를 빠뜨리면 **`subagent_depth: 1` 이 사라져 3인 동시 제안이 막힙니다.**
 
 ## 9. 막히면
 
@@ -523,7 +520,7 @@ opencode run "/refactor YOEDSMOV"
 | 제안자 하나가 빈 결과를 돌려준다 | 산출물 파일을 안 쓰고 끝냄 | 파일 유무로 판정합니다. 한 번만 다시 부르고, 그래도 비면 **그 관점 없이** 진행하고 리포트에 그 사실을 적습니다 |
 | 작업 폴더가 너무 크다 | `--all-mappers` 를 줬음 | 선별이 기본입니다. 그 옵션을 빼세요 |
 | 리포트에 코드가 안 보인다 | `sourceFile` 경로 어긋남 | mapper 는 `src-sql/…` 로 적어야 합니다 |
-| 4인 동시 호출이 안 된다 | `opencode.jsonc` 누락 | 저장소 **루트**에 두세요 |
+| 3인 동시 호출이 안 된다 | `opencode.jsonc` 누락 | 저장소 **루트**에 두세요 |
 | 스크립트가 파일을 못 읽는다 | PowerShell 5.1 의 `>` 가 UTF-16LE 로 씀 | 스크립트가 감지해 경고합니다. `collect.py` 를 쓰면 안 생깁니다 |
 
 ## 10. 치트시트

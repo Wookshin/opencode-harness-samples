@@ -7,7 +7,7 @@
 09 에는 그런 경계가 없습니다. **소스 전체가 대상**이기 때문입니다.
 
 그래서 이 하네스는 **기계적 인덱서**를 Phase 1 에 넣었습니다.
-`index.py` 가 심볼·참조·중복·SQL 을 전수 조사하고, 네 제안자는 그 후보를 **판정만** 합니다.
+`index.py` 가 심볼·참조·중복·SQL 을 전수 조사하고, 세 제안자는 그 후보를 **판정만** 합니다.
 
 > 📖 **동작 원리를 알고 싶거나 남에게 설명해야 한다면 → [docs/how-it-works.md](docs/how-it-works.md)**
 
@@ -54,7 +54,7 @@ python $S/assets/build-report.py $S/sample/expected-findings.json /tmp/out.html
 
 ## 무엇을 보여주는 샘플인가
 
-C# WPF(MES 화면) 코드를 훑습니다. 등장인물은 여덟입니다.
+C# WPF(MES 화면) 코드를 훑습니다. 등장인물은 일곱입니다.
 
 | Phase | 담당 | 패턴 | 하는 일 | 모델 |
 |---|---|---|---|---|
@@ -63,7 +63,6 @@ C# WPF(MES 화면) 코드를 훑습니다. 등장인물은 여덟입니다.
 | 2 | `refac-convention` | **팬아웃** | 명명·컨벤션 (`naming-rules.md`) | 무난 |
 | 2 | `refac-hygiene` | **팬아웃** | 중복·미참조 (`hygiene-rules.md`) | **고가** |
 | 2 | `refac-design` | **팬아웃** | 가독성·성능 구조 (`design-rules.md`) | **고가** |
-| 2 | `refac-sql` | **팬아웃** | mapper·인라인 SQL (`read-sql.md`) | **고가** |
 | 3 | `refac-verifier` | **생성-검증** | 제안을 원문·인덱스와 대조해 오탐 반려 | **고가** |
 | 4 | `report-builder` | 파이프라인 | findings.json → 스크립트 → HTML | 무난 |
 
@@ -71,10 +70,9 @@ C# WPF(MES 화면) 코드를 훑습니다. 등장인물은 여덟입니다.
 
 | 자리 | 틀리면 |
 |---|---|
-| `code-scoper` | 무엇을 볼지를 여기서 정합니다. 틀리면 **뒤의 네 제안자가 전부 틀린 것을 봅니다** |
+| `code-scoper` | 무엇을 볼지를 여기서 정합니다. 틀리면 **뒤의 세 제안자가 전부 틀린 것을 봅니다** |
 | `refac-hygiene` | **"이 코드는 아무도 안 씁니다"** 를 말하는 자리입니다. 이 하네스에서 오탐 비용이 가장 큽니다 |
 | `refac-design` | 구조를 바꾸자고 말합니다. 근거가 약하면 회의가 통째로 구조 논쟁이 됩니다 |
-| `refac-sql` | 운영 DB 로 나가는 쿼리입니다 |
 | `refac-verifier` | 오탐을 놓치면 **회의 시간이 통째로 날아갑니다** |
 | `refactor-lead` | 게이트를 여기서 열고, **로드맵을 직접 씁니다.** `primary` 라 대화 턴마다 도는 자리입니다 |
 
@@ -90,7 +88,7 @@ index.py 가 센 것          제안자가 할 일
 ──────────────────────     ──────────────────────────────
 unreferenced[]        →    정말 지워도 되나? 확신은 몇인가?
 duplicateCandidates[] →    합칠 수 있나? 합치면 무엇이 나아지나?
-sql.unusedIds         →    정말 아무도 안 부르나?
+sql.missingIds        →    정말 mapper 에 없나? (본문은 리뷰하지 않습니다)
 ```
 
 LLM 에게 `grep` 을 시켜 "안 쓰는 코드를 찾아라" 하면 **반드시 몇 개를 놓칩니다.**
@@ -128,7 +126,7 @@ private void btnSearch_Click(object sender, RoutedEventArgs e)  // C# 호출부:
 | 리플렉션 | `GetMethod("Foo")` |
 | 이벤트 구독 | `foo.Bar += Baz;` |
 | resx | `.resx` 키 ↔ `Resources.Foo` |
-| SQL ID | `DPICALL("lot.selectMcLot")` ↔ mapper `<select id=…>` |
+| SQL ID | `DPICALL` 뒤의 `"lot.selectMcLot"` ↔ mapper `<select id=…>` |
 
 하나라도 빠지면 **그 종류의 코드가 전부 "죽었다"고 나옵니다.**
 샘플에 이 함정 10종을 일부러 심어 두었고, `--selftest` 가 매번 확인합니다.
@@ -193,8 +191,8 @@ private void btnSearch_Click(object sender, RoutedEventArgs e)  // C# 호출부:
 
 ### ⑦ 순서를 만드는 것이 오케스트레이터의 일이다
 
-제안자 넷은 각자 자기 것만 봅니다.
-네 묶음을 한자리에 놓고 **순서**를 만들 수 있는 것은 오케스트레이터뿐입니다.
+제안자 셋은 각자 자기 것만 봅니다.
+세 묶음을 한자리에 놓고 **순서**를 만들 수 있는 것은 오케스트레이터뿐입니다.
 
 그래서 `3-roadmap.md` 는 **위임하지 않습니다.** 08 의 종합 평가와 같은 자리입니다.
 
@@ -354,7 +352,7 @@ SendMessageWithJSONToTextResult(SET_SIMAXDATA, …, "legacy_semis.updateSemisDel
   **여기가 틀리면 뒤가 전부 틀어지므로** 실 적용은 이것부터 하는 게 안전합니다.
 - **검증관을 빼 보세요.** `refac-verifier.md` 를 `.bak` 으로 바꾸면 WPF 오탐이 그대로
   회의 자료에 실립니다. 샘플 `expected-findings.json` 의 `rejected` 3건이 본문에 섞이는 상태입니다.
-- **제안자를 하나 빼 보세요.** `refac-sql.md` 를 `.bak` 으로 바꾸면 SQL 제안이 통째로 사라집니다.
+- **제안자를 하나 빼 보세요.** `refac-design.md` 를 `.bak` 으로 바꾸면 구조 제안이 통째로 사라집니다.
 - **`4-findings.json` 을 일부러 망가뜨려 보세요.** `effort` 를 `중간` 으로 바꾸고 스크립트를
   돌리면 검증에서 걸립니다. LLM 이 스키마를 어겼을 때 무엇이 막아 주는지 볼 수 있습니다.
 - **`DUP_THRESHOLD` 를 0.5 로 내려 보세요.** 중복 후보가 쏟아집니다.
@@ -382,7 +380,6 @@ SendMessageWithJSONToTextResult(SET_SIMAXDATA, …, "legacy_semis.updateSemisDel
 | `report-builder` | `python` |
 | `refactor-lead` | `python`(ws.py 만) · `git status` · `git rev-parse` |
 | 제안자 3인 | `git log` |
-| `refac-sql` | 위 + 검색기 (`rg` · `findstr` · `Select-String` · `grep`) |
 
 `collect.py` · `index.py` · `build-report.py` 는 **UTF-16 을 감지해 디코딩하고 경고**합니다.
 다른 경로로 만든 파일이 섞여 들어와도 조용히 깨지지 않습니다.
@@ -422,7 +419,7 @@ cp    09-refactor-oi/opencode.jsonc /path/to/OY_SWP/
 
 빠뜨려도 겉으로는 잘 도는 것처럼 보입니다 — 에이전트마다 `model:` 과 `permission:` 을
 자기 frontmatter 에 다 갖고 있기 때문입니다. 하지만 **`subagent_depth: 1` 이 사라져
-Phase 2 의 4인 동시 호출(팬아웃)이 막힙니다.**
+Phase 2 의 3인 동시 호출(팬아웃)이 막힙니다.**
 
 대상 저장소에 이미 `opencode.jsonc` 가 있으면 덮어쓰지 말고 **병합**하세요.
 
@@ -460,7 +457,7 @@ opencode run "/refactor-sample"
 | 입력 | PR 번호 | **소스 경로** |
 | 경계 | diff 가 정해 줌 | **`index.py` 가 후보를 뽑고 `code-scoper` 가 고름** |
 | 단위 ID | `L1` (변경단위) | `U1` (대상 단위 — 클래스·메서드·XAML·SQL) |
-| 관점 | 3인 (리팩토링·기능·SQL) | **4인** (컨벤션·중복/미사용·구조·SQL) |
+| 관점 | 3인 (리팩토링·기능·SQL) | **3인** (컨벤션·중복/미사용·구조) |
 | 등급 | 꼭 확인·확인 권장·참고 | **먼저·다음·참고 × 작음·보통·큼** |
 | 코드 표시 | diff (add/del·좌우 보기) | **원문 그대로** |
 | 마무리 | 종합 평가 | **개선 로드맵** (+ 「지금은 두는 게 낫습니다」) |
@@ -480,7 +477,6 @@ opencode run "/refactor-sample"
 │   │   ├── refac-convention.md          Phase 2 · 명명·컨벤션 (무난)
 │   │   ├── refac-hygiene.md             Phase 2 · 중복·미참조 (고가) ← 오탐 비용 최대
 │   │   ├── refac-design.md              Phase 2 · 구조·가독성·성능 (고가)
-│   │   ├── refac-sql.md                 Phase 2 · SQL (고가) ← 유일하게 저장소 밖을 볼 수 있음
 │   │   ├── refac-verifier.md            Phase 3 · 제안 검증 V-1~V-7 (고가)
 │   │   └── report-builder.md            Phase 4 · findings.json (무난)
 │   ├── commands/
@@ -497,8 +493,7 @@ opencode run "/refactor-sample"
 │       │   ├── naming-rules.md          명명 규칙 8종 (08 에서 가져와 2축으로 손봄)
 │       │   ├── hygiene-rules.md         K-* 죽은 코드 · P-* 중복 + ★WPF 참조 경로 표
 │       │   ├── design-rules.md          A-1~A-11 가독성·성능 체크리스트
-│       │   ├── read-sql.md              mapper 읽는 절차 · Q-1~Q-9
-│       │   ├── suggest-format.md        4인 공통 출력 형식 · 우선순위·비용 기준
+│       │   ├── suggest-format.md        3인 공통 출력 형식 · 우선순위·비용 기준
 │       │   └── html-report.md           findings.json 스키마
 │       ├── assets/
 │       │   ├── collect.py               경로 → src/ 수집 + 부르는 mapper 만 선별 → src-sql/
@@ -507,7 +502,7 @@ opencode run "/refactor-sample"
 │       │   ├── report-template.html     단일 파일 HTML 골격 (인라인 CSS/JS)
 │       │   └── build-report.py          스키마 검증 + 렌더 (표준 라이브러리만)
 │       └── sample/                      /refactor-sample 재료
-│           ├── src/YOEDSMOV/…           네 관점 결함 + ★WPF 오탐 함정 10종
+│           ├── src/YOEDSMOV/…           세 관점 결함 + ★WPF 오탐 함정 10종
 │           ├── mapper/lot/lot.xml       가짜 iBATIS mapper (미사용·중복 SQL 포함)
 │           ├── expected-index.json      --selftest 기대값
 │           └── expected-findings.json   build-report.py 단독 테스트용 고정 입력

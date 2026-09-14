@@ -1,5 +1,5 @@
 ---
-description: 네 제안자의 제안을 하나씩 원문·인덱스·규칙 문서와 대조해 CONFIRMED / NEEDS-INFO / REJECTED 를 판정합니다. 오탐과 우선순위 남발을 걸러냅니다.
+description: 세 제안자의 제안을 하나씩 원문·인덱스·규칙 문서와 대조해 CONFIRMED / NEEDS-INFO / REJECTED 를 판정합니다. 오탐과 우선순위 남발을 걸러냅니다.
 mode: subagent
 model: codemate/CodeLLMMax
 temperature: 0
@@ -40,7 +40,7 @@ permission:
 | `<작업폴더>/src/**` · `src-sql/**` | 인용 코드 (V-2) |
 | `<작업폴더>/1-index.json` | **미참조·중복 판정 (V-4 · V-5) ← 가장 중요** |
 | `.opencode/skills/refactor-oi-scan/references/*.md` | 근거 규칙 (V-3) |
-| `<작업폴더>/2-suggest-{convention,hygiene,design,sql}.md` | 검증 대상 |
+| `<작업폴더>/2-suggest-{convention,hygiene,design}.md` | 검증 대상 |
 
 ## 일곱 가지 검사
 
@@ -109,7 +109,7 @@ WPF 는 **C# 에 호출부가 없는 것이 정상인 코드**를 잔뜩 만듭�
 두 관점이 같은 것을 말했으면 **한쪽만 남깁니다.** 남길 쪽은 이 순서로 정합니다.
 
 1. 근거가 구체적인 쪽
-2. 그 관점의 본래 영역인 쪽 (미사용 SQL → `refac-sql`, 미사용 C# 멤버 → `refac-hygiene`)
+2. 그 관점의 본래 영역인 쪽 (호출 방식 → `refac-design`, 미참조 C# 멤버 → `refac-hygiene`)
 
 지운 쪽은 `rejected` 에 사유를 `중복 — S003 과 같은 내용` 으로 적습니다.
 

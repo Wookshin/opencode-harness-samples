@@ -64,7 +64,7 @@ permission:
 |---|---|
 | 중복 코드 · 안 쓰는 코드 | `refac-hygiene` |
 | 메서드가 너무 길다 · 책임이 섞였다 | `refac-design` |
-| SQL 본문 · 인덱스 · 바인딩 | `refac-sql` |
+| 화면이 SQL 을 부르는 방식 | `refac-design` (mapper 본문은 아무도 안 봅니다) |
 | 성능 · 보안 | 이 관점이 아닙니다 |
 
 남의 관점을 건드리면 리포트에 같은 말이 두 번 실립니다.
