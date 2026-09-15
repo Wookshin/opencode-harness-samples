@@ -240,6 +240,9 @@ section.file{background:var(--panel);border:1px solid var(--line);border-radius:
 .tag.p1{background:var(--major-bg);color:var(--major)}
 /* '단순' 은 변경 유형이 아니라 "판단이 필요 없다"는 표시 — 모양을 다르게 둡니다 */
 .tag.plain{background:transparent;color:var(--muted);border:1px dashed var(--line);font-weight:600}
+/* 대상 유형(클래스·메서드·XAML…). 개수가 많아 .tag 보다 조용한 색으로 둡니다 */
+.kind{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--code);
+  color:var(--muted);border:1px solid var(--line);white-space:nowrap;letter-spacing:.02em}
 .unit{border-top:2px solid var(--line);padding:0 0 14px}
 .unit:first-of-type{border-top:none}
 .unit>h3{margin:0;padding:10px 16px;background:var(--code);border-bottom:1px solid var(--line)}
@@ -268,8 +271,18 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .code td{padding:0 8px;vertical-align:top;white-space:pre;font-family:"D2Coding",ui-monospace,SFMono-Regular,Consolas,monospace}
 .code td.ln{text-align:right;color:var(--muted);user-select:none;width:1%;white-space:nowrap;
   border-right:1px solid var(--line);font-variant-numeric:tabular-nums;padding:0 8px}
+/* 제안이 닿는 구간 전체에 걸립니다. 줄이 이어지면 왼쪽 띠가 하나로 이어져
+   「여기부터 여기까지」가 그대로 보입니다. */
 .code tr.hit{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
 .code tr.hit td.ln{color:var(--accent);font-weight:700}
+/* 떨어진 구간과 구간 사이 — 줄번호가 없습니다 */
+.code tr.gap td{color:var(--muted);user-select:none}
+
+/* 접이식 머리의 복사 버튼. summary 가 flex 라 margin-left:auto 로 오른쪽 끝에 붙습니다 */
+.copy{font:inherit;font-size:11.5px;padding:2px 9px;border-radius:6px;margin-left:auto;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.copy.done{border-color:var(--add-mark);color:var(--add-mark);font-weight:700}
 
 /* 문법 토큰 */
 .t-com{color:var(--t-com);font-style:italic}
@@ -326,10 +339,21 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .fid{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);font-weight:700}
 .loc{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
 .needsinfo{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--major-bg);color:var(--major)}
-.finding dl{margin:0;display:grid;grid-template-columns:78px minmax(0,1fr);gap:10px 14px;align-items:start}
-.finding dt{font-size:12px;color:var(--ink);opacity:.62;font-weight:700;padding-top:4px;
-  word-break:keep-all;letter-spacing:.01em}
-.finding dd{margin:0;min-width:0}
+/* 여섯 절(무엇을·근거·지금·이렇게·영향·점검)이 한 덩어리로 보이던 자리입니다.
+   **줄마다 선을 긋습니다.** 그리드라 선은 dt 와 dd 양쪽에 걸어야 한 줄로 이어집니다 —
+   한쪽에만 두면 라벨 칸에서 선이 끊깁니다. */
+.finding dl{margin:0;display:grid;grid-template-columns:84px minmax(0,1fr);gap:0;align-items:start}
+.finding dt,.finding dd{padding:11px 0;border-top:1px solid var(--line)}
+.finding dt{font-size:11.5px;color:var(--muted);font-weight:700;
+  word-break:keep-all;letter-spacing:.02em}
+.finding dd{margin:0;min-width:0;padding-left:14px}
+.finding dt:first-of-type,.finding dd:first-of-type{border-top:0;padding-top:2px}
+/* 좁은 화면에서는 84px 라벨 칸이 본문을 짓누릅니다. 라벨을 위로 올립니다. */
+@media (max-width:560px){
+  .finding dl{grid-template-columns:minmax(0,1fr)}
+  .finding dt{padding-bottom:0}
+  .finding dd{padding-left:0;padding-top:2px;border-top:0}
+}
 /* 카드 안 산문은 66ch 로 묶지 않습니다. dd 가 이미 좁아서, 여기서 또 자르면
    오른쪽이 비어 있는데도 문장이 이르게 꺾입니다. */
 .finding dd .prose{max-width:none}
@@ -339,7 +363,18 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .finding dd pre.sug{background:var(--add-bg);border-color:var(--add-mark)}
 .finding dd pre.sug::before{content:"\C81C\C548";display:block;font-family:system-ui,sans-serif;
   font-size:10.5px;font-weight:800;color:var(--add-mark);letter-spacing:.04em;margin-bottom:4px}
+/* 접이식 안에서는 summary 가 이미 무엇인지 말합니다 — 머리표와 테두리를 뺍니다 */
+.finding dd>details.fold{margin:0}
+.finding dd details.fold pre{border:0;border-radius:0;margin:0}
+.finding dd details.fold pre.sug::before{display:none}
 .seecode{font-size:12px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
+
+/* 카드 바닥 — 제목 줄에서 밀어낸 것들을 오른쪽에 태그처럼 모읍니다 */
+.fmeta{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:10px;padding-top:9px;border-top:1px dashed var(--line)}
+/* .grow 는 헤더용이라 min-width:280px 입니다. 카드 안에서는 제목이 줄어들 수 있어야
+   좁은 폭에서 뒤엣것들이 줄바꿈하지 않습니다. */
+.finding>h4 .grow,.sqlbox h4 .grow{flex:1 1 auto;min-width:0}
 
 /* ── SQL · 반려 · 미확인 ────────────────────────── */
 .sqlbox{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;background:var(--panel)}
@@ -376,7 +411,7 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   color-scheme:light;
   }
   body{font-size:10.5pt}
-  .filters,nav.toc,.menu,.seecode{display:none!important}
+  .filters,nav.toc,.menu,.seecode,.copy{display:none!important}
   .layout{display:block}
   header{border-bottom:2px solid #000}
   .band{display:block}
@@ -428,18 +463,8 @@ table.glance td:nth-child(5){width:100%}
 .roadmap .leave{border-left:3px solid var(--line);padding-left:12px;margin-top:14px}
 .roadmap .leave h3{margin:0 0 4px;color:var(--muted)}
 
-.decide{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;
-  padding-top:10px;border-top:1px dashed var(--line)}
-.decide button{font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid var(--line);
-  background:var(--panel);color:var(--muted);cursor:pointer}
-.decide button:hover{border-color:var(--accent);color:var(--accent)}
-.decide button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
-.decide input{flex:1;min-width:120px;font-size:12px;padding:4px 8px;border-radius:6px;
-  border:1px solid var(--line);background:var(--bg);color:var(--ink)}
-
 @media print{
-  .chips,.decide input,#index{break-inside:avoid}
-  .decide button:not(.on){display:none}
+  .chips,#index{break-inside:avoid}
 }
 
 </style>
@@ -448,7 +473,7 @@ table.glance td:nth-child(5){width:100%}
    키는 PR 별 저장소와 분리 — 테마는 사람 취향이라 리포트마다 다를 이유가 없습니다. */
 (function(){
   try {
-    var t = localStorage.getItem('oi-review-theme');
+    var t = localStorage.getItem('oi-refactor-theme');
     if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
   } catch(e){}
 })();
@@ -465,9 +490,7 @@ table.glance td:nth-child(5){width:100%}
       <summary title="설정" aria-label="설정">⚙<span class="lbl">설정</span></summary>
       <div class="items">
         <button id="b-md">제안 내용 마크다운 복사</button>
-        <button id="b-json">결정 JSON 저장</button>
         <button id="b-open">코드 전부 펼치기</button>
-        <button id="b-reset">결정 초기화</button>
         <button id="b-theme">테마: 시스템</button>
         <button id="b-print">인쇄</button>
       </div>
@@ -761,8 +784,7 @@ var UNIT_LEGEND = [
 function kindc(v){ return KINDC[v] || 'k0'; }
 function effc(v){ return EFFC[v] || 'e2'; }
 
-var KEY = 'oi-refactor-' + (D.meta.slug || 'x');
-var TK  = 'oi-refactor-theme';
+var TK = 'oi-refactor-theme';
 
 /* ── 헤더 ────────────────────────────────────── */
 var m = D.meta;
@@ -809,8 +831,16 @@ function glanceRows(){
   });
 }
 
+/* 필터가 카드를 숨기는 화면이라, 지금 몇 건이 남았는지 검색바에 적어 둡니다 */
+function paintCount(n){
+  document.getElementById('cl-note').textContent =
+    n === D.findings.length ? '제안 ' + n + '건'
+                            : '제안 ' + n + ' / ' + D.findings.length + ' 표시 중';
+}
+
 function renderGlance(){
   var rows = glanceRows().filter(visible);
+  paintCount(rows.length);
   var box = document.getElementById('gl-body');
   if (!rows.length) {
     box.innerHTML = '<p class="glnone">필터에 걸리는 제안이 없습니다.</p>';
@@ -908,22 +938,28 @@ function jump(id){
 
 /* ── 코드 렌더 (diff 가 아니라 원문 그대로) ───── */
 function codePlain(rows, hits, lang){
-  var st = newState();
+  var st = newState(), H = {};
+  (hits || []).forEach(function(n){ H[n] = 1; });
   var body = rows.map(function(r){
-    var hit = hits && hits.indexOf(r.no) >= 0;
-    return '<tr class="' + (hit ? 'hit' : '') + '">' +
+    // 줄번호가 없는 행은 구간과 구간 사이의 생략 표시입니다
+    if (r.no == null)
+      return '<tr class="gap"><td class="ln"></td><td>' + esc(r.text) + '</td></tr>';
+    return '<tr class="' + (H[r.no] ? 'hit' : '') + '">' +
       '<td class="ln">' + r.no + '</td>' +
       '<td>' + hlLine(r.text, st, lang) + '</td></tr>';
   }).join('');
   return '<div class="code"><table>' + body + '</table></div>';
 }
 
-function foldedCode(rows, hits, lang, label){
+function realLines(rows){
+  return rows.filter(function(r){ return r.no != null; }).length;
+}
+
+function foldedCode(rows, hits, lang, label, open){
   if (!rows || !rows.length)
     return '<div class="empty">원문을 찾지 못해 코드를 표시하지 못했습니다.</div>';
-  var n = rows.length;
-  return '<details class="fold"><summary>' + esc(label) +
-    ' <span class="plus">' + n + '줄</span></summary>' +
+  return '<details class="fold"' + (open ? ' open' : '') + '><summary>' + esc(label) +
+    ' <span class="plus">' + realLines(rows) + '줄</span></summary>' +
     codePlain(rows, hits, lang) + '</details>';
 }
 
@@ -933,44 +969,138 @@ function looksLikeCode(s){
   return /[;{}()=<>]/.test(s) && !/[가-힣]/.test(s);
 }
 
+/* ── 「이렇게」 안의 코드 펜스 ─────────────────────────────────────────
+   제안은 대개 **산문과 코드가 섞여** 옵니다 — "이렇게 나눕니다" 다음에 떼어 낸
+   함수 본문이 오고, 그 뒤에 불릿이 붙는 식입니다. 통째로 <pre> 에 넣으면 한글
+   설명이 모노스페이스로 늘어서고, 통째로 산문으로 보내면 들여쓰기가 사라집니다.
+   그래서 세 겹따옴표 펜스로 갈라 각각 제 모양으로 그립니다.
+
+   펜스 머리의 언어 뒤에 붙은 말이 접이식 제목이 됩니다:
+       ```csharp BuildSplitParams(int row)
+   → 「BuildSplitParams(int row)」 를 눌러 펴고, 복사 버튼으로 그대로 가져갑니다. */
+var FENCE_LANG = {csharp:'cs', 'c#':'cs', cs:'cs', xaml:'xaml', xml:'xaml', sql:'sql'};
+
+function splitFences(src){
+  var out = [], buf = [], code = null;
+  var open = /^```([A-Za-z0-9_+#-]*)[ \t]*(.*)$/, close = /^```\s*$/;
+  function flushText(){
+    var t = buf.join('\n').trim();
+    if (t) out.push({kind:'text', body:t});
+    buf = [];
+  }
+  function flushCode(){
+    out.push({kind:'code', lang:code.lang, label:code.label, body:code.body.join('\n')});
+    code = null;
+  }
+  String(src).split('\n').forEach(function(l){
+    if (code === null) {
+      var m = open.exec(l);
+      if (m) { flushText(); code = {lang:m[1], label:m[2].trim(), body:[]}; }
+      else buf.push(l);
+      return;
+    }
+    if (close.test(l)) flushCode();
+    else code.body.push(l);
+  });
+  if (code !== null) flushCode(); else flushText();
+  return out;
+}
+
+function suggestionBlock(f){
+  var parts = splitFences(f.suggestion);
+  var hasCode = parts.some(function(p){ return p.kind === 'code'; });
+  /* 펜스가 없으면 지금까지 하던 대로 — 한 줄짜리 제안을 괜히 접지 않습니다 */
+  if (!hasCode)
+    return looksLikeCode(f.suggestion)
+      ? '<pre class="sug">' + hlBlock(f.suggestion, f.lang) + '</pre>'
+      : '<div class="prose">' + prose(f.suggestion) + '</div>';
+
+  return parts.map(function(p){
+    if (p.kind === 'text') return '<div class="prose">' + prose(p.body) + '</div>';
+    var lang = FENCE_LANG[String(p.lang).toLowerCase()] || f.lang;
+    var n = p.body.split('\n').length;
+    return '<details class="fold"><summary>' + esc(p.label || '제안 코드') +
+      ' <span class="plus">' + n + '줄</span>' +
+      '<button class="copy" type="button">복사</button></summary>' +
+      '<pre class="sug">' + hlBlock(p.body, lang) + '</pre></details>';
+  }).join('');
+}
+
+/* 복사 — <pre> 의 textContent 가 하이라이트 이전의 원문 그대로입니다.
+   폐쇄망의 file:// 에서 clipboard API 가 막히는 일이 있어 textarea 로 떨어집니다. */
+function copyDone(btn){
+  var old = btn.getAttribute('data-label') || btn.textContent;
+  btn.setAttribute('data-label', old);
+  btn.textContent = '복사됨'; btn.classList.add('done');
+  setTimeout(function(){ btn.textContent = old; btn.classList.remove('done'); }, 1200);
+}
+function copyFallback(t, btn){
+  var ta = document.createElement('textarea');
+  ta.value = t; ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+  document.body.appendChild(ta); ta.select();
+  try { if (document.execCommand('copy')) copyDone(btn); } catch (e) {}
+  ta.remove();
+}
+document.body.addEventListener('click', function(e){
+  var b = e.target.closest('.copy');
+  if (!b) return;
+  e.preventDefault();          // summary 안에 있어 그냥 두면 접이식이 토글됩니다
+  e.stopPropagation();
+  var box = b.closest('details'), pre = box && box.querySelector('pre');
+  if (!pre) return;
+  var t = pre.textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(function(){ copyDone(b); },
+                                          function(){ copyFallback(t, b); });
+  else copyFallback(t, b);
+});
+
 /* ── 제안 카드 ───────────────────────────────── */
+/* 「지금」도 units 와 같습니다 — 좌표만 받아 원문에서 잘라 줄번호와 함께 그립니다.
+   좌표가 없는 옛 JSON 은 문자열 그대로 떨어집니다. */
+function currentBlock(f){
+  if (f.currentRows && f.currentRows.length) {
+    var rng = (f.currentLines || []).map(function(r){ return r[0] + '–' + r[1]; }).join(' · ');
+    return foldedCode(f.currentRows, [], f.lang,
+                      rng ? rng + ' 줄 보기' : '코드 보기',
+                      realLines(f.currentRows) <= 12);
+  }
+  if (f.current) return '<pre class="cur">' + hlBlock(f.current, f.lang) + '</pre>';
+  return '';
+}
+
 function findingCard(f){
   var dl = '';
   function row(label, html){ if (html) dl += '<dt>' + label + '</dt><dd>' + html + '</dd>'; }
 
   row('무엇을', '<div class="prose">' + prose(f.problem) + '</div>');
   row('근거', inline(f.basis));
-  if (f.current)
-    row('지금', '<pre class="cur">' + hlBlock(f.current, f.lang) + '</pre>');
-  if (f.suggestion)
-    row('이렇게', looksLikeCode(f.suggestion)
-      ? '<pre class="sug">' + hlBlock(f.suggestion, f.lang) + '</pre>'
-      : '<div class="prose">' + prose(f.suggestion) + '</div>');
+  row('지금', currentBlock(f));
+  if (f.suggestion) row('이렇게', suggestionBlock(f));
   if (f.impact) row('영향', '<div class="prose">' + prose(f.impact) + '</div>');
   if (f.checkpoints) row('점검', '<div class="prose">' + prose(f.checkpoints) + '</div>');
 
+  /* 제목 한 줄이 이 리포트의 얼굴입니다. 그 줄에는 **무엇을 바꾸는 변경인가**
+     까지만 두고, 비용·관점·위치는 카드 바닥 오른쪽으로 내립니다. */
   var head = '<h4>' +
     '<span class="fid">' + esc(f.id) + '</span>' +
     '<span class="ikind ' + kindc(f.improvementKind) + '">' + esc(f.improvementKind) + '</span>' +
-    '<span class="eff ' + effc(f.effort) + '">비용 ' + esc(f.effort) + '</span>' +
-    '<span class="persp">' + esc(PERSP[f.perspective] || f.perspective) + '</span>' +
     (f.verdict === 'NEEDS-INFO' ? '<span class="needsinfo">확인 필요</span>' : '') +
     '<span class="grow">' + inline(f.title) + '</span>' +
-    '<span class="loc">' + esc(f.file) + ':' + f.line + '</span>' +
-    '<button class="seecode" data-jump="u-' + esc(f.unitId) + '">코드 보기</button>' +
     '</h4>';
 
-  var dec = '<div class="decide" data-fid="' + esc(f.id) + '">' +
-    ['하기로','보류','안 함'].map(function(v){
-      return '<button data-v="' + v + '">' + v + '</button>';
-    }).join('') +
-    '<input type="text" placeholder="메모" data-memo="' + esc(f.id) + '">' +
+  var foot = '<div class="fmeta">' +
+    '<span class="eff ' + effc(f.effort) + '">비용 ' + esc(f.effort) + '</span>' +
+    '<span class="persp">' + esc(PERSP[f.perspective] || f.perspective) + '</span>' +
+    '<span class="loc">' + esc(f.file) + ':' + f.line + '</span>' +
+    '<button class="seecode" data-jump="u-' + esc(f.unitId) + '">코드 보기</button>' +
     '</div>';
 
   return '<article class="finding" id="f-' + esc(f.id) + '" ' +
     'data-kind="' + esc(f.improvementKind) + '" data-eff="' + esc(f.effort) + '" ' +
     'data-persp="' + esc(f.perspective) + '">' +
-    head + '<dl>' + dl + '</dl>' + dec + '</article>';
+    head + '<dl>' + dl + '</dl>' + foot + '</article>';
 }
 
 /* ── 본문 ────────────────────────────────────── */
@@ -1008,7 +1138,11 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
 
     units.forEach(function(u){
       var fs = byUnit[u.id] || [];
-      var hits = fs.map(function(x){ return x.line; });
+      /* 제안 하나가 여러 줄에 걸칩니다. 대표 줄 하나만 칠하면 "여기 어디쯤"
+         까지만 말하게 됩니다. build-report.py 가 currentLines 를 펼쳐 준
+         hitLines 를 그대로 씁니다 — 「지금」 칸과 같은 좌표입니다. */
+      var hits = [];
+      fs.forEach(function(x){ hits = hits.concat(x.hitLines || [x.line]); });
       html += '<div class="unit" id="u-' + esc(u.id) + '">' +
         '<h3><span class="mono">' + esc(u.id) + '</span>' +
         '<span class="kind">' + esc(u.kindLabel) + '</span> ' + inline(u.summary) + '</h3>' +
@@ -1034,12 +1168,17 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
         return '<div class="sqlbox" id="q-' + esc(s.id) + '">' +
           '<h4><span class="fid">' + esc(s.id) + '</span>' +
           '<span class="persp">' + esc(s.callType) + '</span>' +
-          '<span class="grow">' + esc(s.sqlId || '(인라인)') + '</span>' +
+          '<span class="grow"><code class="c-sql">' +
+            esc(s.sqlId || '(인라인)') + '</code></span>' +
           (s.unitId ? '<button class="seecode" data-jump="u-' + esc(s.unitId) + '">' + esc(s.unitId) + '</button>' : '') +
           '</h4>' +
           (s.sourcePath ? '<div class="path">' + esc(s.sourcePath) + '</div>' : '') +
           (s.role ? '<div class="role">' + inline(s.role) + '</div>' : '') +
-          (s.body ? '<pre>' + hlBlock(s.body, 'sql') + '</pre>' : '') + '</div>';
+          /* 참고 자료라 기본은 접어 둡니다. 설정의 「코드 전부 펼치기」가
+             details.fold 를 훑으므로 코드 블록과 같이 펴집니다. */
+          (s.body ? '<details class="fold"><summary>SQL 본문 보기 <span class="plus">' +
+             s.body.split('\n').length + '줄</span></summary>' +
+             '<pre>' + hlBlock(s.body, 'sql') + '</pre></details>' : '') + '</div>';
       }).join('') + '</section>';
     tocHtml += '<a href="#sec-sql" data-jump="sec-sql"><span>부르는 SQL</span>' +
       '<span class="note">' + D.sql.length + '건</span></a>';
@@ -1084,44 +1223,6 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
     var b = e.target.closest('[data-jump]');
     if (b) { e.preventDefault(); jump(b.getAttribute('data-jump')); }
   });
-})();
-
-/* ── 결정 저장 (브라우저에만 남습니다) ────────── */
-var store = {};
-try { store = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { store = {}; }
-
-function save(){
-  try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {}
-  paintProgress();
-}
-function paintProgress(){
-  var n = D.findings.filter(function(f){ return store[f.id] && store[f.id].v; }).length;
-  document.getElementById('cl-note').textContent = '결정 ' + n + ' / ' + D.findings.length;
-}
-(function(){
-  document.querySelectorAll('.decide').forEach(function(box){
-    var fid = box.getAttribute('data-fid'), cur = store[fid] || {};
-    box.querySelectorAll('button').forEach(function(b){
-      if (cur.v === b.getAttribute('data-v')) b.classList.add('on');
-      b.addEventListener('click', function(){
-        var v = b.getAttribute('data-v');
-        store[fid] = store[fid] || {};
-        store[fid].v = (store[fid].v === v) ? '' : v;
-        box.querySelectorAll('button').forEach(function(x){
-          x.classList.toggle('on', x.getAttribute('data-v') === store[fid].v);
-        });
-        save();
-      });
-    });
-    var memo = box.querySelector('input[data-memo]');
-    if (cur.memo) memo.value = cur.memo;
-    memo.addEventListener('input', function(){
-      store[fid] = store[fid] || {};
-      store[fid].memo = memo.value;
-      save();
-    });
-  });
-  paintProgress();
 })();
 
 /* ── 필터 (개선 유형 × 비용 × 관점) ───────────── */
@@ -1207,10 +1308,8 @@ function reviewMd(){
     if (!fs.length) return;
     L.push('### ' + s, '');
     fs.forEach(function(f){
-      var d = store[f.id] || {};
       L.push('- **' + f.id + '** (비용 ' + f.effort + ' · ' + (PERSP[f.perspective] || f.perspective) + ') ' +
-             f.title + '  \n  `' + f.file + ':' + f.line + '`' +
-             (d.v ? ' — **' + d.v + '**' : '') + (d.memo ? ' (' + d.memo + ')' : ''));
+             f.title + '  \n  `' + f.file + ':' + f.line + '`');
     });
     L.push('');
   });
@@ -1234,24 +1333,10 @@ document.getElementById('b-md').addEventListener('click', function(){
   download('refactor-' + (m.slug || 'report') + '.md', t, 'text/markdown;charset=utf-8');
   closeMenu();
 });
-document.getElementById('b-json').addEventListener('click', function(){
-  download('refactor-' + (m.slug || 'report') + '-decisions.json',
-           JSON.stringify(store, null, 2), 'application/json');
-  closeMenu();
-});
 document.getElementById('b-open').addEventListener('click', function(){
   var any = !!document.querySelector('details.fold:not([open])');
   document.querySelectorAll('details.fold').forEach(function(d){ d.open = any; });
   this.textContent = any ? '코드 전부 접기' : '코드 전부 펼치기';
-  closeMenu();
-});
-document.getElementById('b-reset').addEventListener('click', function(){
-  if (!confirm('이 리포트의 결정과 메모를 전부 지웁니다. 계속할까요?')) return;
-  store = {};
-  try { localStorage.removeItem(KEY); } catch (e) {}
-  document.querySelectorAll('.decide button.on').forEach(function(b){ b.classList.remove('on'); });
-  document.querySelectorAll('.decide input[data-memo]').forEach(function(i){ i.value = ''; });
-  paintProgress();
   closeMenu();
 });
 document.getElementById('b-print').addEventListener('click', function(){

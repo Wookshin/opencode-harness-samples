@@ -173,10 +173,15 @@
       "unitId": "U1",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 26,
+      "currentLines": [
+        [
+          26,
+          26
+        ]
+      ],
       "title": "`MaxRowCount` 는 선언만 있고 읽는 곳이 없다",
       "problem": "`MaxRowCount` 를 읽는 코드가 C#·XAML·문자열 어디에도 없습니다. 조회 건수를 제한하려던 흔적으로 보이지만 실제로는 아무 일도 하지 않습니다.\n남겨 두면 다음 사람이 \"조회 상한이 걸려 있다\"고 읽습니다.",
       "basis": "K-1 (정의만 있고 참조가 0인 private 멤버) · 인덱스 확신 `높음`",
-      "current": "private int MaxRowCount = 1000;",
       "suggestion": "줄을 지웁니다. 조회 상한이 필요하면 SQL 쪽 `ROWNUM` 이나 mapper 파라미터로 거는 편이 맞습니다.",
       "impact": "참조 0곳. 지워도 컴파일과 동작이 그대로입니다."
     },
@@ -189,10 +194,19 @@
       "unitId": "U3",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 116,
+      "currentLines": [
+        [
+          94,
+          114
+        ],
+        [
+          116,
+          136
+        ]
+      ],
       "title": "`SearchLotByLine()` 이 `SearchLot()` 의 복사본이고, 부르는 곳도 없다",
       "problem": "두 메서드가 유사도 0.85 로 겹칩니다. 다른 것은 파라미터 이름과 SQL ID 뿐입니다.\n게다가 `SearchLotByLine()` 은 호출부가 없어 지금은 죽은 코드입니다. 이대로 두면 조회 로직을 고칠 때 한쪽만 고치게 됩니다.",
       "basis": "P-1 (본문 유사도 0.75 이상) · K-1 (참조 0) · 인덱스 `DP001`",
-      "current": "private void SearchLotByLine()\n{\n    ShowLoading(true);\n\n    _sqlManager.Init();\n    _sqlManager.AddParam(\"lineId\", cboLine.Text.Trim());",
       "suggestion": "private void SearchLot(string sqlId, string paramName, string paramValue)\n{\n    ShowLoading(true);\n\n    _sqlManager.Init();\n    _sqlManager.AddParam(paramName, paramValue);\n    _sqlManager.AddParam(\"appName\", _appName);\n\n    DataTable dt = _sqlManager.DPICALL(sqlId);\n    grdLot.ItemsSource = dt.DefaultView;\n    StatusMessage = dt.Rows.Count + \"건 조회\";\n\n    ShowLoading(false);\n}",
       "impact": "`SearchLot()` 호출부 2곳(`btnSearch_Click` 96줄, `Confirm()` 끝)이 인자를 갖도록 바뀝니다. `SearchLotByLine()` 은 호출부가 없어 그대로 사라집니다.",
       "checkpoints": "합칠 때 `lot.selectMcLotWithLine` 이 mapper 에 **없다**는 점을 함께 보세요 (D005)."
@@ -206,10 +220,15 @@
       "unitId": "U6",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 215,
+      "currentLines": [
+        [
+          215,
+          219
+        ]
+      ],
       "title": "`FormatLotId()` 를 부르는 곳이 없다",
       "problem": "Lot ID 를 12자리로 채우는 함수인데 호출부가 하나도 없습니다. 화면에서 Lot ID 를 그대로 쓰고 있어 실제 자리수 보정은 일어나지 않습니다.",
       "basis": "K-1 (참조 0인 private 메서드) · 인덱스 확신 `높음`",
-      "current": "private string FormatLotId(string lotId)",
       "suggestion": "지웁니다. 자리수 보정이 정말 필요하면 조회 직전 한 곳에서 부르도록 되살리세요.",
       "impact": "참조 0곳."
     },
@@ -222,10 +241,15 @@
       "unitId": "U7",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 7,
+      "currentLines": [
+        [
+          7,
+          7
+        ]
+      ],
       "title": "`using System.Web;` 을 쓰는 곳이 없다",
       "problem": "`System.Web` 의 타입을 이 파일에서 하나도 쓰지 않습니다. WPF 프로젝트에 웹 참조가 남아 있으면 참조 정리를 할 때 판단이 흐려집니다.",
       "basis": "K-4 (쓰지 않는 using)",
-      "current": "using System.Web;",
       "suggestion": "줄을 지웁니다.",
       "impact": "이 파일 안에서만 영향이 있습니다."
     },
@@ -238,10 +262,15 @@
       "unitId": "U4",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 138,
+      "currentLines": [
+        [
+          138,
+          148
+        ]
+      ],
       "title": "`bool` 을 돌려주는 `CheckLot` 이 `Is` 로 시작하지 않고, 이름이 동작과 반대다",
       "problem": "이름은 \"Lot 을 검사한다\" 인데 본문은 **WAIT·HELD 일 때 true** 를 돌려줍니다. 호출부 `Confirm()` 은 `if (!CheckLot(lotId))` 로 쓰고 있어, 읽는 사람은 \"검사에 실패하면 건너뛴다\" 로 이해하지만 실제로는 **대기·보류가 아닌 Lot 이 걸러집니다.**\n이름만으로는 어느 쪽이 맞는지 알 수 없어, 고칠 때마다 본문을 다시 읽어야 합니다.",
       "basis": "규칙 1-4 (bool 반환은 `Is` 로 시작) · 규칙 1-2 (동작과 같은 방향의 이름)",
-      "current": "private bool CheckLot(string lotId)\n{\n    ...\n    return status == \"WAIT\" || status == \"HELD\";\n}",
       "suggestion": "private bool IsMovableLot(string lotId)\n{\n    ...\n    return status != \"WAIT\" && status != \"HELD\";\n}",
       "impact": "호출부 1곳(`Confirm()` 163줄). 반환 조건을 뒤집으면 그 자리의 `!` 도 함께 빠집니다.",
       "checkpoints": "**이름과 조건을 한 커밋에서 같이** 바꾸세요. 이름만 바꾸면 반대 의미가 그대로 남습니다."
@@ -255,10 +284,19 @@
       "unitId": "U2",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 104,
+      "currentLines": [
+        [
+          104,
+          108
+        ],
+        [
+          111,
+          111
+        ]
+      ],
       "title": "`tmpList` 가 무엇을 담는지 이름에 없다",
       "problem": "`tmpList` 는 조회 결과의 Lot ID 목록입니다. `tmp` 는 수명이 짧다는 뜻일 뿐 내용을 말해 주지 않아, 아래 `tmpList.Count` 를 볼 때 무엇의 건수인지 되짚어야 합니다.",
       "basis": "규칙 3-1 (`tmp`·`temp`·`data` 같은 무의미한 이름 금지)",
-      "current": "List<string> tmpList = new List<string>();",
       "suggestion": "List<string> lotIdList = new List<string>();",
       "impact": "같은 메서드 안 3곳. `SearchLotByLine()` 에도 같은 이름이 있어 H002 와 함께 처리하면 한 번에 끝납니다."
     },
@@ -270,11 +308,20 @@
       "verdict": "CONFIRMED",
       "unitId": "U5",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
-      "line": 21,
+      "line": 182,
+      "currentLines": [
+        [
+          23,
+          23
+        ],
+        [
+          182,
+          182
+        ]
+      ],
       "title": "`_operId` 가 팀 표기(`operatorId`)와 어긋난다",
       "problem": "같은 값을 `UserInfo.OperId` 는 `OperId` 로, mapper 파라미터는 `operId` 로 부릅니다. 줄여 쓴 형태가 코드베이스 전체에 퍼져 있어 지금 한 곳만 바꾸면 오히려 섞입니다.",
       "basis": "규칙 3-3 (약어는 팀 용어집에 있는 것만)",
-      "current": "private string _operId = string.Empty;",
       "suggestion": "지금은 그대로 두고, 용어집에 `operId` 를 등재하거나 저장소 전체를 한 번에 바꾸는 쪽으로 정하세요.",
       "impact": "이 화면 밖까지 퍼져 있어 단독으로 바꾸면 일관성이 더 나빠집니다."
     },
@@ -287,11 +334,24 @@
       "unitId": "U5",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 150,
+      "currentLines": [
+        [
+          152,
+          164
+        ],
+        [
+          166,
+          199
+        ],
+        [
+          201,
+          206
+        ]
+      ],
       "title": "`Confirm()` 하나가 선택 수집·검증·저장·룰 실행·메시지 조립을 모두 한다",
       "problem": "64줄 안에 다섯 가지 책임이 섞여 있습니다. 그래서 \"반출 조건이 뭐냐\"는 질문에 답하려면 저장·메시지 코드까지 읽어야 하고, 조건이 하나 늘 때마다 이 메서드만 길어집니다.\n반복문 안에서 **Lot 하나마다 DB 를 두 번** 오가는 것도 여기 묻혀 잘 안 보입니다.",
       "basis": "A-1 (한 메서드는 한 가지 일) · A-3 (반복문 안 DB 왕복)",
-      "current": "private void Confirm()\n{\n    ...\n    foreach (string lotId in targetList)\n    {\n        if (!CheckLot(lotId)) { ... }\n        _sqlManager.Init();\n        ...\n    }\n    ...\n}",
-      "suggestion": "이 팀의 기본형(`A-1`)대로 **단계마다 한 줄**이 되게 나눕니다. `bool` 을 돌려주고 결과는 `out` 으로, `Confirm()` 은 가드만 남깁니다.\n\n```csharp\nprivate void Confirm()\n{\n    if (!GetSelectedLotIds(out List<string> targetList)) return;\n\n    MoveOutResult result = MoveOutLots(targetList);\n    RunMoveOutRules(targetList);\n\n    StatusMessage = BuildResultMessage(result);\n    MessageBox.Show(StatusMessage);\n    SearchLot();\n}\n```\n\n- `bool GetSelectedLotIds(out List<string> lotIds)` — 선택이 없으면 `false`. 지금 메서드 앞머리의 `MessageBox` + `return` 이 여기로 들어갑니다\n- `MoveOutResult MoveOutLots(IEnumerable<string> ids)` — 검증·저장. 결과를 값으로 돌려줍니다\n- `void RunMoveOutRules(IEnumerable<string> ids)` — 룰 실행\n- `string BuildResultMessage(MoveOutResult r)` — 메시지 조립",
+      "suggestion": "이 팀의 기본형(`A-1`)대로 **단계마다 한 줄**이 되게 나눕니다. `bool` 을 돌려주고 결과는 `out` 으로, `Confirm()` 은 가드만 남깁니다.\n\n```csharp Confirm() — 가드 한 줄과 세 호출만 남습니다\nprivate void Confirm()\n{\n    if (!GetSelectedLotIds(out List<string> targetList)) return;\n\n    ShowLoading(true);\n    MoveOutResult result = MoveOutLots(targetList);\n\n    StatusMessage = BuildResultMessage(result);\n    MessageBox.Show(StatusMessage);\n\n    SearchLot();\n    ShowLoading(false);\n}\n```\n\n```csharp GetSelectedLotIds(out List<string> lotIds) — 152–164 줄이 들어갑니다\nprivate bool GetSelectedLotIds(out List<string> lotIds)\n{\n    lotIds = new List<string>();\n\n    if (grdLot.SelectedItems == null || grdLot.SelectedItems.Count == 0)\n    {\n        MessageBox.Show(\"Lot 을 선택하세요.\");\n        return false;\n    }\n\n    foreach (DataRowView drv in grdLot.SelectedItems)\n    {\n        lotIds.Add(drv[\"LOT_ID\"].ToString());\n    }\n\n    return true;\n}\n```\n\n```csharp MoveOutLots(IEnumerable<string> ids) — 166–199 줄이 들어갑니다\nprivate MoveOutResult MoveOutLots(IEnumerable<string> ids)\n{\n    MoveOutResult result = new MoveOutResult();\n\n    foreach (string lotId in ids)\n    {\n        if (!CheckLot(lotId))\n        {\n            result.NgList.Add(lotId);\n            continue;\n        }\n\n        _sqlManager.Init();\n        _sqlManager.AddParam(\"lotId\", lotId);\n        _sqlManager.AddParam(\"attr\", \"MOVED\");\n        _sqlManager.AddParam(\"operId\", _operId);\n\n        if (_sqlManager.DPICALL(\"lot.updateLotAttr\").Rows.Count > 0) result.OkCount++;\n        else result.NgList.Add(lotId);\n\n        _ruleManager.Init();\n        _ruleManager.AddParam(\"lotId\", lotId);\n        _ruleManager.AddParam(\"lineId\", _lineId);\n        _ruleManager.Run(\"EDS_MOVE_OUT\");\n    }\n\n    return result;\n}\n```\n\n```csharp BuildResultMessage(MoveOutResult r) — 201–206 줄이 들어갑니다\nprivate string BuildResultMessage(MoveOutResult r)\n{\n    string msg = \"확정 \" + r.OkCount + \"건\";\n    if (r.NgList.Count == 0) return msg;\n\n    return msg + \" / 실패 \" + r.NgList.Count + \"건\"\n               + \" (\" + string.Join(\",\", r.NgList.ToArray()) + \")\";\n}\n```\n\n```csharp MoveOutResult — 결과를 값으로 돌려받기 위한 작은 타입\nprivate class MoveOutResult\n{\n    public int OkCount;\n    public List<string> NgList = new List<string>();\n}\n```\n\n룰 실행은 저장 루프 **안에** 그대로 둡니다. 지금도 `CheckLot()` 을 통과한 Lot 에만 돌기 때문에, 밖으로 빼면 실패한 Lot 에도 룰이 걸립니다.",
       "impact": "`Confirm()` 안에서만 움직입니다. 외부 호출부는 `btnConfirm_Click` 1곳뿐이라 시그니처가 바뀌지 않습니다. 64줄이 10줄로 줄어듭니다.",
       "checkpoints": "나눌 때 `CheckLot()` 의 이름·조건 문제(N001)를 같이 처리하세요. 따로 하면 호출부를 두 번 건드립니다.\n**떼어 낸 네 조각 중 `MoveOutLots()` 에는 `lot.updateLotAttr` 통신이 들어 있습니다** — 그 조각만은 화면에 두지 말고 `SqlManager` 까지 옮기세요(`A-14`, D006 과 같은 모양)."
     },
@@ -304,10 +364,15 @@
       "unitId": "U5",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 163,
+      "currentLines": [
+        [
+          170,
+          199
+        ]
+      ],
       "title": "선택한 Lot 수만큼 UI 스레드에서 DB 를 왕복한다",
       "problem": "`foreach` 안에서 Lot 하나마다 `CheckLot()` 조회 1회 + `updateLotAttr` 실행 1회, 그리고 룰 실행까지 돕니다. 100건을 고르면 왕복이 300번입니다.\n전부 UI 스레드에서 동기로 돌기 때문에 그동안 화면이 멈춥니다 — 사용자는 \"프로그램이 죽었다\"고 말합니다.",
       "basis": "A-3 (반복문 안 DB 왕복) · A-5 (UI 스레드 동기 I/O)",
-      "current": "foreach (string lotId in targetList)\n{\n    if (!CheckLot(lotId))\n    {\n        ngCount++;",
       "suggestion": "상태 검증을 `lot.selectMcLotList` 처럼 **IN 절 한 번**으로 바꾸고, 확정은 mapper 의 일괄 update 로 묶으세요. 그래도 오래 걸리면 `await Task.Run(...)` 으로 UI 스레드에서 내리세요.",
       "impact": "`Confirm()` 안. D001 로 `MoveOutLots()` 를 떼어 낸 뒤에 하면 바꿀 자리가 한 함수로 좁혀집니다.",
       "checkpoints": "`lot.selectMcLotList` 가 이미 mapper 에 있습니다 (U11). 지우기 전에 여기 쓸지 먼저 판단하세요."
@@ -321,11 +386,16 @@
       "unitId": "U10",
       "file": "YOEDSMOV/YOEDSMOV.xaml",
       "line": 24,
+      "currentLines": [
+        [
+          25,
+          34
+        ]
+      ],
       "title": "같은 `Margin` 을 다섯 번 되풀이한다",
       "problem": "조회 조건 줄의 컨트롤마다 `Margin=\"{StaticResource FieldMargin}\"` 이 붙어 있습니다. 여백을 바꾸려면 다섯 곳을 고쳐야 합니다.",
       "basis": "A-7 (XAML 반복은 Style 로)",
-      "current": "<TextBox x:Name=\"txtLotId\" Width=\"160\"\n         Margin=\"{StaticResource FieldMargin}\" />",
-      "suggestion": "`StackPanel.Resources` 에 `TargetType` 별 암시적 Style 을 두고 `Margin` 을 Setter 로 내리면 각 컨트롤에서 속성이 빠집니다.",
+      "suggestion": "`StackPanel.Resources` 에 `TargetType` 별 암시적 Style 을 두고 `Margin` 을 Setter 로 내리면 각 컨트롤에서 속성이 빠집니다.\n\n```xaml 조회 조건 StackPanel — Margin 이 한 자리로 모입니다\n<StackPanel Grid.Row=\"0\" Orientation=\"Horizontal\" Margin=\"8\">\n    <StackPanel.Resources>\n        <Style TargetType=\"TextBlock\">\n            <Setter Property=\"Margin\" Value=\"{StaticResource FieldMargin}\" />\n            <Setter Property=\"VerticalAlignment\" Value=\"Center\" />\n        </Style>\n        <Style TargetType=\"TextBox\">\n            <Setter Property=\"Margin\" Value=\"{StaticResource FieldMargin}\" />\n        </Style>\n        <Style TargetType=\"ComboBox\">\n            <Setter Property=\"Margin\" Value=\"{StaticResource FieldMargin}\" />\n        </Style>\n        <Style TargetType=\"Button\">\n            <Setter Property=\"Margin\" Value=\"{StaticResource FieldMargin}\" />\n        </Style>\n    </StackPanel.Resources>\n\n    <TextBlock Text=\"Lot ID\" />\n    <TextBox x:Name=\"txtLotId\" Width=\"160\" />\n    <TextBlock Text=\"Line\" />\n    <ComboBox x:Name=\"cboLine\" Width=\"120\" />\n    <Button x:Name=\"btnSearch\" Content=\"조회\" Width=\"80\" Click=\"btnSearch_Click\" />\n    <Button x:Name=\"btnConfirm\" Content=\"반출 확정\" Width=\"100\" Click=\"btnConfirm_Click\" />\n</StackPanel>\n```\n\n여백을 바꿀 일이 생기면 `FieldMargin` 한 곳만 고칩니다.",
       "impact": "이 StackPanel 안에서만 영향이 있습니다."
     },
     {
@@ -337,10 +407,15 @@
       "unitId": "U8",
       "file": "YOEDSMOV/Common/SqlManager.cs",
       "line": 63,
+      "currentLines": [
+        [
+          63,
+          68
+        ]
+      ],
       "title": "인라인 SQL 을 문자열 연결로 조립해 값이 그대로 쿼리에 들어간다",
       "problem": "`lineId` 와 `fromDate` 를 `\" + lineId + \"` 로 이어 붙입니다. 값에 따옴표가 들어오면 쿼리가 깨지고, 의도적으로 넣으면 **조건을 바꿔 넣을 수 있습니다.**\n게다가 `TRIM(l.line_id)` 로 컬럼을 감싸 인덱스를 타지 못합니다.",
       "basis": "A-12 (화면이 조립하는 SQL 에 값을 이어 붙인다)",
-      "current": "AddSql(\"   AND TRIM(l.line_id) = '\" + lineId + \"' \");",
       "suggestion": "mapper 에 `lot.selectLotSummary` 로 옮기고 `#{lineId}` 로 바인딩하세요. 화면에 남겨야 한다면 최소한 `_sql.Bind(\"lineId\")` 를 쓰고 `TRIM()` 은 조회 값 쪽에 거세요.",
       "impact": "`SelectLotSummary()` 는 이 경로 안에서 호출부가 없습니다(인덱스 확신 `중간`). **지우는 선택지도 함께 검토하세요** — 쓰이지 않는다면 옮길 필요가 없습니다.",
       "checkpoints": "저장소 전체에서 `SelectLotSummary` 를 한 번 찾아보고 결정하세요."
@@ -354,10 +429,15 @@
       "unitId": "U3",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 124,
+      "currentLines": [
+        [
+          124,
+          124
+        ]
+      ],
       "title": "`lot.selectMcLotWithLine` 을 부르는데 mapper 에 그 ID 가 없다",
       "problem": "`SearchLotByLine()` 이 `lot.selectMcLotWithLine` 을 부르지만 수집한 mapper 에 해당 ID 가 없습니다. 지금은 호출부가 없어 드러나지 않지만, 이 메서드를 살리는 순간 **실행 시점에** 터집니다.",
       "basis": "A-13 (부르는 SQL ID 가 mapper 에 없다) · 인덱스 `missingIds`",
-      "current": "DataTable dt = _sqlManager.DPICALL(\"lot.selectMcLotWithLine\");",
       "suggestion": "H002 로 이 메서드를 합치면서 함께 없어집니다. 라인별 조회가 필요하면 `lot.selectMcLotList` 를 고쳐 쓰는 편이 낫습니다.",
       "impact": "현재 호출부 0곳이라 지금 당장 장애는 없습니다."
     },
@@ -370,11 +450,16 @@
       "unitId": "U2",
       "file": "YOEDSMOV/YOEDSMOV.xaml.cs",
       "line": 102,
+      "currentLines": [
+        [
+          98,
+          102
+        ]
+      ],
       "title": "`SearchLot()` 이 SQL ID 와 파라미터 조립을 직접 들고 있다",
       "problem": "화면이 `\"lot.selectMcLot\"` 이라는 ID 와 `AddParam` 순서를 직접 압니다. 즉 이 화면은 **무엇을 가져오는지와 어떻게 가져오는지를 동시에** 들고 있습니다.\n같은 ID 를 `CheckLot()`(142줄)도 따로 조립하고 있어서, 파라미터가 하나 늘면 두 자리를 같이 고쳐야 합니다.",
       "basis": "A-14 (화면이 DB 통신을 직접 들고 있다) · `1-index.json` 의 `sql.toSqlManager` 에 이 화면의 이관 후보 4곳이 올라와 있습니다",
-      "current": "_sqlManager.Init();\n_sqlManager.AddParam(\"lotId\", txtLotId.Text.Trim());\n_sqlManager.AddParam(\"appName\", _appName);\n\nDataTable dt = _sqlManager.DPICALL(\"lot.selectMcLot\");",
-      "suggestion": "이름 있는 메서드로 묶어 `SqlManager.cs` 로 옮깁니다. 화면에는 **무엇을**만 남습니다.\n\n```csharp\n// YOEDSMOV.xaml.cs\nDataTable dt = _sqlManager.GetMcLotByLotId(new GetMcLotByLotIdVO\n{\n    lotId = txtLotId.Text.Trim()\n});\n```\n\n```csharp\n// Common/SqlManager.cs — 어떻게 가져오는지는 여기만 압니다\npublic DataTable GetMcLotByLotId(GetMcLotByLotIdVO vo)\n{\n    Init();\n    AddParam(\"lotId\", vo.lotId);\n    AddParam(\"appName\", _appName);\n    return DPICALL(\"lot.selectMcLot\");\n}\n```\n\n```csharp\n// Common/GetMcLotByLotIdVO.cs — 규칙 2-1 (함수명 + VO)\npublic class GetMcLotByLotIdVO\n{\n    public string lotId;\n}\n```\n\n`appName` 은 `SqlManager` 가 이미 들고 있으니 VO 에서 빠집니다.",
+      "suggestion": "이름 있는 메서드로 묶어 `SqlManager.cs` 로 옮깁니다. 화면에는 **무엇을**만 남습니다.\n\n```csharp YOEDSMOV.xaml.cs — 98–102 줄이 한 줄이 됩니다\nDataTable dt = _sqlManager.GetMcLotByLotId(new GetMcLotByLotIdVO\n{\n    lotId = txtLotId.Text.Trim()\n});\n```\n\n```csharp Common/SqlManager.cs — 어떻게 가져오는지는 여기만 압니다\npublic DataTable GetMcLotByLotId(GetMcLotByLotIdVO vo)\n{\n    Init();\n    AddParam(\"lotId\", vo.lotId);\n    AddParam(\"appName\", _appName);\n    return DPICALL(\"lot.selectMcLot\");\n}\n```\n\n```csharp Common/GetMcLotByLotIdVO.cs — 규칙 2-1 (함수명 + VO)\npublic class GetMcLotByLotIdVO\n{\n    public string lotId;\n}\n```\n\n`appName` 은 `SqlManager` 가 이미 들고 있으니 VO 에서 빠집니다.",
       "impact": "세 파일이 함께 바뀝니다 — 화면 · `Common/SqlManager.cs` · 새 VO. `SearchLot()` 은 5줄이 1줄이 됩니다. `CheckLot()`(142줄)도 같은 ID 를 쓰므로 같은 메서드를 부르게 되어 조립이 한 자리로 모입니다.",
       "checkpoints": "`SearchLotByLine()`(124줄)은 H002 에서 지우기로 되어 있으니 이관 대상에서 빼세요. 먼저 지우면 옮길 것이 셋으로 줄어듭니다."
     }

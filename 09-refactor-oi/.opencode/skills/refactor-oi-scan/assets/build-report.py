@@ -277,6 +277,24 @@ for i, f in enumerate(D["findings"]):
                                           and not isinstance(f["line"], bool)):
         bad("%s: line 은 정수여야 합니다" % w)
 
+    # 「지금」은 옮겨 적는 칸이 아니라 **좌표**입니다. 원문은 아래에서 잘라 씁니다.
+    # 떨어진 구간을 여러 개 적을 수 있어 units[].lines 와 달리 쌍의 배열입니다.
+    cl = f.get("currentLines")
+    if cl is not None:
+        if not isinstance(cl, list) or not cl:
+            bad("%s: currentLines 는 [[시작, 끝], …] 형태의 배열이어야 합니다" % w)
+            f["currentLines"] = None
+        else:
+            for j, rng in enumerate(cl):
+                if (not isinstance(rng, list) or len(rng) != 2
+                        or not all(isinstance(n, int) and not isinstance(n, bool) and n > 0
+                                   for n in rng)):
+                    bad("%s: currentLines[%d] 는 [시작, 끝] 형태의 양의 정수 배열이어야 "
+                        "합니다" % (w, j))
+                elif rng[0] > rng[1]:
+                    bad("%s: currentLines[%d] 의 시작(%d)이 끝(%d)보다 큽니다"
+                        % (w, j, rng[0], rng[1]))
+
 # ── sql ─────────────────────────────────────────────────────────────────
 # 「이 화면이 부르는 SQL」 — 참고 자료입니다. 제안이 아닙니다.
 # mapper 본문은 리뷰하지 않지만, 그 SQL 을 쓰는 로직을 고치려면
@@ -372,6 +390,34 @@ for u in D["units"]:
     if rows:
         units_with_code += 1
 
+# ── 제안이 가리키는 줄 ──────────────────────────────────────────────────
+# 「지금」 칸도 units 와 같은 원칙입니다 — LLM 은 좌표만 주고, 코드는 여기서 자릅니다.
+# 그리고 **같은 좌표가** 단위 코드 뷰어의 강조 범위(hitLines)로도 쓰입니다.
+# 둘을 따로 받으면 언젠가 어긋나는데, 한 곳에서 나오므로 어긋날 수가 없습니다.
+findings_no_coords = []
+for f in D["findings"]:
+    ranges = f.get("currentLines") or []
+    chunks, hits = [], []
+    for frm, to in ranges:
+        hits.extend(range(frm, to + 1))
+        got = rows_from_source(f["file"], frm, to)
+        if got:
+            chunks.append(got)
+    rows = []
+    for c in chunks:
+        if rows:
+            # 끊긴 자리. 줄번호가 없으므로 리포트가 생략 행으로 그립니다.
+            rows.append({"no": None, "text": "⋯"})
+        rows.extend(c)
+    f["currentRows"] = rows
+    if hits:
+        f["hitLines"] = sorted(set(hits))
+    else:
+        # 좌표가 없으면 지금까지처럼 대표 줄 하나만 강조합니다.
+        f["hitLines"] = [f["line"]] if isinstance(f.get("line"), int) else []
+    if not ranges:
+        findings_no_coords.append(f.get("id") or "?")
+
 # 파일 원문 임베드 (접이식)
 for f in D["files"]:
     f["lang"] = lang_of(f["path"])
@@ -452,5 +498,11 @@ print("  %d KB · 외부 요청 없음" % kb)
 if units_with_code < len(D["units"]):
     print("  ! 대상 단위 %d개는 코드를 표시하지 못했습니다 "
           "— src/ 원문과 라인 범위를 확인하세요." % (len(D["units"]) - units_with_code))
+if findings_no_coords:
+    shown = " · ".join(findings_no_coords[:6])
+    if len(findings_no_coords) > 6:
+        shown += " …"
+    print("  ! currentLines 가 없는 제안 %d건 (%s)" % (len(findings_no_coords), shown))
+    print("    「지금」이 문자열 그대로 실리고, 강조도 대표 줄 하나에 그칩니다.")
 if index_summary is None:
     print("  ! 「기계가 센 것」 절이 비었습니다 — 1-index.json 경로를 확인하세요.")
