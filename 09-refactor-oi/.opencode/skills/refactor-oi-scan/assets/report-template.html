@@ -234,11 +234,19 @@ nav.toc a .cnt{background:var(--accent-soft);color:var(--accent)}
 nav.toc .sep{margin:7px 0 0;padding-top:7px;border-top:1px solid var(--line)}
 
 /* ── 파일 / 변경단위 ────────────────────────────── */
+/* overflow:hidden 을 두지 않습니다 — 그 박스가 스크롤 컨테이너가 되어 버려서
+   안쪽 단위 머리줄의 position:sticky 가 뷰포트에 붙지 못합니다.
+   모서리는 .file>h2 와 .unit:last-child 가 직접 깎습니다. */
 section.file{background:var(--panel);border:1px solid var(--line);border-radius:10px;
-  margin-bottom:20px;overflow:hidden;min-width:0;box-shadow:var(--shadow)}
+  margin-bottom:20px;min-width:0;box-shadow:var(--shadow)}
 .unit,.finding{min-width:0}
-.file>h2{margin:0;padding:12px 16px;font-size:15px;background:var(--code);
-  border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap;word-break:break-all}
+/* 화면(파일)은 **담는 그릇**, 단위는 그 안의 칸입니다. 둘 다 var(--code) 머리띠를
+   쓰던 자리 — 어두운 화면에서 --code(#12151a)는 페이지 배경(#14171a)과 거의 같은
+   색이라 머리띠로 읽히지도 않고, 두 줄이 그대로 붙어 보였습니다. 그릇에만 색을 줍니다. */
+.file>h2{margin:0;padding:12px 16px;font-size:16px;font-weight:700;
+  background:var(--accent-soft);border-bottom:2px solid var(--accent);
+  border-radius:9px 9px 0 0;                    /* 10px 반경 − 1px 테두리 */
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;word-break:break-all}
 .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--accent-soft);
   color:var(--accent);white-space:nowrap;letter-spacing:.02em}
 .tag.p1{background:var(--major-bg);color:var(--major)}
@@ -247,15 +255,35 @@ section.file{background:var(--panel);border:1px solid var(--line);border-radius:
 /* 대상 유형(클래스·메서드·XAML…). 개수가 많아 .tag 보다 조용한 색으로 둡니다 */
 .kind{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--code);
   color:var(--muted);border:1px solid var(--line);white-space:nowrap;letter-spacing:.02em}
-.unit{border-top:2px solid var(--line);padding:0 0 14px}
+/* 파일 종류(화면·공통·매퍼). 단위 유형 칩과 **같은 모양이면 급이 같아 보입니다** —
+   조용한 배경에 먹색인 .kind 와 반대로, 이쪽은 테두리와 글자에 색을 줍니다. */
+.fkind{font-size:11px;font-weight:800;padding:2px 8px;border-radius:5px;background:var(--panel);
+  color:var(--accent);border:1px solid var(--accent);white-space:nowrap;letter-spacing:.02em}
+/* 들여쓰기는 **세로선**으로 보여 줍니다 — 목차의 nav.toc .lv, 로드맵의
+   .roadmap .leave 와 같은 관용구입니다. 단위가 어디서 끝나는지가 이 선으로 보입니다.
+   마지막 단위는 섹션의 둥근 모서리 밖으로 3px 선이 삐져나오므로 같이 깎습니다. */
+.unit{border-top:2px solid var(--line);border-left:3px solid var(--line);padding:0 0 14px}
 .unit:first-of-type{border-top:none}
-.unit>h3{margin:0;padding:10px 16px;background:var(--code);border-bottom:1px solid var(--line)}
+.unit:last-child{border-bottom-left-radius:9px}
+/* 머리줄 배경은 var(--code) 그대로 둡니다 — 부모 띠가 파래진 순간 이 줄은 저절로
+   한 단 아래로 읽힙니다. 여기까지 색을 빼면 제안 카드와의 경계가 흐려집니다.
+   긴 단위를 훑는 동안 「지금 어느 단위인가」가 계속 보이도록 위에 붙입니다.
+   top 52px 은 sticky 인 .filters(재어 보면 420~1440px 모두 53px) 에 **1px 물립니다** —
+   딱 붙이거나 띄우면 그 틈으로 코드가 흘러가는 것이 보입니다. 물린 1px 은
+   z-index 가 낮아(.filters 는 20) 검색바 밑으로 들어가 가려집니다. */
+.unit>h3{margin:0;padding:10px 16px;background:var(--code);border-bottom:1px solid var(--line);
+  position:sticky;top:52px;z-index:2}
 .unit>details.fold,.unit>.finding,.unit>.empty{margin-left:16px;margin-right:16px}
 .unit>details.fold{margin-top:12px}
 .unit>h3{font-size:14px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
-.unit>h3 .uid{font-weight:800;color:var(--accent)}
 .unit>h3 .sum{font-weight:500;color:var(--ink)}
 .unit>h3 .rng{color:var(--muted);font-size:12px;font-weight:400}
+/* 단위 ID — 표에서 고른 U1 과 본문의 U1 이 **같은 모양**이어야 눈이 이어집니다.
+   그래서 머리줄·대상 요약 표·한눈에 보기 표가 이 한 벌을 같이 씁니다. */
+.uid{font-family:"D2Coding",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:11.5px;font-weight:800;padding:1px 7px;border-radius:5px;
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);
+  white-space:nowrap}
 .unit:target>h3 .uid,.finding:target .fid{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
 .flash{animation:flash 1.4s ease-out}
 @keyframes flash{0%{background:var(--accent-soft)}100%{background:transparent}}
@@ -437,7 +465,7 @@ h2.sec{font-size:16px;margin:26px 0 12px}
   section.file{break-inside:auto;page-break-inside:auto;border:1px solid #bbb;box-shadow:none}
   .unit{break-inside:avoid;page-break-inside:avoid}
   .finding{break-inside:avoid;page-break-inside:avoid}
-  table.list th{position:static}
+  table.list th,.unit>h3{position:static}
   details.fold,details.audit{display:block}
   details.fold>summary{list-style:none}
   a{color:#000;text-decoration:none}
@@ -465,7 +493,6 @@ table.glance th{text-align:left;font-weight:600;font-size:12px;color:var(--muted
 table.glance td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 table.glance tr[data-jump]{cursor:pointer}
 table.glance tbody tr:hover{background:var(--accent-soft)}
-table.glance td .uid{font-weight:700;color:var(--ink);font-size:12px}
 table.glance td:nth-child(5){width:100%}
 .glnone{color:var(--muted);font-size:13px;margin:0}
 #glance .body{overflow-x:auto}
@@ -928,7 +955,7 @@ function jump(id){
         }).join(' ')
       : '<span class="note">—</span>';
     return '<tr data-jump="u-' + esc(u.id) + '">' +
-      '<td class="mono">' + esc(u.id) + '</td>' +
+      '<td><span class="uid">' + esc(u.id) + '</span></td>' +
       '<td class="mono">' + esc(u.file) + '</td>' +
       '<td><span class="kind">' + esc(u.kindLabel) + '</span></td>' +
       '<td class="mono">' + (u.lines ? u.lines[0] + '–' + u.lines[1] : '—') + '</td>' +
@@ -1191,7 +1218,7 @@ function tocTree(files){
     var fid = 'file-' + cssId(f.path);
 
     html += '<section class="file" id="' + fid + '">' +
-      '<h2><span class="kind">' + esc(f.kind) + '</span> <span class="mono">' + esc(f.path) + '</span></h2>';
+      '<h2><span class="fkind">' + esc(f.kind) + '</span> <span class="mono">' + esc(f.path) + '</span></h2>';
 
     units.forEach(function(u){
       var fs = byUnit[u.id] || [];
@@ -1201,7 +1228,7 @@ function tocTree(files){
       var hits = [];
       fs.forEach(function(x){ hits = hits.concat(x.hitLines || [x.line]); });
       html += '<div class="unit" id="u-' + esc(u.id) + '">' +
-        '<h3><span class="mono">' + esc(u.id) + '</span>' +
+        '<h3><span class="uid">' + esc(u.id) + '</span>' +
         '<span class="kind">' + esc(u.kindLabel) + '</span> ' + inline(u.summary) + '</h3>' +
         foldedCode(u.rows, hits, u.lang,
                    u.lines ? (u.lines[0] + '–' + u.lines[1] + ' 줄 보기') : '코드 보기') +
