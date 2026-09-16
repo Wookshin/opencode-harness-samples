@@ -620,10 +620,44 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
         left = [g for g in gone if g in rep]
         check(not left, "우선순위 축의 흔적이 남지 않았습니다%s"
               % ("" if not left else "  ← %s" % left))
-        check("지금 바로 할 수 있는 것" in rep,
-              "핵심 칩이 「지금 바로 할 수 있는 것」(비용 작음)으로 바뀌었습니다")
 
-        print("\n15. 화면이 직접 들고 있는 통신을 찾는가")
+        print("\n15. 제안 카드가 읽히는 모양인가")
+        # 아래 검사가 지키는 것은 **배치**입니다. 눈으로 보면 금방 알지만,
+        # 눈으로 보는 일이 매번 일어나지는 않아서 여기 박아 둡니다.
+        #
+        # 카드 본문은 「왜 바꾸나 → 지금 코드 → 제안 코드」 세 줄기입니다.
+        for js, what in [("row('왜 바꾸나'", "「왜 바꾸나」"),
+                         ("row('지금 코드'", "「지금 코드」"),
+                         ("row('제안 코드'", "「제안 코드」")]:
+            check(js in rep, "카드가 %s 로 묻습니다" % what)
+        old_labels = [x for x in ("row('무엇을'", "row('지금'", "row('이렇게'") if x in rep]
+        check(not old_labels, "옛 라벨이 남지 않았습니다%s"
+              % ("" if not old_labels else "  ← %s" % old_labels))
+
+        # 근거·영향·점검은 고칠지 정한 뒤에 보는 것이라 한 자리에 접어 둡니다.
+        check('<details class="more">' in rep, "근거·영향·점검이 한 자리에 접혀 있습니다")
+
+        # 「지금 코드」는 좌표로 옵니다 — LLM 이 코드를 옮겨 적지 않습니다.
+        check('"currentRows"' in rep, "빌더가 원문을 잘라 `currentRows` 로 넣었습니다")
+        check('"hitLines"' in rep, "같은 좌표가 `hitLines`(줄 보기 강조)로도 내려갑니다")
+        check('"current":' not in rep,
+              "샘플이 코드를 문자열로 들고 있지 않습니다 (좌표만)")
+
+        # 제안 코드는 펴서 그대로 가져갈 수 있어야 합니다.
+        check('class="copy"' in rep, "제안 코드에 복사 버튼이 붙습니다")
+        check("SQL 본문 보기" in rep, "SQL 본문이 접혀 있습니다 (참고 자료라서)")
+
+        # 목차는 파일 탐색기처럼 — 폴더를 접었다 펼 수 있어야 합니다.
+        check('<details class="dir"' in rep, "목차가 폴더 트리입니다")
+
+        # 걷어낸 것들. 되살아나면 여기서 걸립니다.
+        removed = [g for g in ('class="decide"', "'하기로'", 'placeholder="메모"',
+                               'class="chip"', 'data-k="kind"', 'id="chips"')
+                   if g in rep]
+        check(not removed, "결정 UI 와 칩 필터가 남지 않았습니다%s"
+              % ("" if not removed else "  ← %s" % removed))
+
+        print("\n16. 화면이 직접 들고 있는 통신을 찾는가")
         # 화면이 SQL ID 를 직접 들고 있으면 SqlManager 로 옮길 후보입니다(A-14).
         # 기계가 파일·줄·**소속 메서드**까지 세어 두어야 제안자가 판정만 합니다.
         tsm = ix["sql"].get("toSqlManager", [])

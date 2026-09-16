@@ -208,26 +208,30 @@ table.list td.t{line-height:1.55}
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:24px;align-items:start}
 .layout>main{min-width:0}
 @media (max-width:1000px){.layout{grid-template-columns:minmax(0,1fr)}}
+/* 목차는 파일 탐색기처럼 동작합니다 — 폴더를 접었다 펼 수 있어야 대상이 커져도
+   쓸모가 있습니다. 글자는 본문보다 한 단계 작게: 여기서 읽는 것이 아니라 **고르는** 곳입니다. */
 nav.toc{position:sticky;top:64px;max-height:calc(100vh - 90px);overflow:auto;
-  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px}
-nav.toc .f{margin:14px 0 4px;padding-top:12px;border-top:2px solid var(--line);
-  font-weight:700;word-break:break-all;line-height:1.4}
-nav.toc .f:first-child{margin-top:0;padding-top:0;border-top:0}
-nav.toc a{display:flex;align-items:baseline;padding:6px 0 6px 10px;color:var(--muted);
-  text-decoration:none;border-left:2px solid var(--line);border-bottom:1px solid var(--line);
-  line-height:1.45}
-/* 폴더는 줄어들고, 파일명은 안 줄어듭니다. 눈이 찾는 것이 파일명이라서입니다. */
-nav.toc a .dir{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;opacity:.55;font-size:12px}
-nav.toc a .base{flex:0 0 auto;color:var(--ink);font-weight:600}
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:12px}
+nav.toc details.dir{margin:0}
+nav.toc details.dir>summary{cursor:pointer;user-select:none;list-style:none;display:flex;
+  align-items:center;gap:5px;padding:3px 2px;color:var(--muted);font-weight:700;border-radius:5px}
+nav.toc details.dir>summary::-webkit-details-marker{display:none}
+nav.toc details.dir>summary::before{content:"▸";font-size:9px;width:9px;flex:none;color:var(--muted)}
+nav.toc details.dir[open]>summary::before{content:"▾"}
+nav.toc details.dir>summary:hover{background:var(--accent-soft);color:var(--accent)}
+nav.toc details.dir>summary .dn{flex:1 1 auto;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+/* 들여쓰기는 **세로선**으로 보여 줍니다. 여백만으로는 깊이가 안 읽힙니다. */
+nav.toc .lv{margin-left:4px;padding-left:9px;border-left:1px solid var(--line)}
+nav.toc a{display:flex;align-items:center;gap:6px;padding:3px 2px 3px 14px;color:var(--ink);
+  text-decoration:none;border-radius:5px;line-height:1.5}
+nav.toc a .base{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.toc a:hover{background:var(--accent-soft);color:var(--accent)}
 /* 곁들이는 숫자는 본문 글자와 **색이 달라야** 합니다. 같으면 이름이 안 읽힙니다. */
-nav.toc a .note{margin-left:auto;padding-left:8px;font-size:11px;color:var(--muted);opacity:.7}
-nav.toc a:last-child{border-bottom:0}
-nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
-nav.toc a .uid{color:var(--ink);font-weight:700}
-nav.toc a .cnt{display:inline-block;min-width:16px;text-align:center;font-size:11px;font-weight:700;
-  padding:0 4px;border-radius:8px;background:var(--accent-soft);color:var(--accent)}
-nav.toc a{padding:4px 0 4px 10px}
+nav.toc .cnt{flex:none;min-width:15px;text-align:center;font-size:10.5px;font-weight:700;
+  padding:0 4px;border-radius:8px;background:var(--code);color:var(--muted)}
+nav.toc a .cnt{background:var(--accent-soft);color:var(--accent)}
+nav.toc .sep{margin:7px 0 0;padding-top:7px;border-top:1px solid var(--line)}
 
 /* ── 파일 / 변경단위 ────────────────────────────── */
 section.file{background:var(--panel);border:1px solid var(--line);border-radius:10px;
@@ -342,7 +346,7 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 /* 여섯 절(무엇을·근거·지금·이렇게·영향·점검)이 한 덩어리로 보이던 자리입니다.
    **줄마다 선을 긋습니다.** 그리드라 선은 dt 와 dd 양쪽에 걸어야 한 줄로 이어집니다 —
    한쪽에만 두면 라벨 칸에서 선이 끊깁니다. */
-.finding dl{margin:0;display:grid;grid-template-columns:84px minmax(0,1fr);gap:0;align-items:start}
+.finding dl{margin:0;display:grid;grid-template-columns:92px minmax(0,1fr);gap:0;align-items:start}
 .finding dt,.finding dd{padding:11px 0;border-top:1px solid var(--line)}
 .finding dt{font-size:11.5px;color:var(--muted);font-weight:700;
   word-break:keep-all;letter-spacing:.02em}
@@ -350,7 +354,7 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .finding dt:first-of-type,.finding dd:first-of-type{border-top:0;padding-top:2px}
 /* 좁은 화면에서는 84px 라벨 칸이 본문을 짓누릅니다. 라벨을 위로 올립니다. */
 @media (max-width:560px){
-  .finding dl{grid-template-columns:minmax(0,1fr)}
+  .finding dl{grid-template-columns:minmax(0,1fr)!important}
   .finding dt{padding-bottom:0}
   .finding dd{padding-left:0;padding-top:2px;border-top:0}
 }
@@ -368,6 +372,18 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .finding dd details.fold pre{border:0;border-radius:0;margin:0}
 .finding dd details.fold pre.sug::before{display:none}
 .seecode{font-size:12px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
+
+/* 근거·영향·점검은 **필요할 때만 보는 것들**입니다. 셋 다 펼쳐 두면 정작
+   「왜 바꾸나 → 지금 코드 → 제안 코드」 흐름이 안 보입니다. 한 자리에 접어 둡니다. */
+.finding details.more{margin-top:11px;border-top:1px solid var(--line)}
+.finding details.more>summary{cursor:pointer;user-select:none;list-style:none;
+  font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--muted);padding:9px 0 0}
+.finding details.more>summary::-webkit-details-marker{display:none}
+.finding details.more>summary::before{content:"▸ ";font-size:10px}
+.finding details.more[open]>summary::before{content:"▾ "}
+.finding details.more>summary:hover{color:var(--accent)}
+.finding details.more>dl{margin-top:4px}
+.finding details.more dt:first-of-type,.finding details.more dd:first-of-type{border-top:0}
 
 /* 카드 바닥 — 제목 줄에서 밀어낸 것들을 오른쪽에 태그처럼 모읍니다 */
 .fmeta{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;
@@ -433,13 +449,6 @@ h2.sec{font-size:16px;margin:26px 0 12px}
 .eff.e1{border-color:var(--add-mark);color:var(--add-mark)}
 .eff.e3{border-color:var(--major);color:var(--major)}
 
-.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.chip{font-size:12px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);
-  background:var(--panel);color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
-.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
-.chip.now{border-color:var(--add-mark);color:var(--add-mark);font-weight:700}
-.chip.now.on{background:var(--add-mark);border-color:var(--add-mark);color:#fff}
 
 #index .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 #index .tile{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--code)}
@@ -464,7 +473,7 @@ table.glance td:nth-child(5){width:100%}
 .roadmap .leave h3{margin:0 0 4px;color:var(--muted)}
 
 @media print{
-  .chips,#index{break-inside:avoid}
+  #index{break-inside:avoid}
 }
 
 </style>
@@ -501,7 +510,6 @@ table.glance td:nth-child(5){width:100%}
 <div class="wrap">
   <div class="filters">
     <input type="search" id="q" placeholder="제안 내용 · 파일 · 근거 검색">
-    <div class="chips" id="chips"></div>
     <span class="note" id="cl-note"></span>
   </div>
 
@@ -1071,15 +1079,22 @@ function currentBlock(f){
 }
 
 function findingCard(f){
-  var dl = '';
+  /* 카드 본문은 **왜 바꾸나 → 지금 코드 → 제안 코드** 세 줄기입니다.
+     근거·영향·점검은 고칠지 정한 뒤에 보는 것이라 아래에 접어 둡니다. */
+  var dl = '', more = '';
   function row(label, html){ if (html) dl += '<dt>' + label + '</dt><dd>' + html + '</dd>'; }
+  function aside(label, html){ if (html) more += '<dt>' + label + '</dt><dd>' + html + '</dd>'; }
 
-  row('무엇을', '<div class="prose">' + prose(f.problem) + '</div>');
-  row('근거', inline(f.basis));
-  row('지금', currentBlock(f));
-  if (f.suggestion) row('이렇게', suggestionBlock(f));
-  if (f.impact) row('영향', '<div class="prose">' + prose(f.impact) + '</div>');
-  if (f.checkpoints) row('점검', '<div class="prose">' + prose(f.checkpoints) + '</div>');
+  row('왜 바꾸나', '<div class="prose">' + prose(f.problem) + '</div>');
+  row('지금 코드', currentBlock(f));
+  if (f.suggestion) row('제안 코드', suggestionBlock(f));
+
+  aside('근거', inline(f.basis));
+  if (f.impact) aside('영향', '<div class="prose">' + prose(f.impact) + '</div>');
+  if (f.checkpoints) aside('점검', '<div class="prose">' + prose(f.checkpoints) + '</div>');
+  var moreHtml = more
+    ? '<details class="more"><summary>근거 · 영향 · 점검</summary><dl>' + more + '</dl></details>'
+    : '';
 
   /* 제목 한 줄이 이 리포트의 얼굴입니다. 그 줄에는 **무엇을 바꾸는 변경인가**
      까지만 두고, 비용·관점·위치는 카드 바닥 오른쪽으로 내립니다. */
@@ -1100,11 +1115,65 @@ function findingCard(f){
   return '<article class="finding" id="f-' + esc(f.id) + '" ' +
     'data-kind="' + esc(f.improvementKind) + '" data-eff="' + esc(f.effort) + '" ' +
     'data-persp="' + esc(f.perspective) + '">' +
-    head + '<dl>' + dl + '</dl>' + foot + '</article>';
+    head + '<dl>' + dl + '</dl>' + moreHtml + foot + '</article>';
 }
 
 /* ── 본문 ────────────────────────────────────── */
 function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
+
+/* ── 목차 = 파일 탐색기 ───────────────────────────────────────────────
+   경로를 폴더 트리로 세워 접었다 펼 수 있게 합니다. 갈림이 없는 폴더
+   (`YOEDSMOV/Common` 처럼 안에 폴더 하나뿐)는 **한 줄로 합칩니다** —
+   빈 껍데기를 여러 번 펴게 만들지 않으려고. */
+function treeOf(files){
+  var root = {dirs:{}, files:[]};
+  files.forEach(function(f){
+    var parts = f.path.split('/'), node = root;
+    for (var i = 0; i < parts.length - 1; i++) {
+      node = node.dirs[parts[i]] = node.dirs[parts[i]] || {dirs:{}, files:[]};
+    }
+    node.files.push({name: parts[parts.length - 1], path: f.path});
+  });
+  return root;
+}
+/* 폴더에 다는 숫자도 **제안 건수**입니다. 파일 수를 달면 파일에 달린 숫자와
+   같은 모양인데 뜻이 달라져, 「11」 이 제안인지 파일인지 매번 되짚게 됩니다. */
+function nFound(node, by){
+  var n = 0;
+  node.files.forEach(function(e){ n += by[e.path] || 0; });
+  Object.keys(node.dirs).forEach(function(k){ n += nFound(node.dirs[k], by); });
+  return n;
+}
+function fileLink(e, findingsBy){
+  var fid = 'file-' + cssId(e.path), n = findingsBy[e.path] || 0;
+  return '<a href="#' + fid + '" data-jump="' + fid + '" title="' + esc(e.path) + '">' +
+    '<span class="mono base">' + esc(e.name) + '</span>' +
+    (n ? '<span class="cnt">' + n + '</span>' : '') + '</a>';
+}
+function tocInner(node, by){
+  var h = '';
+  Object.keys(node.dirs).sort().forEach(function(k){ h += tocDir(node.dirs[k], k, by); });
+  node.files.slice().sort(function(a, b){ return a.name.localeCompare(b.name); })
+    .forEach(function(e){ h += fileLink(e, by); });
+  return h;
+}
+function tocDir(node, name, by){
+  var keys = Object.keys(node.dirs);
+  while (!node.files.length && keys.length === 1) {      // a/b/c 로 합칩니다
+    name += '/' + keys[0];
+    node = node.dirs[keys[0]];
+    keys = Object.keys(node.dirs);
+  }
+  var n = nFound(node, by);
+  return '<details class="dir" open><summary><span class="dn">' + esc(name) + '</span>' +
+    (n ? '<span class="cnt">' + n + '</span>' : '') + '</summary>' +
+    '<div class="lv">' + tocInner(node, by) + '</div></details>';
+}
+function tocTree(files){
+  var by = {};
+  D.findings.forEach(function(f){ by[f.file] = (by[f.file] || 0) + 1; });
+  return tocInner(treeOf(files), by);
+}
 
 (function(){
   var main = document.getElementById('main'), toc = document.getElementById('toc');
@@ -1116,22 +1185,10 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
     return (a.priority - b.priority) || a.path.localeCompare(b.path);
   });
 
-  var html = '', tocHtml = '';
+  var html = '';
   files.forEach(function(f){
     var units = byFile[f.path] || [];
     var fid = 'file-' + cssId(f.path);
-
-    /* 목차는 **어디로 갈지** 고르는 곳입니다. 숫자는 본문에 이미 있고,
-       파일명과 같은 색으로 붙어 있으면 파일명이 안 읽힙니다. 이름만 둡니다.
-
-       경로가 길면 폴더 쪽을 줄입니다. 눈이 찾는 것은 **파일명**이라
-       그쪽은 절대 자르지 않습니다. 한 줄로 끝나 목록이 가지런합니다. */
-    var cut = f.path.lastIndexOf('/');
-    var dir = cut < 0 ? '' : f.path.slice(0, cut + 1);
-    var base = cut < 0 ? f.path : f.path.slice(cut + 1);
-    tocHtml += '<a href="#' + fid + '" data-jump="' + fid + '" title="' + esc(f.path) + '">' +
-      (dir ? '<span class="dir">' + esc(dir) + '</span>' : '') +
-      '<span class="mono base">' + esc(base) + '</span></a>';
 
     html += '<section class="file" id="' + fid + '">' +
       '<h2><span class="kind">' + esc(f.kind) + '</span> <span class="mono">' + esc(f.path) + '</span></h2>';
@@ -1180,8 +1237,6 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
              s.body.split('\n').length + '줄</span></summary>' +
              '<pre>' + hlBlock(s.body, 'sql') + '</pre></details>' : '') + '</div>';
       }).join('') + '</section>';
-    tocHtml += '<a href="#sec-sql" data-jump="sec-sql"><span>부르는 SQL</span>' +
-      '<span class="note">' + D.sql.length + '건</span></a>';
   }
 
   /* 손대기 쉬운 것 */
@@ -1217,7 +1272,10 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
   }
 
   main.innerHTML = html;
-  toc.innerHTML = tocHtml;
+  toc.innerHTML = tocTree(files) +
+    (D.sql.length ? '<div class="sep"><a href="#sec-sql" data-jump="sec-sql">' +
+      '<span class="base">부르는 SQL</span>' +
+      '<span class="cnt">' + D.sql.length + '</span></a></div>' : '');
 
   document.body.addEventListener('click', function(e){
     var b = e.target.closest('[data-jump]');
@@ -1225,46 +1283,14 @@ function cssId(p){ return p.replace(/[^A-Za-z0-9_-]/g, '_'); }
   });
 })();
 
-/* ── 필터 (개선 유형 × 비용 × 관점) ───────────── */
-var filt = {kind:{}, eff:{}, persp:{}, now:false};
-
-(function(){
-  var box = document.getElementById('chips'), h = '';
-  /* 우선순위가 없어졌으므로 「지금 바로 할 수 있는 것」은 비용만 봅니다 */
-  h += '<button class="chip now" data-k="now">지금 바로 할 수 있는 것</button>';
-  KINDS.forEach(function(s){ h += '<button class="chip" data-k="kind" data-v="' + s + '">' + s + '</button>'; });
-  EFFS.forEach(function(s){ h += '<button class="chip" data-k="eff" data-v="' + s + '">비용 ' + s + '</button>'; });
-  Object.keys(PERSP).forEach(function(p){
-    h += '<button class="chip" data-k="persp" data-v="' + p + '">' + PERSP[p] + '</button>';
-  });
-  box.innerHTML = h;
-
-  box.addEventListener('click', function(e){
-    var b = e.target.closest('.chip');
-    if (!b) return;
-    var k = b.getAttribute('data-k');
-    if (k === 'now') {
-      filt.now = !filt.now;
-      b.classList.toggle('on', filt.now);
-    } else {
-      var v = b.getAttribute('data-v');
-      filt[k][v] = !filt[k][v];
-      b.classList.toggle('on', filt[k][v]);
-    }
-    applyFilters();
-  });
-})();
-
-function anyOn(o){ return Object.keys(o).some(function(k){ return o[k]; }); }
-
+/* ── 검색 ─────────────────────────────────────
+   유형·비용·관점 칩은 없앴습니다. 여덟 유형 × 세 비용 × 세 관점이 검색창 아래
+   열네 줄을 차지했는데, 실제로 고르는 방법은 「한눈에 보기」 표를 훑는 것이었습니다. */
 function visible(f){
-  if (filt.now && f.effort !== '작음') return false;
-  if (anyOn(filt.kind)  && !filt.kind[f.improvementKind]) return false;
-  if (anyOn(filt.eff)   && !filt.eff[f.effort])        return false;
-  if (anyOn(filt.persp) && !filt.persp[f.perspective]) return false;
   var q = (document.getElementById('q').value || '').trim().toLowerCase();
   if (!q) return true;
-  return [f.id, f.title, f.problem, f.basis, f.file, f.suggestion, f.impact]
+  return [f.id, f.title, f.problem, f.basis, f.file, f.suggestion, f.impact,
+          f.improvementKind, f.effort, PERSP[f.perspective] || f.perspective]
     .join(' ').toLowerCase().indexOf(q) >= 0;
 }
 
