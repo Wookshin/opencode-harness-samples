@@ -18,6 +18,7 @@
 표준 라이브러리만 씁니다. pip 설치 불필요. Python 3.8 이상.
 """
 import argparse
+import json
 import re
 import subprocess
 import unicodedata
@@ -46,6 +47,148 @@ def run(cmd, timeout=20):
         return r.returncode == 0, (out[0] if out else "")
     except Exception:
         return False, ""
+
+
+# ── --suggest-status ────────────────────────────────────────────────────
+#
+# Phase 2 의 게이트입니다. 제안자가 **끝난 것**과 **쓰다 끊긴 것**은 전혀 다른데,
+# 눈으로는 잘 안 갈립니다 — 둘 다 "파일이 좀 있다" 로 보이기 때문입니다.
+# 끊긴 것을 빈 결과로 판정해 관점 하나를 통째로 버리는 것이 이 자리에서 가장
+# 값비싼 실수라, 판정을 스크립트로 내립니다.
+#
+# 가르는 표시는 제안자가 답니다.
+#   `<!-- 진행: … -->`   어디까지 봤는지. 끊기기 전에 갱신합니다
+#   `## 확인 못 한 것`    다 썼다는 표시. 이것이 있어야 완료입니다
+#
+# 진행이 있는 한 계속 이어 부릅니다. 멈추는 조건은 둘뿐입니다 —
+# **파일이 두 번 연속 그대로**(무진행)이거나 **회차 상한**입니다.
+SUGGEST_KINDS = [
+    ("convention", "컨벤션",      "refac-convention", "N"),
+    ("hygiene",    "중복·미사용", "refac-hygiene",    "H"),
+    ("design",     "구조",        "refac-design",     "D"),
+]
+DONE_MARK = "## 확인 못 한 것"
+PROG_RE = re.compile(r"<!--\s*진행\s*:\s*(.*?)-->", re.S)
+MAX_ROUNDS = 5          # 처음 1 + 이어서 4. 넘으면 있는 것만 쓰고 넘어갑니다
+
+
+def _suggest_read(ws, key):
+    p = ws / ("2-suggest-%s.md" % key)
+    if not p.is_file():
+        return None
+    try:
+        return p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+
+
+def suggest_status(ws_arg):
+    ws = Path(ws_arg)
+    if not ws.is_dir():
+        print("✗ 작업 폴더를 찾을 수 없습니다: %s" % ws)
+        print("  → python ws.py --list 로 폴더 이름을 확인하세요.")
+        return 2
+
+    state_path = ws / "2-progress.json"
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        state = {}
+
+    rows, again = [], []
+    for key, label, agent, pre in SUGGEST_KINDS:
+        txt = _suggest_read(ws, key)
+        body = (txt or "").strip()
+        ids = re.findall(r"(?m)^###\s+(%s\d{3})\b" % pre, txt or "")
+        done = DONE_MARK in (txt or "")
+        m = PROG_RE.search(txt or "")
+        prog = " ".join(m.group(1).split()) if m else ""
+        size = len(txt or "")
+
+        prev = state.get(key) or {}
+        same = prev.get("found") == len(ids) and prev.get("size") == size
+        # 부르지 않고 한 번 더 확인한 경우까지 무진행으로 몰지 않습니다.
+        repeats = (prev.get("repeats", 0) + 1) if same else 0
+        rounds = prev.get("rounds", 0) if done else prev.get("rounds", 0) + 1
+
+        if not body:
+            verdict = "없음" if rounds <= 2 else "포기"
+        elif done:
+            verdict = "완료"
+        elif rounds >= MAX_ROUNDS:
+            verdict = "상한"
+        elif repeats >= 2:
+            verdict = "무진행"
+        else:
+            verdict = "이어서"
+
+        state[key] = {"found": len(ids), "size": size,
+                      "repeats": repeats, "rounds": rounds, "verdict": verdict}
+        rows.append((key, label, agent, pre, ids, prog, verdict, rounds))
+        if verdict in ("없음", "이어서"):
+            again.append(rows[-1])
+
+    try:
+        state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n",
+                              encoding="utf-8")
+    except OSError:
+        print("! 2-progress.json 을 쓰지 못했습니다 — 회차를 세지 못합니다.")
+
+    print("Phase 2 제안 상태 — %s\n" % ws)
+    print("  관점         제안   회차   상태")
+    for _k, label, _a, _p, ids, _pr, verdict, rounds in rows:
+        print("  %-10s %4d건  %-5s %s"
+              % (label, len(ids), "—" if verdict == "완료" else "%d/%d" % (rounds, MAX_ROUNDS),
+                 verdict))
+    print()
+
+    for key, label, agent, pre, ids, prog, verdict, rounds in rows:
+        if verdict == "완료":
+            continue
+        print("── %s (%s) — %s" % (label, agent, verdict))
+        if verdict == "없음":
+            print("   파일이 없거나 비어 있습니다. **새 에이전트로** 다시 부르세요.")
+            print("   프롬프트에 붙일 말:")
+            print("   - 올릴 제안이 없다는 결론이어도 `suggest-format.md` 의 「없음」 "
+                  "형태로 파일은 반드시 쓰세요.")
+            print("   - **아무것도 읽기 전에** 뼈대 파일부터 만드세요. 읽기가 가장 긴 "
+                  "구간이라, 읽다가 끊기면 뼈대조차 안 남습니다.")
+            print("   - 그다음 제안마다 이어 붙이고, 단위 예닐곱 개마다 "
+                  "`<!-- 진행: … -->` 를 갱신하세요.")
+        elif verdict == "이어서":
+            nxt = "%s%03d" % (pre, (int(ids[-1][1:]) + 1) if ids else 1)
+            span = ("%s–%s" % (ids[0], ids[-1])) if len(ids) > 1 else (ids[0] if ids else "없음")
+            print("   쓰다 끊겼습니다. **다시가 아니라 이어서** 부르세요 (%d회차 / 상한 %d)."
+                  % (rounds, MAX_ROUNDS))
+            print("   프롬프트에 붙일 말:")
+            print("   - `%s` 에 이미 %s 가 있습니다. "
+                  "`read` 로 먼저 읽고 **지우지 마세요.**"
+                  % (ws / ("2-suggest-%s.md" % key), span))
+            print("   - `%s` 부터 이어서 붙이세요. 이미 쓴 제안은 다시 쓰지 않습니다." % nxt)
+            if prog:
+                print("   - 지난번 진행: %s — 그 다음부터 보세요." % prog)
+            print("   - 단위 예닐곱 개마다 `<!-- 진행: … -->` 를 갱신하며 이어 쓰세요.")
+            print("   - 끝까지 보았으면 `## 요약` 을 맞추고 `%s` 을 붙여 마치세요." % DONE_MARK)
+        else:                                   # 포기 · 무진행 · 상한
+            print("   여기서 멈춥니다.")
+            print("   `report-builder` 에게 `unknowns` 에 넣으라고 적으세요:")
+            if ids:
+                print("   **거기까지 쓰인 제안 %d건은 그대로 씁니다** — "
+                      "반쪽이라도 버리지 않습니다." % len(ids))
+                print("   - \"%s 관점은 %s 끊겼습니다 — 남은 것은 다음 실행에서 "
+                      "봐야 합니다\"" % (label, ("「%s」 에서" % prog) if prog else "중간에"))
+            else:
+                print("   - \"%s 관점은 이번 실행에서 결과를 받지 못했습니다\"" % label)
+                print("   마지막 보고에도 **이 관점이 비었다는 것을 그대로** 쓰세요.")
+        print()
+
+    if again:
+        print("→ 이어/다시 부를 관점: %s" % " · ".join(r[1] for r in again))
+        print("  **에이전트를 부른 뒤에** 이 명령을 다시 돌리세요. "
+              "부르지 않고 돌리면 회차만 셉니다.")
+        return 1
+    print("→ 더 부를 것이 없습니다. Phase 3(검증)으로 넘어가세요.")
+    return 0
 
 
 # ── --list ──────────────────────────────────────────────────────────────
@@ -697,6 +840,83 @@ var r = new TibRVHelper(P).SendMessageWithJSON(
         lmd = (lws / "1-index.md").read_text(encoding="utf-8")
         check("## SqlManager 로 옮길 호출" in lmd, "요약에 「SqlManager 로 옮길 호출」 표가 있습니다")
 
+        print("\n17. Phase 2 게이트가 끊김과 빈 것을 가르는가")
+        # 여기가 틀리면 **일하던 제안자를 버리고 지나갑니다.** 실제로 그 사고가
+        # 났던 자리라, 회차별로 무엇으로 판정하는지 시나리오로 확인합니다.
+        import contextlib
+        import io as _io
+
+        gws = Path(tmp) / "scan-gate"
+        gws.mkdir()
+        DONE = "\n## 확인 못 한 것\n\n- 없음\n"
+
+        def gw(key, text):
+            (gws / ("2-suggest-%s.md" % key)).write_text(text, encoding="utf-8")
+
+        def gstate():
+            """판정만 꺼내 옵니다. 출력은 삼킵니다."""
+            with contextlib.redirect_stdout(_io.StringIO()):
+                suggest_status(str(gws))
+            st = json.loads((gws / "2-progress.json").read_text(encoding="utf-8"))
+            return {k: v["verdict"] for k, v in st.items()}
+
+        gw("convention", "# c\n## 제안\n### N001 x\n" + DONE)
+        gw("hygiene", "# h\n## 제안\n### H001 x\n" + DONE)
+        # 구조만 쓰다 끊겼습니다 — 제안은 있는데 완료 표시가 없습니다.
+        design = "# 구조 제안\n<!-- 진행: 단위 U1–U6 -->\n## 제안\n### D001 a\n### D002 b\n"
+        gw("design", design)
+
+        v = gstate()
+        check(v["convention"] == "완료" and v["hygiene"] == "완료",
+              "`## 확인 못 한 것` 이 붙은 파일은 완료입니다")
+        check(v["design"] == "이어서",
+              "제안은 있는데 완료 표시가 없으면 **이어서**입니다  ← 빈 결과가 아닙니다%s"
+              % ("" if v["design"] == "이어서" else "  ← 실제: %s" % v["design"]))
+
+        # 이어 부를 때마다 늘어나면 **계속** 이어 부릅니다. 두 번에서 끊지 않습니다.
+        for n in range(3, 7):
+            design = design + "### D%03d x\n" % n
+            gw("design", design)
+            v = gstate()
+            if v["design"] != "이어서":
+                break
+        check(v["design"] == "상한",
+              "진행이 있는 한 계속 이어 부르고, 상한(%d회)에서만 멈춥니다%s"
+              % (MAX_ROUNDS, "" if v["design"] == "상한" else "  ← 실제: %s" % v["design"]))
+
+        # 무진행이면 상한 전에 멈춥니다 — 같은 자리를 다시 부르지 않습니다.
+        sws = Path(tmp) / "scan-stall"
+        sws.mkdir()
+        (sws / "2-suggest-design.md").write_text("# 구조 제안\n## 제안\n### D001 a\n",
+                                                 encoding="utf-8")
+        for key in ("convention", "hygiene"):
+            (sws / ("2-suggest-%s.md" % key)).write_text("# x\n## 제안\n### X\n" + DONE,
+                                                         encoding="utf-8")
+        seen = []
+        for _ in range(3):
+            with contextlib.redirect_stdout(_io.StringIO()):
+                suggest_status(str(sws))
+            seen.append(json.loads((sws / "2-progress.json")
+                                   .read_text(encoding="utf-8"))["design"]["verdict"])
+        check(seen == ["이어서", "이어서", "무진행"],
+              "파일이 두 번 그대로면 **무진행**으로 멈춥니다 (무한 루프 방지)%s"
+              % ("" if seen == ["이어서", "이어서", "무진행"] else "  ← 실제: %s" % seen))
+
+        # 파일이 아예 없는 것은 「끊김」이 아니라 「없음」입니다 — 다시 부릅니다.
+        nws = Path(tmp) / "scan-none"
+        nws.mkdir()
+        with contextlib.redirect_stdout(_io.StringIO()):
+            suggest_status(str(nws))
+        n1 = json.loads((nws / "2-progress.json").read_text(encoding="utf-8"))
+        check(all(x["verdict"] == "없음" for x in n1.values()),
+              "파일이 없으면 **없음**입니다 (이어서가 아니라 다시 부르기)")
+        for _ in range(2):
+            with contextlib.redirect_stdout(_io.StringIO()):
+                suggest_status(str(nws))
+        n3 = json.loads((nws / "2-progress.json").read_text(encoding="utf-8"))
+        check(all(x["verdict"] == "포기" for x in n3.values()),
+              "두 번 불러도 파일이 없으면 포기하고 그 관점 없이 갑니다")
+
     return report(fails)
 
 
@@ -719,6 +939,10 @@ g.add_argument("--list", action="store_true", help="_workspace/ 의 작업 폴�
 g.add_argument("--doctor", action="store_true", help="python·git·경로·쓰기 권한 점검")
 g.add_argument("--selftest", action="store_true",
                help="샘플로 스크립트 파이프라인 전체를 모델 없이 돌려 봅니다")
+g.add_argument("--suggest-status", metavar="작업폴더",
+               help="Phase 2 게이트 — 제안자가 끝났는지·이어 부를지 판정합니다")
 a = ap.parse_args()
 
+if a.suggest_status:
+    raise SystemExit(suggest_status(a.suggest_status))
 raise SystemExit(list_ws() if a.list else (doctor() if a.doctor else selftest()))

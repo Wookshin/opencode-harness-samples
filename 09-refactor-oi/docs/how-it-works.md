@@ -547,6 +547,7 @@ opencode run "/refactor YOEDSMOV"
 python .opencode/skills/refactor-oi-scan/assets/ws.py --doctor
 python .opencode/skills/refactor-oi-scan/assets/ws.py --selftest
 python .opencode/skills/refactor-oi-scan/assets/ws.py --list
+python .opencode/skills/refactor-oi-scan/assets/ws.py --suggest-status <작업폴더>
 
 # 스크립트 단독
 S=.opencode/skills/refactor-oi-scan

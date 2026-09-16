@@ -40,6 +40,9 @@ opencode run "/doctor"                # 돌 준비가 됐는지 점검 (막히�
 
 > 모델을 한 번도 부르지 않고 스크립트만 확인하려면
 > `python .opencode/skills/refactor-oi-scan/assets/ws.py --selftest` 를 쓰세요.
+>
+> Phase 2 게이트(제안자가 끝났나 · 이어 부를까)는 **눈이 아니라 스크립트**가 봅니다 —
+> `ws.py --suggest-status <작업폴더>`.
 
 ## 무엇이 만들어지나
 
