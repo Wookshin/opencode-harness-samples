@@ -327,11 +327,22 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .t-op{color:var(--t-op)}
 
 /* ── 지적 카드 ──────────────────────────────────── */
+/* 기본은 **접어 둡니다.** 한 단위에 카드가 서넛씩 통째로 펼쳐져 있으면 고르기 전에
+   읽기부터 하게 됩니다. 제목 줄(ID · 개선 유형 · 무엇이 바뀌나)만 훑고 볼 것만 폅니다. */
 .finding{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;
-  padding:12px 14px;margin:10px 0;background:var(--panel)}
+  padding:0;margin:10px 0;background:var(--panel)}
 .finding{border-left-color:var(--line)}
+.finding>summary{display:flex;gap:9px;align-items:baseline;cursor:pointer;user-select:none;
+  list-style:none;padding:12px 14px;border-radius:7px}
+.finding>summary::-webkit-details-marker{display:none}
+.finding>summary::before{content:"▸";color:var(--muted);font-size:11px;flex:none}
+.finding[open]>summary::before{content:"▾"}
+.finding>summary:hover{color:var(--accent)}
+.finding[open]>summary{border-radius:7px 7px 0 0;border-bottom:1px solid var(--line)}
+.finding .fbody{padding:12px 14px}
 
-.finding>h4{margin:0 0 8px;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.finding>summary>h4{margin:0;flex:1 1 auto;min-width:0;
+  font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 /* 개선 유형 칩 — 경중이 아니라 종류라서 **강약 없이** 구분만 합니다 */
 .ikind{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;
   letter-spacing:.01em;white-space:nowrap;background:var(--code);color:var(--ink);
@@ -379,7 +390,7 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
 .finding dt{font-size:11.5px;color:var(--muted);font-weight:700;
   word-break:keep-all;letter-spacing:.02em}
 .finding dd{margin:0;min-width:0;padding-left:14px}
-.finding dt:first-of-type,.finding dd:first-of-type{border-top:0;padding-top:2px}
+.finding dt:first-of-type,.finding dd:first-of-type{border-top:0;padding-top:0}
 /* 좁은 화면에서는 84px 라벨 칸이 본문을 짓누릅니다. 라벨을 위로 올립니다. */
 @media (max-width:560px){
   .finding dl{grid-template-columns:minmax(0,1fr)!important}
@@ -418,7 +429,7 @@ details.fold[open]>summary{border-bottom:1px solid var(--line)}
   margin-top:10px;padding-top:9px;border-top:1px dashed var(--line)}
 /* .grow 는 헤더용이라 min-width:280px 입니다. 카드 안에서는 제목이 줄어들 수 있어야
    좁은 폭에서 뒤엣것들이 줄바꿈하지 않습니다. */
-.finding>h4 .grow,.sqlbox h4 .grow{flex:1 1 auto;min-width:0}
+.finding h4 .grow,.sqlbox h4 .grow{flex:1 1 auto;min-width:0}
 
 /* ── SQL · 반려 · 미확인 ────────────────────────── */
 .sqlbox{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0;background:var(--panel)}
@@ -526,7 +537,7 @@ table.glance td:nth-child(5){width:100%}
       <summary title="설정" aria-label="설정">⚙<span class="lbl">설정</span></summary>
       <div class="items">
         <button id="b-md">제안 내용 마크다운 복사</button>
-        <button id="b-open">코드 전부 펼치기</button>
+        <button id="b-open">전부 펼치기</button>
         <button id="b-theme">테마: 시스템</button>
         <button id="b-print">인쇄</button>
       </div>
@@ -1139,10 +1150,14 @@ function findingCard(f){
     '<button class="seecode" data-jump="u-' + esc(f.unitId) + '">코드 보기</button>' +
     '</div>';
 
-  return '<article class="finding" id="f-' + esc(f.id) + '" ' +
+  /* <summary> 는 제목 한 줄만 답니다 — 접힌 채로도 「무엇을 바꾸는 변경인가」가
+     보여야 고를 수 있습니다. summary 안에 heading 하나는 HTML 이 허용합니다. */
+  return '<details class="finding" id="f-' + esc(f.id) + '" ' +
     'data-kind="' + esc(f.improvementKind) + '" data-eff="' + esc(f.effort) + '" ' +
     'data-persp="' + esc(f.perspective) + '">' +
-    head + '<dl>' + dl + '</dl>' + moreHtml + foot + '</article>';
+    '<summary>' + head + '</summary>' +
+    '<div class="fbody">' + '<dl>' + dl + '</dl>' + moreHtml + foot + '</div>' +
+    '</details>';
 }
 
 /* ── 본문 ────────────────────────────────────── */
@@ -1386,11 +1401,19 @@ document.getElementById('b-md').addEventListener('click', function(){
   download('refactor-' + (m.slug || 'report') + '.md', t, 'text/markdown;charset=utf-8');
   closeMenu();
 });
+/* 카드가 접혀 있으니 코드만 펴 봐야 보이지 않습니다 — 카드와 코드를 같이 다룹니다 */
 document.getElementById('b-open').addEventListener('click', function(){
-  var any = !!document.querySelector('details.fold:not([open])');
-  document.querySelectorAll('details.fold').forEach(function(d){ d.open = any; });
-  this.textContent = any ? '코드 전부 접기' : '코드 전부 펼치기';
+  var sel = 'details.fold, details.finding';
+  var any = !!document.querySelector('details.fold:not([open]), details.finding:not([open])');
+  document.querySelectorAll(sel).forEach(function(d){ d.open = any; });
+  this.textContent = any ? '전부 접기' : '전부 펼치기';
   closeMenu();
+});
+/* 브라우저 Ctrl+P 로 찍어도 **카드 본문이 통째로 빠지지 않게** 합니다.
+   코드 접이식까지 펴지는 않습니다 — 그건 설정 ▸ 인쇄가 하는 일이고,
+   여기서 같이 펴면 Ctrl+P 가 예전의 두 배 넘는 종이를 뱉습니다. */
+window.addEventListener('beforeprint', function(){
+  document.querySelectorAll('details.finding').forEach(function(d){ d.open = true; });
 });
 document.getElementById('b-print').addEventListener('click', function(){
   document.querySelectorAll('details').forEach(function(d){ d.open = true; });
